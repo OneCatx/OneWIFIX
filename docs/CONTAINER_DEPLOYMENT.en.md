@@ -60,8 +60,9 @@ above yourself to establish which nodes are absent, then compare that against th
 exact NAS vendor, model, CPU platform, architecture, complete OS build and kernel release; never
 install a package built for a similar model or OS version, and never load an unknown `.ko` or `.spk`.
 
-**DS1621+ (DSM 7.4.1-90080, kernel 4.4.302+)** has a formal driver pack, published with every Release
-as `mdd-driver-synology-ds1621plus-dsm7.4.1-90080-k4.4.302plus-x86_64.tar.gz` and covered by the Release `SHA256SUMS`. CI rebuilds it from Synology's public toolkit and
+**DS1621+ (DSM 7.4.1-90080, kernel 4.4.302+)** driver pack is not attached to image Releases.
+The sources live in `drivers/packs/synology-ds1621plus-dsm7.4.1/`; the archive name is
+`mdd-driver-synology-ds1621plus-dsm7.4.1-90080-k4.4.302plus-x86_64.tar.gz`. The Driver packs workflow rebuilds it from Synology's public toolkit and
 unmodified Linux v4.4.302 sources, byte for byte identical to the modules validated on hardware.
 Installing it takes one SSH session:
 

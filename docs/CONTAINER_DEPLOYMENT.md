@@ -58,8 +58,9 @@ Hardware 容器内。
 驱动必须同时匹配厂商、型号、CPU 平台、架构、系统完整 build 和内核 release，不得安装相近
 型号或相近系统版本的包，也不要使用来源不明的 `.ko` 或 `.spk`。
 
-**DS1621+（DSM 7.4.1-90080、内核 4.4.302+）** 已有正式驱动包，随每个 Release 发布：
-`mdd-driver-synology-ds1621plus-dsm7.4.1-90080-k4.4.302plus-x86_64.tar.gz`，并纳入 Release 的 `SHA256SUMS`。它由 CI 用群晖公开工具链和未经修改的 Linux
+**DS1621+（DSM 7.4.1-90080、内核 4.4.302+）** 的驱动包不随镜像 Release 发布。源码在
+`drivers/packs/synology-ds1621plus-dsm7.4.1/`，文件名是
+`mdd-driver-synology-ds1621plus-dsm7.4.1-90080-k4.4.302plus-x86_64.tar.gz`。它由 Driver packs 工作流用群晖公开工具链和未经修改的 Linux
 v4.4.302 源码重新构建，与实机验证过的模块逐字节一致。安装需要一次 SSH：
 
 ```sh

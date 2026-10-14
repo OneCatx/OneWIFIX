@@ -1,7 +1,7 @@
 name: Driver packs
 
 # Rebuild the Synology driver pack whenever an input changes, and prove it still reproduces the
-# modules validated on hardware. The Release workflow runs the same script to publish it.
+# modules validated on hardware. Image releases do not publish this pack.
 on:
   pull_request:
     paths:
