@@ -62,7 +62,9 @@ No physical reader, cellular/IMS path, APNs provider delivery, SIP fork/pickup o
 
 - The PowerShell wrapper was attempted first with `python docs/onewifi-migration/run-backend-final.py`; it refused to hide the non-empty `docs/onewifi-migration/linux-tmp` mount target before launching tests. This is an environment guard, not a test result. The equivalent direct WSL command was then run against the unchanged project source, the project `.venv-linux` interpreter, `TMPDIR=/tmp`, `MDD_DATA=/tmp/mdd-full-final-logged`, and the pinned local PC/SC library path.
 - Direct command time: 2026-10-14 13:24–13:32 Asia/Shanghai. Result: **2097 tests, 0 failures, 0 errors, 1 skipped; OK; exit 0**. Raw UTF-8 output is `backend-final-regression.log`, SHA-256 is recorded in `backend-final-evidence.json`; source input inventory was unchanged.
-- `verify-final-evidence.py` reports `backend-final-evidence.json` as `identity_valid: true`; the current aggregate run also reports all five receipts (`backend`, `oneboard`, `ios`, `android`, `android-kotlin`) as identity-valid.
+- `verify-final-evidence.py` reports `backend-final-evidence.json` as `identity_valid: true`; after
+  the local 1.14.0 WebUI test/build refresh, the aggregate run also reports all five receipts
+  (`backend`, `oneboard`, `ios`, `android`, `android-kotlin`) as identity-valid.
 - The endpoint/auth/calls/SMS-MMS/reader/eSIM/APNs/typed-status/Asterisk audit is in `backend-endpoint-contract-diff.md`; the route decorator inventory is `backend-endpoint-route-inventory.txt`. AT&T and Three HK remain explicit `carrier_profile_unsupported` blocks with no unsafe IMS defaults.
 - Software evidence does not establish physical reader/eUICC, IMS, installed Asterisk, APNs/device delivery, carrier SMS/MMS, or mobile-device behavior. Those remain NOT RUN/BLOCKED for the runtime window.
 

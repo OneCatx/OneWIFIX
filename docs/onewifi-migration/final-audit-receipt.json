@@ -1,13 +1,13 @@
 {
-  "generated_local": "2026-10-14T14:30:53.080333+08:00",
+  "generated_local": "2026-10-14T14:33:26.556550+08:00",
   "verifier": {
     "command": [
       "C:\\Python314\\python.exe",
       "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\verify-final-evidence.py"
     ],
     "cwd": "E:\\GQ\\Ultra\\mdd-sim-gateway",
-    "exit_code": 1,
-    "stdout": "[\n  {\n    \"receipt\": \"backend-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"exit_code\": 0,\n        \"test_results\": {\n          \"run\": 2097,\n          \"success\": 2096,\n          \"failure\": 0,\n          \"error\": 0,\n          \"skipped\": 1\n        },\n        \"done\": [\n          {\n            \"success\": true,\n            \"type\": \"done\",\n            \"time\": 325482\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"receipt\": \"oneboard-final-evidence.json\",\n    \"identity_valid\": false,\n    \"errors\": [\n      \"log drift: node-tests\",\n      \"log drift: vite-build\"\n    ],\n    \"commands\": [\n      {\n        \"label\": \"node-tests\",\n        \"exit_code\": 0\n      },\n      {\n        \"label\": \"vite-build\",\n        \"exit_code\": 0\n      }\n    ]\n  },\n  {\n    \"receipt\": \"ios-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"label\": \"flutter-test\",\n        \"exit_code\": 0,\n        \"test_results\": {\n          \"success\": 1086,\n          \"failure\": 0,\n          \"error\": 0\n        },\n        \"done\": [\n          {\n            \"success\": true,\n            \"type\": \"done\",\n            \"time\": 67476\n          }\n        ]\n      },\n      {\n        \"label\": \"flutter-analyze\",\n        \"exit_code\": 0\n      }\n    ]\n  },\n  {\n    \"receipt\": \"android-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"label\": \"flutter-test\",\n        \"exit_code\": 0,\n        \"test_results\": {\n          \"success\": 892,\n          \"failure\": 0,\n          \"error\": 0\n        },\n        \"done\": [\n          {\n            \"success\": true,\n            \"type\": \"done\",\n            \"time\": 54752\n          }\n        ]\n      },\n      {\n        \"label\": \"flutter-analyze\",\n        \"exit_code\": 0\n      }\n    ]\n  },\n  {\n    \"receipt\": \"android-kotlin-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"exit_code\": 0\n      }\n    ]\n  }\n]\n",
+    "exit_code": 0,
+    "stdout": "[\n  {\n    \"receipt\": \"backend-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"exit_code\": 0,\n        \"test_results\": {\n          \"run\": 2097,\n          \"success\": 2096,\n          \"failure\": 0,\n          \"error\": 0,\n          \"skipped\": 1\n        },\n        \"done\": [\n          {\n            \"success\": true,\n            \"type\": \"done\",\n            \"time\": 325482\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"receipt\": \"oneboard-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"label\": \"node-tests\",\n        \"exit_code\": 0\n      },\n      {\n        \"label\": \"vite-build\",\n        \"exit_code\": 0\n      }\n    ]\n  },\n  {\n    \"receipt\": \"ios-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"label\": \"flutter-test\",\n        \"exit_code\": 0,\n        \"test_results\": {\n          \"success\": 1086,\n          \"failure\": 0,\n          \"error\": 0\n        },\n        \"done\": [\n          {\n            \"success\": true,\n            \"type\": \"done\",\n            \"time\": 67476\n          }\n        ]\n      },\n      {\n        \"label\": \"flutter-analyze\",\n        \"exit_code\": 0\n      }\n    ]\n  },\n  {\n    \"receipt\": \"android-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"label\": \"flutter-test\",\n        \"exit_code\": 0,\n        \"test_results\": {\n          \"success\": 892,\n          \"failure\": 0,\n          \"error\": 0\n        },\n        \"done\": [\n          {\n            \"success\": true,\n            \"type\": \"done\",\n            \"time\": 54752\n          }\n        ]\n      },\n      {\n        \"label\": \"flutter-analyze\",\n        \"exit_code\": 0\n      }\n    ]\n  },\n  {\n    \"receipt\": \"android-kotlin-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"exit_code\": 0\n      }\n    ]\n  }\n]\n",
     "stderr": ""
   },
   "verifier_rows": [
@@ -37,11 +37,8 @@
     },
     {
       "receipt": "oneboard-final-evidence.json",
-      "identity_valid": false,
-      "errors": [
-        "log drift: node-tests",
-        "log drift: vite-build"
-      ],
+      "identity_valid": true,
+      "errors": [],
       "commands": [
         {
           "label": "node-tests",
@@ -151,8 +148,8 @@
     },
     "oneboard-final-evidence.json": {
       "path": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\oneboard-final-evidence.json",
-      "sha256": "37e88aa86cec25b5d4c4796cdf1ad06e45a9236db72c039282ec90c4c80ac0a6",
-      "recorded": "2026-10-14T06:24:50.365388+00:00",
+      "sha256": "61249c125472c02ef1197e82949f7df52e7b0e71ed9bf6d87dfbacd8482589aa",
+      "recorded": "2026-10-14T06:31:44.834220+00:00",
       "source_unchanged": true,
       "exit_code": null,
       "commands": [
@@ -162,7 +159,7 @@
           "test_results": null,
           "done": null,
           "log": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\oneboard-final-node-tests.log",
-          "log_sha256": "2e601c5b6869c33a3e5ec6109a85b833ef7808ee094580aa4e0707c82c334d7a"
+          "log_sha256": "b4f7d885cfdea748802a50bcd355fd9ed95ced6506754044de375d50a866ba20"
         },
         {
           "label": "vite-build",
@@ -170,10 +167,10 @@
           "test_results": null,
           "done": null,
           "log": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\oneboard-final-vite-build.log",
-          "log_sha256": "645792e93c83adb7e545a54206cd410e81ab5d646bac68bf51b95eb0c0fbc095"
+          "log_sha256": "fdedf53b44db54b141f75306e00f8e55101f23e7a7289250419625a5f017f37d"
         }
       ],
-      "boundary": "Source tests and build only, no live MDD authentication/provider or installed runtime proof"
+      "boundary": "Source tests and local Vite build only; no live MDD authentication/provider or installed runtime proof."
     },
     "ios-final-evidence.json": {
       "path": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\ios-final-evidence.json",
@@ -499,7 +496,7 @@
       "cwd": "E:\\GQ\\Ultra\\mdd-sim-gateway",
       "exit_code": 0,
       "stdout": "",
-      "stderr": "warning: in the working copy of 'docs/onewifi-migration/fnos-deployment-readiness.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'docs/onewifi-migration/oneboard-final-node-tests.log', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'docs/onewifi-migration/oneboard-final-vite-build.log', LF will be replaced by CRLF the next time Git touches it\n"
+      "stderr": ""
     },
     "git_diff_check_ios": {
       "command": [

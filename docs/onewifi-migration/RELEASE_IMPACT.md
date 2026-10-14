@@ -20,7 +20,8 @@ paths. The current source impact is:
 ## Evidence snapshot
 
 - Backend: 2097 tests, 0 failures, 0 errors, 1 skipped; source unchanged during receipt.
-- Aggregate receipt verifier: all five current receipts identity-valid.
+- Aggregate receipt verifier: all five current receipts identity-valid after the local 1.14.0
+  WebUI Node/Vite refresh.
 - Compose YAML parses locally; Docker image build/inspect is **NOT RUN** because this host has no
   Docker CLI.
 - FNOS startup, host architecture/kernel/device nodes, and real SIM/IMS behavior are **NOT RUN**.

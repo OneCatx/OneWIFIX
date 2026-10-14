@@ -42,7 +42,6 @@ $env:PYTHONIOENCODING='utf-8'
 python docs/onewifi-migration/verify-final-evidence.py
 ```
 
-That verifier reports this backend receipt as identity-valid. The aggregate verifier still reports
-Android receipt drift owned by W1 (`ResidentCallSourceTest.kt`), so the aggregate result is not a
-W2 failure and is not relabelled as a global PASS.
+That verifier reports this backend receipt as identity-valid. After the local 1.14.0 WebUI
+test/build refresh, the aggregate verifier reports all five receipts as identity-valid.
 
