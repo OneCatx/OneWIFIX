@@ -1,6 +1,6 @@
 # W5 终审与制品封存
 
-审计时间：2026-10-14T14:20:11.318619+08:00（本机时区）；审计脚本：`docs/onewifi-migration/run-final-audit.py`。本报告只写入当前审计结果，不把源码、receipt 或静态检查当成设备运行证据。
+审计时间：2026-10-14T14:30:53.080333+08:00（本机时区）；审计脚本：`docs/onewifi-migration/run-final-audit.py`。本报告只写入当前审计结果，不把源码、receipt 或静态检查当成设备运行证据。
 
 ## 终审裁决
 
@@ -23,7 +23,7 @@
 
 - **P1 — runtime acceptance:** 真实 MDD origin、reader/SIM、IMS、设备、授权号码和安装态证据仍缺失，不能发布或称冻结。
 - **P1 — carrier/native gaps:** AT&T/Three HK 完整 consumers、Asterisk C/image/install、Xcode/Swift 与签名设备仍缺失或未运行。
-- **P2 — backend/OneBoard evidence freshness:** backend=ok; oneboard=['input drift: package.json', 'current input inventory differs from receipt']。 无 backend evidence integrity finding。
+- **P2 — backend/OneBoard evidence freshness:** backend=ok; oneboard=['log drift: node-tests', 'log drift: vite-build']。 无 backend evidence integrity finding。
 - **P2 — checkpoint freshness:** 无 checkpoint source drift。 当前 checkpoint 漂移如下：
 - none
 - **P2 — runtime document drift:** 无当前 Android 资源/APK 状态矛盾；历史阻塞段落已明确标注为历史。

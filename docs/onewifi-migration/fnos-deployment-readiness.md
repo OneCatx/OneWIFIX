@@ -18,7 +18,7 @@ worktree still has uncommitted backend, mobile-contract, and WebUI changes.
 | Gate | Result | Evidence |
 |---|---|---|
 | Backend source regression | PASS: 2097 tests, 0 failures, 0 errors, 1 skip | `backend-final-evidence.json`, `backend-final-regression.log` |
-| Cross-receipt identity check | BLOCKED: backend, iOS, Android and Android Kotlin are valid; OneBoard receipt is stale only because `webui/package.json` changed for `1.14.0` | `python docs/onewifi-migration/verify-final-evidence.py` |
+| Cross-receipt identity check | PASS: backend, OneBoard, iOS, Android and Android Kotlin all valid after the `1.14.0` receipt refresh | `python docs/onewifi-migration/verify-final-evidence.py` |
 | NAS compatibility catalogue | PASS: 1 record validated | `python tools/validate_nas_catalog.py` |
 | Compose structure | PASS: YAML parses; control/hardware/egress and required named volumes/networks are present | `runtime/compose.yaml` |
 | Version consistency in source | PASS: `VERSION` and `webui/package.json` both `1.14.0`; matching release notes exist | `VERSION`, `webui/package.json`, `.github/release-notes/v1.14.0.md` |
@@ -58,6 +58,5 @@ python -c "import yaml; yaml.safe_load(open('runtime/compose.yaml', encoding='ut
 $env:PYTHONIOENCODING='utf-8'; python docs/onewifi-migration/verify-final-evidence.py
 ```
 
-The first two commands exited 0. The latest aggregate verifier reports the backend, iOS, Android and
-Android Kotlin receipts as identity-valid; OneBoard requires the versioned receipt refresh described
-above. This report does not claim FNOS startup or real SIM/IMS/call/SMS acceptance.
+The first two commands exited 0. The latest aggregate verifier reports all five receipts as
+identity-valid. This report does not claim FNOS startup or real SIM/IMS/call/SMS acceptance.
