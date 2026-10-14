@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import struct
 import subprocess
 import sys
 import time
@@ -1181,10 +1182,106 @@ class UdpProbeTargetTests(unittest.TestCase):
     def test_epdg_resolution_uses_the_selected_socks_udp_path(self):
         with patch.object(egress, "_udp_probe_once", return_value="198.51.100.25") as probe:
             address = egress.resolve_ipv4_via_socks(
-                "socks5://mdd-egress:22157", "epdg.example.net")
+                "socks5://mdd-egress:22157", "epdg.example.net",
+                client_subnet="109.192.0.0/24")
         self.assertEqual(address, "198.51.100.25")
         self.assertEqual(probe.call_args.args[2],
-                         ("resolve", "1.1.1.1", 53, "epdg.example.net"))
+                         ("resolve", "1.1.1.1", 53, "epdg.example.net",
+                          "109.192.0.0/24"))
+
+    def test_epdg_resolution_rejects_invalid_ecs_before_using_the_proxy(self):
+        with patch.object(egress, "_udp_probe_once") as probe:
+            with self.assertRaisesRegex(egress.EgressError, "invalid ePDG ECS"):
+                egress.resolve_ipv4_via_socks(
+                    "socks5://mdd-egress:22157", "epdg.example.net",
+                    client_subnet="not-a-network")
+        probe.assert_not_called()
+
+    def test_dns_query_payload_encodes_masked_ipv4_ecs(self):
+        with patch.object(egress.os, "urandom", return_value=b"\x12\x34"):
+            payload = egress._dns_query_payload("epdg.example.net", "109.192.0.0/24")
+        self.assertEqual(struct.unpack("!HHHHHH", payload[:12]),
+                         (0x1234, 0x0100, 1, 0, 0, 1))
+        self.assertEqual(payload[-22:], bytes.fromhex(
+            "000029100000000000000b00080007000118006dc000"))
+
+    def test_dns_query_payload_without_ecs_keeps_standard_query_shape(self):
+        with patch.object(egress.os, "urandom", return_value=b"\x12\x34"):
+            payload = egress._dns_query_payload("epdg.example.net")
+        self.assertEqual(struct.unpack("!HHHHHH", payload[:12]),
+                         (0x1234, 0x0100, 1, 0, 0, 0))
+        self.assertNotIn(b"\x00\x00\x29", payload)
+
+    def test_dns_query_payload_encodes_masked_ipv6_ecs(self):
+        with patch.object(egress.os, "urandom", return_value=b"\x12\x34"):
+            payload = egress._dns_query_payload("epdg.example.net", "2001:db8:1234::/48")
+        self.assertEqual(struct.unpack("!HHHHHH", payload[:12]),
+                         (0x1234, 0x0100, 1, 0, 0, 1))
+        self.assertEqual(payload[-25:], bytes.fromhex(
+            "000029100000000000000e0008000a0002300020010db81234"))
+
+    def test_socks_udp_packet_carries_the_dns_query_and_ecs_option(self):
+        sent = []
+
+        class FakeStream:
+            def __init__(self):
+                self.replies = [
+                    b"\x05\x00",                    # no-auth method
+                    b"\x05\x00\x00\x01",            # UDP ASSOCIATE reply
+                    b"\x7f\x00\x00\x01",            # relay address
+                    b"\x04\x38",                    # relay port 1080
+                ]
+                self.outbound = []
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                return False
+
+            def settimeout(self, _timeout):
+                pass
+
+            def sendall(self, data):
+                self.outbound.append(data)
+
+            def recv(self, size):
+                value = self.replies.pop(0)
+                return value[:size]
+
+        class FakeUdp:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                return False
+
+            def settimeout(self, _timeout):
+                pass
+
+            def sendto(self, packet, address):
+                sent.append((packet, address))
+
+            def recvfrom(self, _size):
+                # SOCKS UDP header followed by a matching DNS A response.
+                question = egress._dns_name("epdg.example.net") + b"\x00\x01\x00\x01"
+                answer = (b"\x12\x34\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00"
+                          + question + b"\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x3c\x00\x04\xc6\x33\x64\x19")
+                return b"\x00\x00\x00\x01\x7f\x00\x00\x01\x04\x38" + answer, None
+
+        stream = FakeStream()
+        with patch.object(egress.os, "urandom", return_value=b"\x12\x34"), \
+                patch.object(egress.socket, "create_connection", return_value=stream), \
+                patch.object(egress.socket, "socket", return_value=FakeUdp()):
+            result = egress._udp_probe_once(
+                "proxy", 1080,
+                ("resolve", "1.1.1.1", 53, "epdg.example.net", "109.192.0.0/24"),
+                1.0)
+            self.assertEqual(result, "198.51.100.25")
+        packet, address = sent[0]
+        self.assertEqual(address, ("127.0.0.1", 1080))
+        self.assertEqual(packet[:10], b"\x00\x00\x00\x01\x01\x01\x01\x01\x005")
+        self.assertIn(bytes.fromhex("00080007000118006dc000"), packet)
 
     def test_every_probe_failing_names_each_one(self):
         with patch.object(egress, "_udp_probe_once",

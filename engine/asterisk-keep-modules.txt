@@ -29,6 +29,7 @@ pbx_config.so                      # extensions.conf is the only dialplan source
 
 # --- Applications called by extensions.conf.j2 -----------------------------------------
 app_dial.so                        # Dial() — both call legs
+app_directed_pickup.so             # Pickup(<call-id>@PICKUPMARK) for late native answer
 app_exec.so                        # TryExec(), ExecIf()
 app_playback.so                    # Playback() — voicemail beep prompt
 app_record.so                      # Record() — voicemail, writes .wav to bind-mounted /logs

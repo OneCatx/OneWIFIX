@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import importlib.util
+import ipaddress
 import os
 from pathlib import Path
 import shutil
@@ -122,6 +123,32 @@ def _dns_name(value: str) -> bytes:
     return b"".join(bytes([len(label)]) + label for label in labels) + b"\x00"
 
 
+def _ecs_network(value: str):
+    try:
+        network = ipaddress.ip_network(str(value).strip(), strict=False)
+    except ValueError:
+        raise EgressError("invalid ePDG ECS") from None
+    if network.prefixlen <= 0:
+        raise EgressError("invalid ePDG ECS")
+    return network
+
+
+def _dns_query_payload(query_name: str, client_subnet: str = "") -> bytes:
+    transaction = os.urandom(2)
+    additional = b""
+    arcount = 0
+    if client_subnet:
+        network = _ecs_network(client_subnet)
+        family = 1 if network.version == 4 else 2
+        address = network.network_address.packed[:(network.prefixlen + 7) // 8]
+        option = struct.pack("!HHHBB", 8, 4 + len(address), family,
+                             network.prefixlen, 0) + address
+        additional = b"\x00" + struct.pack("!HHIH", 41, 4096, 0, len(option)) + option
+        arcount = 1
+    return (transaction + struct.pack("!HHHHH", 0x0100, 1, 0, 0, arcount)
+            + _dns_name(query_name) + b"\x00\x01\x00\x01" + additional)
+
+
 def _dns_ipv4_answer(message: bytes, transaction: bytes) -> str:
     if len(message) < 12 or message[:2] != transaction or not (message[2] & 0x80) \
             or message[3] & 0x0f:
@@ -169,10 +196,10 @@ def _udp_probe_once(host: str, port: int, probe: tuple, timeout: float,
         transaction = os.urandom(12)
         payload = struct.pack("!HH", 0x0001, 0) + b"\x21\x12\xa4\x42" + transaction
     else:
-        transaction = os.urandom(2)
         query_name = parameters[0] if parameters else "cloudflare.com"
-        payload = transaction + b"\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00" \
-            + _dns_name(query_name) + b"\x00\x01\x00\x01"
+        client_subnet = parameters[1] if len(parameters) > 1 else ""
+        payload = _dns_query_payload(query_name, client_subnet)
+        transaction = payload[:2]
 
     started = time.monotonic()
     with socket.create_connection((host, int(port)), timeout=timeout) as stream:
@@ -239,18 +266,21 @@ def _udp_probe_once(host: str, port: int, probe: tuple, timeout: float,
     return max(1, round((time.monotonic() - started) * 1000))
 
 
-def resolve_ipv4_via_socks(proxy_url: str, name: str, timeout: float = 8.0) -> str:
+def resolve_ipv4_via_socks(proxy_url: str, name: str, timeout: float = 8.0,
+                           client_subnet: str = "") -> str:
     """Resolve an ePDG through a public resolver reached from the selected country exit."""
     parsed = urlsplit(proxy_url)
     if parsed.scheme != "socks5" or not parsed.hostname or parsed.port is None:
         raise EgressError("invalid internal SOCKS endpoint")
+    if client_subnet:
+        _ecs_network(client_subnet)
     username = unquote(parsed.username or "")
     password = unquote(parsed.password or "")
     failures = []
     for resolver in udp_probe_targets():
         try:
             return str(_udp_probe_once(parsed.hostname, parsed.port,
-                                      ("resolve", resolver, 53, name), timeout,
+                                      ("resolve", resolver, 53, name, client_subnet), timeout,
                                       username, password))
         except (EgressError, OSError, ValueError, struct.error) as exc:
             failures.append(str(exc))
@@ -563,15 +593,29 @@ def country_for_mcc(mcc: str | int | None) -> str:
 
 
 def line_country(inst: dict) -> str:
-    """Per-line override wins; otherwise infer the SIM home country from its MCC."""
-    return normalize_country(inst.get("proxy_country")) or country_for_mcc(inst.get("mcc"))
+    """Per-line override wins; otherwise route via the profiled network, not sponsor MCC."""
+    if normalize_country(inst.get("proxy_country")):
+        return normalize_country(inst["proxy_country"])
+    from . import carrier_profiles
+    profile = carrier_profiles.resolve(carrier_profiles.identity_from_instance(inst))
+    route_mcc = (profile.get("route", {}).get("mcc")
+                 if profile["operational_status"] != "blocked" else None) or inst.get("mcc")
+    return country_for_mcc(route_mcc)
 
 
 def epdg_for(inst: dict) -> str:
     if inst.get("epdg"):
         return str(inst["epdg"]).strip()
-    mcc = str(inst.get("mcc") or "").zfill(3)
-    mnc = str(inst.get("mnc") or "").zfill(3)
+    from . import carrier_profiles
+    profile = carrier_profiles.resolve(carrier_profiles.identity_from_instance(inst))
+    if profile["operational_status"] == "blocked":
+        profile = {}
+    hostname = profile.get("epdg", {}).get("hostname")
+    if hostname:
+        return str(hostname).strip()
+    route = profile.get("route", {})
+    mcc = str(route.get("mcc") or inst.get("mcc") or "").zfill(3)
+    mnc = str(route.get("mnc") or inst.get("mnc") or "").zfill(3)
     if not mcc.strip("0") or not mnc.strip("0"):
         return ""
     return f"epdg.epc.mnc{mnc}.mcc{mcc}.pub.3gppnetwork.org"

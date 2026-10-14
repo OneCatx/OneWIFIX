@@ -4,6 +4,33 @@ All notable changes follow Keep a Changelog and Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-10-14
+
+The automatic update channels remain unchanged until the release is explicitly approved.
+
+### Added
+
+- MDD now exposes capability-scoped mobile adapters for device status, SMS/MMS, eSIM, typed
+  settings, pairing, Live Activity receipts, and VoIP endpoint ownership without creating a second
+  gateway.
+- Native APNs SMS and VoIP provider settings are kept separate, with masked credentials and
+  update-only Live Activity semantics.
+
+### Changed
+
+- Reader and eSIM operations require live ICCID proof and refreshed line association; stale or
+  unknown identity fails closed instead of returning a false callable line.
+- Call callbacks retain the exact MDD engine call ID, and SMS/MMS outcomes preserve unknown
+  delivery state instead of inventing delivery counts.
+- AT&T and Three HK profiles report explicit unsupported IMS/security contracts rather than
+  enabling incomplete carrier defaults.
+
+### Deployment
+
+- Full-container release preparation now keeps Control, Hardware, Egress, and per-line Engine
+  images on one versioned Compose and checksum set. FNOS/NAS startup and hardware acceptance remain
+  environment-specific checks.
+
 ## [1.13.2] - 2026-10-05
 
 The automatic update channels remain unchanged.

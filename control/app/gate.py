@@ -38,7 +38,7 @@ from starlette.requests import cookie_parser
 from starlette.responses import JSONResponse
 from starlette.websockets import WebSocket
 
-from . import auth, authz, clients
+from . import auth, authz, clients, mobile_pairing
 from . import config as cfg
 
 log = logging.getLogger("mdd.gate")
@@ -70,6 +70,7 @@ class Principal:
     kind: str                   # "admin" | "client" | "engine" | "anonymous"
     csrf: str = ""              # the session's CSRF token; only a cookie session has one
     client_id: int | None = None
+    capabilities: frozenset[str] = frozenset()
     # Names the credential for revocation without being it: "session:<digest>" or "client:<id>".
     credential: str = ""
 
@@ -137,7 +138,13 @@ def _client(headers: dict[str, str]) -> Principal | None:
     record = clients.resolve(token)
     if not record:
         return None
-    return Principal("client", client_id=record["id"], credential=f"client:{record['id']}")
+    return Principal("client", client_id=record["id"], credential=f"client:{record['id']}",
+                     capabilities=frozenset(record.get("capabilities") or ()))
+
+
+def _mobile_pairing(headers: dict[str, str]) -> Principal | None:
+    token = bearer_token(headers)
+    return Principal("pairing") if mobile_pairing.verify(token) else None
 
 
 def _engine(headers: dict[str, str]) -> Principal | None:
@@ -180,6 +187,10 @@ class Source:
 SOURCES: tuple[Source, ...] = (
     # Static assets stay public so the browser can render the login screen.
     Source("static", "http", lambda scope, headers: not _api(scope), _nobody, required=False),
+    Source("mobile pairing", "http", lambda scope, headers:
+           (scope.get("path") or "").startswith("/api/mobile/v1/onetools/") and
+           bearer_token(headers).startswith("mdd_pair1_"), _mobile_pairing,
+           refusal="invalid or expired pairing credential"),
     # A request that names a bearer token is judged by it alone, wherever it goes under /api/.
     Source("bearer", "http", lambda scope, headers: _has_bearer(scope, headers), _client,
            refusal="invalid or revoked client token"),
@@ -410,7 +421,11 @@ class Gate:
     async def _deny(self, scope, receive, send, status: int, detail: str, close_code: int):
         if scope["type"] == "websocket":
             return await self._refuse(scope, receive, send, close_code)
-        await JSONResponse({"detail": detail}, status_code=status)(scope, receive, send)
+        body = ({"error": {"code": "unauthorized" if status == 401 else "forbidden",
+                            "message": detail}}
+                if (scope.get("path") or "").startswith("/api/mobile/v1/") else
+                {"detail": detail})
+        await JSONResponse(body, status_code=status)(scope, receive, send)
 
     @staticmethod
     async def _refuse(scope, receive, send, code: int) -> None:

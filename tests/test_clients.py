@@ -109,7 +109,21 @@ class ClientTokenTests(unittest.TestCase):
         clients.register("phone", "ios", "2.1")
         (listed,) = clients.list_clients()
         self.assertEqual(set(listed), {"id", "name", "platform", "app_version", "created_at",
-                                       "last_seen", "expires_at"})
+                                       "last_seen", "expires_at", "capabilities"})
+
+    def test_capabilities_persist_and_old_records_default_to_none(self):
+        client, token = clients.register("phone", "ios", capabilities=["manage_devices"])
+        self.assertEqual(client["capabilities"], ["manage_devices"])
+        clients._load()
+        self.assertEqual(clients.resolve(token)["capabilities"], ["manage_devices"])
+        data = self.stored()
+        del data["clients"][0]["capabilities"]
+        with open(clients.CLIENTS_PATH, "w", encoding="utf-8") as handle:
+            json.dump(data, handle)
+        clients._load()
+        self.assertEqual(clients.resolve(token)["capabilities"], [])
+        with self.assertRaises(clients.ClientError):
+            clients.register("phone", "ios", capabilities=["admin"])
 
 
 if __name__ == "__main__":

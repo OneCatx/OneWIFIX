@@ -1,0 +1,663 @@
+{
+  "boundary": "Static literal inventory only; not request execution or reachability proof. Current mobile edits in flight.",
+  "platforms": [
+    {
+      "platform": "ios",
+      "routes": [
+        {
+          "file": "lib\\app\\app_dependencies.dart",
+          "line": 156,
+          "declared_route": "/api/euicc-catalog",
+          "expected_effective_route": "/api/mobile/v1/euicc-catalog"
+        },
+        {
+          "file": "lib\\features\\auth\\data\\auth_api.dart",
+          "line": 14,
+          "declared_route": "/api/auth/client/login",
+          "expected_effective_route": "/api/auth/client/login"
+        },
+        {
+          "file": "lib\\features\\auth\\data\\auth_api.dart",
+          "line": 36,
+          "declared_route": "/api/auth/status",
+          "expected_effective_route": "/api/auth/status"
+        },
+        {
+          "file": "lib\\features\\auth\\data\\auth_api.dart",
+          "line": 48,
+          "declared_route": "/api/auth/client/logout",
+          "expected_effective_route": "/api/auth/client/logout"
+        },
+        {
+          "file": "lib\\features\\automation\\data\\automation_api.dart",
+          "line": 20,
+          "declared_route": "/api/automatic-tasks",
+          "expected_effective_route": "/api/mobile/v1/automatic-tasks"
+        },
+        {
+          "file": "lib\\features\\automation\\data\\automation_api.dart",
+          "line": 37,
+          "declared_route": "/api/automatic-tasks/runs",
+          "expected_effective_route": "/api/mobile/v1/automatic-tasks/runs"
+        },
+        {
+          "file": "lib\\features\\automation\\data\\automation_api.dart",
+          "line": 62,
+          "declared_route": "/api/automatic-tasks/{id}",
+          "expected_effective_route": "/api/mobile/v1/automatic-tasks/{id}"
+        },
+        {
+          "file": "lib\\features\\automation\\data\\automation_api.dart",
+          "line": 77,
+          "declared_route": "/api/automatic-tasks/{id}",
+          "expected_effective_route": "/api/mobile/v1/automatic-tasks/{id}"
+        },
+        {
+          "file": "lib\\features\\automation\\data\\automation_api.dart",
+          "line": 92,
+          "declared_route": "/api/automatic-tasks/{id}/run",
+          "expected_effective_route": "/api/mobile/v1/automatic-tasks/{id}/run"
+        },
+        {
+          "file": "lib\\features\\calls\\data\\call_push_registrar.dart",
+          "line": 22,
+          "declared_route": "/api/mobile/v1/calls/push-endpoint",
+          "expected_effective_route": "/api/mobile/v1/calls/push-endpoint"
+        },
+        {
+          "file": "lib\\features\\calls\\data\\calls_api.dart",
+          "line": 21,
+          "declared_route": "/api/instances/{id}/calls",
+          "expected_effective_route": "/api/instances/{id}/calls"
+        },
+        {
+          "file": "lib\\features\\calls\\data\\mdd_sip_background.dart",
+          "line": 261,
+          "declared_route": "/api/mobile/v1/calls/{call_id}/pickup",
+          "expected_effective_route": "/api/mobile/v1/calls/{call_id}/pickup"
+        },
+        {
+          "file": "lib\\features\\calls\\data\\mdd_sip_background.dart",
+          "line": 314,
+          "declared_route": "/api/instances/{iid}/softphone",
+          "expected_effective_route": "/api/instances/{iid}/softphone"
+        },
+        {
+          "file": "lib\\features\\calls\\data\\mdd_sip_background.dart",
+          "line": 352,
+          "declared_route": "/api/auth/status",
+          "expected_effective_route": "/api/auth/status"
+        },
+        {
+          "file": "lib\\features\\calls\\data\\mdd_sip_background.dart",
+          "line": 371,
+          "declared_route": "/api/instances",
+          "expected_effective_route": "/api/instances"
+        },
+        {
+          "file": "lib\\features\\calls\\data\\mdd_sip_background.dart",
+          "line": 403,
+          "declared_route": "/api/instances/{iid}/softphone",
+          "expected_effective_route": "/api/instances/{iid}/softphone"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\device_api.dart",
+          "line": 47,
+          "declared_route": "/api/devices/{id}/network",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/network"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\device_api.dart",
+          "line": 59,
+          "declared_route": "/api/devices/{id}/vowifi",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/vowifi"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\device_api.dart",
+          "line": 71,
+          "declared_route": "/api/devices/{id}/flight-mode",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/flight-mode"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\device_api.dart",
+          "line": 83,
+          "declared_route": "/api/devices/{id}/vowifi/actions/reconnect",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/vowifi/actions/reconnect"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\device_api.dart",
+          "line": 97,
+          "declared_route": "/api/devices/{id}/actions/reboot",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/actions/reboot"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\reader_provision_api.dart",
+          "line": 15,
+          "declared_route": "/api/readers",
+          "expected_effective_route": "/api/readers"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\reader_provision_api.dart",
+          "line": 33,
+          "declared_route": "/api/sim/detect",
+          "expected_effective_route": "/api/sim/detect"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\reader_provision_api.dart",
+          "line": 52,
+          "declared_route": "/api/provision",
+          "expected_effective_route": "/api/provision"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 28,
+          "declared_route": "/api/devices/{id}/esim",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 49,
+          "declared_route": "/api/devices/{id}/esim/profiles",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/profiles"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 69,
+          "declared_route": "/api/devices/{id}/esim/actions/switch",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/actions/switch"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 106,
+          "declared_route": "/api/devices/{id}/esim/profiles/{iccid}",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/profiles/{iccid}"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 132,
+          "declared_route": "/api/devices/{id}/esim/actions/disable",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/actions/disable"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 151,
+          "declared_route": "/api/devices/{id}/esim/profiles/{iccid}",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/profiles/{iccid}"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 188,
+          "declared_route": "/api/cards/{iccid}/policy",
+          "expected_effective_route": "/api/mobile/v1/cards/{iccid}/policy"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 208,
+          "declared_route": "/api/cards/{iccid}/policy",
+          "expected_effective_route": "/api/mobile/v1/cards/{iccid}/policy"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 237,
+          "declared_route": "/api/devices/{id}/esim/actions/download",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/actions/download"
+        },
+        {
+          "file": "lib\\features\\logs\\data\\logs_api.dart",
+          "line": 17,
+          "declared_route": "/api/logs/history",
+          "expected_effective_route": "/api/mobile/v1/logs/history"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 16,
+          "declared_route": "/api/settings/preferences",
+          "expected_effective_route": "/api/mobile/v1/settings/preferences"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 28,
+          "declared_route": "/api/settings/preferences",
+          "expected_effective_route": "/api/mobile/v1/settings/preferences"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 42,
+          "declared_route": "/api/system/info",
+          "expected_effective_route": "/api/mobile/v1/system/info"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 58,
+          "declared_route": "/api/settings/notifications",
+          "expected_effective_route": "/api/mobile/v1/settings/notifications"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 70,
+          "declared_route": "/api/settings/notifications",
+          "expected_effective_route": "/api/mobile/v1/settings/notifications"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 87,
+          "declared_route": "/api/settings/notifications/{channel}/test",
+          "expected_effective_route": "/api/mobile/v1/settings/notifications/{channel}/test"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 103,
+          "declared_route": "/api/settings/password",
+          "expected_effective_route": "/api/mobile/v1/settings/password"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 121,
+          "declared_route": "/api/settings/security",
+          "expected_effective_route": "/api/mobile/v1/settings/security"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 133,
+          "declared_route": "/api/settings/security",
+          "expected_effective_route": "/api/mobile/v1/settings/security"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 148,
+          "declared_route": "/api/settings/https",
+          "expected_effective_route": "/api/mobile/v1/settings/https"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 160,
+          "declared_route": "/api/settings/https",
+          "expected_effective_route": "/api/mobile/v1/settings/https"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 172,
+          "declared_route": "/api/settings/developer",
+          "expected_effective_route": "/api/mobile/v1/settings/developer"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 185,
+          "declared_route": "/api/settings/developer",
+          "expected_effective_route": "/api/mobile/v1/settings/developer"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 200,
+          "declared_route": "/api/settings/sms",
+          "expected_effective_route": "/api/mobile/v1/settings/sms"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 215,
+          "declared_route": "/api/settings/sms",
+          "expected_effective_route": "/api/mobile/v1/settings/sms"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 232,
+          "declared_route": "/api/settings/vowifi",
+          "expected_effective_route": "/api/mobile/v1/settings/vowifi"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 247,
+          "declared_route": "/api/settings/vowifi",
+          "expected_effective_route": "/api/mobile/v1/settings/vowifi"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 263,
+          "declared_route": "/api/license",
+          "expected_effective_route": "/api/mobile/v1/license"
+        },
+        {
+          "file": "lib\\features\\sms\\data\\sms_api.dart",
+          "line": 20,
+          "declared_route": "/api/sms/contacts",
+          "expected_effective_route": "/api/mobile/v1/sms/contacts"
+        },
+        {
+          "file": "lib\\features\\sms\\data\\sms_api.dart",
+          "line": 42,
+          "declared_route": "/api/sms/thread",
+          "expected_effective_route": "/api/mobile/v1/sms/thread"
+        },
+        {
+          "file": "lib\\features\\sms\\data\\sms_api.dart",
+          "line": 82,
+          "declared_route": "/api/sms/thread",
+          "expected_effective_route": "/api/mobile/v1/sms/thread"
+        },
+        {
+          "file": "lib\\features\\sms\\data\\sms_api.dart",
+          "line": 103,
+          "declared_route": "/api/sms/send",
+          "expected_effective_route": "/api/mobile/v1/sms/send"
+        }
+      ]
+    },
+    {
+      "platform": "android",
+      "routes": [
+        {
+          "file": "lib\\app\\app_dependencies.dart",
+          "line": 145,
+          "declared_route": "/api/euicc-catalog",
+          "expected_effective_route": "/api/mobile/v1/euicc-catalog"
+        },
+        {
+          "file": "lib\\features\\auth\\data\\auth_api.dart",
+          "line": 15,
+          "declared_route": "/api/auth/client/login",
+          "expected_effective_route": "/api/auth/client/login"
+        },
+        {
+          "file": "lib\\features\\auth\\data\\auth_api.dart",
+          "line": 33,
+          "declared_route": "/api/auth/status",
+          "expected_effective_route": "/api/auth/status"
+        },
+        {
+          "file": "lib\\features\\auth\\data\\auth_api.dart",
+          "line": 43,
+          "declared_route": "/api/auth/client/logout",
+          "expected_effective_route": "/api/auth/client/logout"
+        },
+        {
+          "file": "lib\\features\\automation\\data\\automation_api.dart",
+          "line": 20,
+          "declared_route": "/api/automatic-tasks",
+          "expected_effective_route": "/api/mobile/v1/automatic-tasks"
+        },
+        {
+          "file": "lib\\features\\automation\\data\\automation_api.dart",
+          "line": 37,
+          "declared_route": "/api/automatic-tasks/runs",
+          "expected_effective_route": "/api/mobile/v1/automatic-tasks/runs"
+        },
+        {
+          "file": "lib\\features\\automation\\data\\automation_api.dart",
+          "line": 62,
+          "declared_route": "/api/automatic-tasks/{id}",
+          "expected_effective_route": "/api/mobile/v1/automatic-tasks/{id}"
+        },
+        {
+          "file": "lib\\features\\automation\\data\\automation_api.dart",
+          "line": 77,
+          "declared_route": "/api/automatic-tasks/{id}",
+          "expected_effective_route": "/api/mobile/v1/automatic-tasks/{id}"
+        },
+        {
+          "file": "lib\\features\\automation\\data\\automation_api.dart",
+          "line": 92,
+          "declared_route": "/api/automatic-tasks/{id}/run",
+          "expected_effective_route": "/api/mobile/v1/automatic-tasks/{id}/run"
+        },
+        {
+          "file": "lib\\features\\calls\\data\\calls_api.dart",
+          "line": 22,
+          "declared_route": "/api/instances/{id}/calls",
+          "expected_effective_route": "/api/instances/{id}/calls"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\device_api.dart",
+          "line": 47,
+          "declared_route": "/api/devices/{id}/network",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/network"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\device_api.dart",
+          "line": 59,
+          "declared_route": "/api/devices/{id}/vowifi",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/vowifi"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\device_api.dart",
+          "line": 71,
+          "declared_route": "/api/devices/{id}/flight-mode",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/flight-mode"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\device_api.dart",
+          "line": 83,
+          "declared_route": "/api/devices/{id}/vowifi/actions/reconnect",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/vowifi/actions/reconnect"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\device_api.dart",
+          "line": 97,
+          "declared_route": "/api/devices/{id}/actions/reboot",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/actions/reboot"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\reader_provision_api.dart",
+          "line": 15,
+          "declared_route": "/api/readers",
+          "expected_effective_route": "/api/readers"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\reader_provision_api.dart",
+          "line": 32,
+          "declared_route": "/api/sim/detect",
+          "expected_effective_route": "/api/sim/detect"
+        },
+        {
+          "file": "lib\\features\\devices\\data\\reader_provision_api.dart",
+          "line": 50,
+          "declared_route": "/api/provision",
+          "expected_effective_route": "/api/provision"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 28,
+          "declared_route": "/api/devices/{id}/esim",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 49,
+          "declared_route": "/api/devices/{id}/esim/profiles",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/profiles"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 69,
+          "declared_route": "/api/devices/{id}/esim/actions/switch",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/actions/switch"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 106,
+          "declared_route": "/api/devices/{id}/esim/profiles/{iccid}",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/profiles/{iccid}"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 132,
+          "declared_route": "/api/devices/{id}/esim/actions/disable",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/actions/disable"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 151,
+          "declared_route": "/api/devices/{id}/esim/profiles/{iccid}",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/profiles/{iccid}"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 188,
+          "declared_route": "/api/cards/{iccid}/policy",
+          "expected_effective_route": "/api/mobile/v1/cards/{iccid}/policy"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 208,
+          "declared_route": "/api/cards/{iccid}/policy",
+          "expected_effective_route": "/api/mobile/v1/cards/{iccid}/policy"
+        },
+        {
+          "file": "lib\\features\\esim\\data\\esim_api.dart",
+          "line": 237,
+          "declared_route": "/api/devices/{id}/esim/actions/download",
+          "expected_effective_route": "/api/mobile/v1/devices/{id}/esim/actions/download"
+        },
+        {
+          "file": "lib\\features\\logs\\data\\logs_api.dart",
+          "line": 17,
+          "declared_route": "/api/logs/history",
+          "expected_effective_route": "/api/mobile/v1/logs/history"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 16,
+          "declared_route": "/api/settings/preferences",
+          "expected_effective_route": "/api/mobile/v1/settings/preferences"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 28,
+          "declared_route": "/api/settings/preferences",
+          "expected_effective_route": "/api/mobile/v1/settings/preferences"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 42,
+          "declared_route": "/api/system/info",
+          "expected_effective_route": "/api/mobile/v1/system/info"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 56,
+          "declared_route": "/api/system/update/check",
+          "expected_effective_route": "/api/mobile/v1/system/update/check"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 75,
+          "declared_route": "/api/system/update/apply",
+          "expected_effective_route": "/api/mobile/v1/system/update/apply"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 94,
+          "declared_route": "/api/settings/notifications",
+          "expected_effective_route": "/api/mobile/v1/settings/notifications"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 106,
+          "declared_route": "/api/settings/notifications",
+          "expected_effective_route": "/api/mobile/v1/settings/notifications"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 123,
+          "declared_route": "/api/settings/notifications/{channel}/test",
+          "expected_effective_route": "/api/mobile/v1/settings/notifications/{channel}/test"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 139,
+          "declared_route": "/api/settings/password",
+          "expected_effective_route": "/api/mobile/v1/settings/password"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 157,
+          "declared_route": "/api/settings/security",
+          "expected_effective_route": "/api/mobile/v1/settings/security"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 169,
+          "declared_route": "/api/settings/security",
+          "expected_effective_route": "/api/mobile/v1/settings/security"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 184,
+          "declared_route": "/api/settings/https",
+          "expected_effective_route": "/api/mobile/v1/settings/https"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 196,
+          "declared_route": "/api/settings/https",
+          "expected_effective_route": "/api/mobile/v1/settings/https"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 208,
+          "declared_route": "/api/settings/developer",
+          "expected_effective_route": "/api/mobile/v1/settings/developer"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 221,
+          "declared_route": "/api/settings/developer",
+          "expected_effective_route": "/api/mobile/v1/settings/developer"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 236,
+          "declared_route": "/api/settings/sms",
+          "expected_effective_route": "/api/mobile/v1/settings/sms"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 251,
+          "declared_route": "/api/settings/sms",
+          "expected_effective_route": "/api/mobile/v1/settings/sms"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 268,
+          "declared_route": "/api/settings/vowifi",
+          "expected_effective_route": "/api/mobile/v1/settings/vowifi"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 283,
+          "declared_route": "/api/settings/vowifi",
+          "expected_effective_route": "/api/mobile/v1/settings/vowifi"
+        },
+        {
+          "file": "lib\\features\\settings\\data\\settings_api.dart",
+          "line": 299,
+          "declared_route": "/api/license",
+          "expected_effective_route": "/api/mobile/v1/license"
+        },
+        {
+          "file": "lib\\features\\sms\\data\\sms_api.dart",
+          "line": 20,
+          "declared_route": "/api/sms/contacts",
+          "expected_effective_route": "/api/mobile/v1/sms/contacts"
+        },
+        {
+          "file": "lib\\features\\sms\\data\\sms_api.dart",
+          "line": 42,
+          "declared_route": "/api/sms/thread",
+          "expected_effective_route": "/api/mobile/v1/sms/thread"
+        },
+        {
+          "file": "lib\\features\\sms\\data\\sms_api.dart",
+          "line": 82,
+          "declared_route": "/api/sms/thread",
+          "expected_effective_route": "/api/mobile/v1/sms/thread"
+        },
+        {
+          "file": "lib\\features\\sms\\data\\sms_api.dart",
+          "line": 103,
+          "declared_route": "/api/sms/send",
+          "expected_effective_route": "/api/mobile/v1/sms/send"
+        }
+      ]
+    }
+  ]
+}

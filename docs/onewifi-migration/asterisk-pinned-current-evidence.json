@@ -1,0 +1,75 @@
+{
+  "revision": "d231cb2c658545773fcd5eb9de787219b9ef6566",
+  "directory": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\asterisk-source-verified-20261013T115451Z",
+  "inputs": [
+    {
+      "path": "res/res_pjsip_outbound_registration.c",
+      "git_blob": "86d36e7e0c33c43c6b12931e01ce615f15f67c32",
+      "sha256": "d7f49063e49356abc694b343642757f6c497f7144ddcaeb00516ea45ed1e9b9b"
+    },
+    {
+      "path": "res/res_pjsip_outbound_registration/volte.c",
+      "git_blob": "cd8c7de974085bccc1926776a925a41ed72d27bd",
+      "sha256": "5897f6f53fd6bf767523b1eab0586067a47d92d46c4548b9a746a1938b8a9324"
+    },
+    {
+      "path": "res/res_pjsip_outbound_registration/volte.h",
+      "git_blob": "b2f2818493483046ef711bc74d97de000159b6e2",
+      "sha256": "38e48fd7f82abce2e973f427bc997270a9e453a2c25edaf365dc1425b54f0809"
+    }
+  ],
+  "scripts": [
+    {
+      "path": "engine\\patches\\asterisk\\ims_public_identity_log.py",
+      "sha256": "15a2b46d5aedc3e935ca05bfe3ff0667920c0fd8f6f69b7d04a7ef7af51d1675",
+      "stdout": "patched store_volte_p_associated_uri to log the registered P-Associated-URI\n",
+      "stderr": ""
+    },
+    {
+      "path": "engine\\patches\\asterisk\\reauth_missing_security_server.py",
+      "sha256": "79c1e82e3485de7336cc42c93d6a1f89ef32e7546a1a010067a09918eac6c69b",
+      "stdout": "patched handle_volte_unauthorized to re-auth over established SAs when a 401 has no Security-Server header\n",
+      "stderr": ""
+    },
+    {
+      "path": "engine\\patches\\asterisk\\volte_registration_expiry_from_contact.py",
+      "sha256": "492be52ae384b655d77e7eba1f1f99d5a2bf5d7f4086cd6eacc5c0cf0f51364d",
+      "stdout": "patched sip_outbound_registration_response_cb to read the granted registration expiry from our own Contact in the response\n",
+      "stderr": ""
+    },
+    {
+      "path": "engine\\patches\\asterisk\\volte_sim_timeout_retry.py",
+      "sha256": "948766575e18cb649f94874a5a5ae7a9851cc6cae1344c48164b0e0ea8da4db8",
+      "stdout": "patched SIM_TIMEOUT to 10 s, sim_timeout_cb to retry the registration, and the pending SIM response to be claimed under the client state lock\n",
+      "stderr": ""
+    },
+    {
+      "path": "engine\\patches\\asterisk\\zz_carrier_register_profiles.py",
+      "sha256": "21897ac75a9ed7630fa69e59be898a20a107a3cf770c22cecedec83621db9a8e",
+      "stdout": "patched O2 REGISTER headers and Ultra Mobile Contact features\n",
+      "stderr": ""
+    }
+  ],
+  "outputs": [
+    {
+      "path": "res/res_pjsip_outbound_registration.c",
+      "sha256": "f14425777c7fbbe6a8254047b9ea4d3d66e7b7a87c7c50eee9d59c73a1e37e3d"
+    },
+    {
+      "path": "res/res_pjsip_outbound_registration/volte.c",
+      "sha256": "f5e315e594857d6cba5f5c6d0e1f3f861ae1f0d292d45b6e13c4e81af924ad7a"
+    },
+    {
+      "path": "res/res_pjsip_outbound_registration/volte.h",
+      "sha256": "505bd84017dea388f3a7e35af4cb25055aaa08528f743f3f37c8717a8388d1e1"
+    }
+  ],
+  "scope": "Three pinned REGISTER/VoLTE files, relevant preceding patches, then current carrier patch; no C build or installed/runtime proof.",
+  "idempotence": {
+    "exit_code": 0,
+    "stdout": "carrier REGISTER patch already applied\n",
+    "stderr": "",
+    "unchanged": true
+  },
+  "recorded_utc": "2026-10-13T11:54:54.787375+00:00"
+}

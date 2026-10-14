@@ -1,0 +1,9 @@
+# Finish interrupted SOCKS ePDG ECS gap
+
+Own only control/app/egress.py, control/app/engine.py, tests/test_country_egress.py and tests/test_engine_paths.py, plus socks-ecs-report.md here. Other contributors are working in mobile/docs; preserve every existing edit and do not reset/stash/commit/push/deploy. Only MDD is modified; NEWONE read-only, no real network probe/SIM/call/provider actions. No extra agents.
+
+Interrupted implementation is already on disk: _ecs_network, _dns_query_payload EDNS ECS, resolve_ipv4_via_socks client_subnet, engine start profile propagation, tests. Prior backend final receipt (2,080 tests) is archived as backend-before-socks-ecs-evidence.json with original log; it does not cover these edits. Read MIGRATION_SPEC.md/RULEBOOK.md and existing carrier report/gap. Finish and verify the existing-scope repair, not a new resolver system.
+
+Requirements: ECS hint derives only from operationally eligible carrier profile for the exact effective ePDG host; respect explicit host overrides, withhold blocked profiles, do not leak local DNS resolution or subscriber identity. Encode IPv4/IPv6 ECS network prefix properly, source/scope length and EDNS lengths; absent ECS preserves ordinary query behavior. Invalid hints fail closed. Check actual SOCKS UDP packet composition and engine startup consumer with dependency-level tests, not only passing a kwarg into a mock. Keep compatibility with regular DNS/STUN proxy health probes.
+
+Inspect current tests and run deterministic focused Linux tests using docs/onewifi-migration/run-linux-tests.ps1. The one known mtime-sensitive IdleBackoff test requires the documented real project filesystem if needed; never remove or weaken it. Full regression is parent-owned. Record any RED/GREEN already on disk honestly; do not fabricate a pre-fix run. Parent needs exact edits, tests/exits/logs and explicit freeze for independent review. No production test-only hooks.

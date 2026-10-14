@@ -72,6 +72,48 @@ CLIENT_GLOBAL_RULES = _rules(
     ("WEBSOCKET", r"^/ws$"),
 )
 
+# Named grants are issued only after administrator password verification. Facade rules belong
+# here too: adapters invoke functions in-process and must never inherit admin authority.
+CAPABILITY_RULES = {
+    "manage_devices": _rules(
+        ("GET", r"^/api/(readers|sim/detect|devices|devices/[^/]+/(cellular|ims|voice-audio))$"),
+        ("POST", r"^/api/provision$"),
+        ("POST", r"^/api/instances/[^/]+/(start|stop)$"),
+        ("GET", r"^/api/mobile/v1/(dashboard/(host|devices)|devices|devices/[^/]+/overview)$"),
+        ("PATCH", r"^/api/mobile/v1/devices/[^/]+/(network|vowifi|flight-mode)$"),
+        ("POST", r"^/api/mobile/v1/devices/[^/]+/(vowifi/actions/reconnect|actions/reboot)$"),
+    ),
+    "manage_esim": _rules(
+        ("GET", r"^/api/esim/(status|chip|chip/cached|profiles|notifications)$"),
+        ("POST", r"^/api/esim/(download|download/cancel|discovery|notifications/process|profiles/[^/]+/(enable|disable|nickname))$"),
+        ("DELETE", r"^/api/esim/(profiles/[^/]+|notifications/[^/]+)$"),
+        ("GET", r"^/api/mobile/v1/(devices/[^/]+/esim(/profiles)?|cards/[^/]+/policy)$"),
+        ("PUT", r"^/api/mobile/v1/cards/[^/]+/policy$"),
+        ("POST", r"^/api/mobile/v1/devices/[^/]+/esim/actions/(switch|disable|download)$"),
+        ("PATCH DELETE", r"^/api/mobile/v1/devices/[^/]+/esim/profiles/[^/]+$"),
+    ),
+    "manage_settings": _rules(
+        ("GET", r"^/api/mobile/v1/(settings/(preferences|notifications|sms|vowifi)|system/info)$"),
+        ("PUT", r"^/api/mobile/v1/settings/(preferences|notifications|sms|vowifi)$"),
+        ("POST", r"^/api/mobile/v1/settings/notifications/(telegram|webhook|wecom|bark|pushplus)/test$"),
+        ("GET POST", r"^/api/mobile/v1/settings/notifications/onetools/pairing$"),
+    ),
+}
+
+MOBILE_COMMUNICATION_RULES = _rules(
+    ("GET", r"^/api/mobile/v1/sms/(contacts|thread)$"),
+    ("DELETE", r"^/api/mobile/v1/sms/thread$"),
+    ("POST", r"^/api/mobile/v1/sms/send$"),
+    ("POST", r"^/api/mobile/v1/calls/push-endpoint$"),
+    ("GET", r"^/api/mobile/v1/calls/[0-9]+\.[0-9]+/pickup$"),
+)
+
+PAIRING_RULES = _rules(
+    ("GET", r"^/api/mobile/v1/onetools/sms/stream$"),
+    ("PUT", r"^/api/mobile/v1/onetools/ios/push-endpoint(/live-activity)?$"),
+    ("POST", r"^/api/mobile/v1/onetools/ios/push-endpoint/ack$"),
+)
+
 # Live events a client receives, and only for a line: its conversations, calls and the line's
 # own state. Host alerts, hardware, cards and engine maintenance stay with the administrator.
 CLIENT_EVENTS = frozenset({"sms", "call", "voicemail", "status", "line"})
@@ -82,11 +124,21 @@ def allowed(principal, method: str, path: str) -> bool:
     kind = getattr(principal, "kind", "")
     method = str(method or "").upper()
     path = path or ""
+    if kind == "pairing":
+        return any(method in methods and pattern.fullmatch(path)
+                   for methods, pattern in PAIRING_RULES)
     if kind == "admin":
         return True
     if kind == "engine":
         return method == "POST" and path == ENGINE_EVENT_PATH
     if kind == "client":
+        if any(method in methods and pattern.fullmatch(path)
+               for methods, pattern in MOBILE_COMMUNICATION_RULES):
+            return True
+        if any(method in methods and pattern.fullmatch(path)
+               for capability in getattr(principal, "capabilities", ())
+               for methods, pattern in CAPABILITY_RULES.get(capability, ())):
+            return True
         match = LINE_PREFIX.match(path)
         if match:
             rest = match.group("rest")

@@ -38,7 +38,8 @@ class DialplanTests(unittest.TestCase):
         out = render(vm_enabled=False)
         self.assertIn("Set(BROWSER_PICKUP_DEADLINE=$[${EPOCH}+60])", out)
         self.assertIn("Set(BROWSER_CONTACTS=${PJSIP_DIAL_CONTACTS(webrtc)})", out)
-        self.assertIn("same => n,Dial(PJSIP/webrtc,${BROWSER_PICKUP_REMAINING})", out)
+        self.assertIn("same => n,Dial(${BROWSER_CONTACTS},${BROWSER_PICKUP_REMAINING},"
+                      "b(mdd-inbound-headers^s^1)U(mdd-inbound-answer))", out)
         self.assertIn("same => n(unanswered),NoOp(Browser pickup window expired)", out)
         self.assertNotIn("Record(", out)
         self.assertNotIn("[mdd_voicemail]", out)
@@ -107,11 +108,12 @@ class DialplanTests(unittest.TestCase):
 
     def test_both_h_handlers_report_which_side_ended_the_call(self):
         # ANSWER/16 after one second reads the same whether the carrier, the browser or the
-        # gateway tore the call down (#109); the 'h' handlers name the side as a 5th argument.
+        # gateway tore the call down (#109); the 'h' handlers name the side before
+        # the appended exact engine identity.
         out = render(vm_enabled=True)
         for direction in ("in", "out"):
             line = next(l for l in out.splitlines() if f"call_result {direction} " in l)
-            self.assertIn('"${GOSUB_RETVAL}" &)', line, direction)
+            self.assertIn('"${GOSUB_RETVAL}" "${', line, direction)
             handler = out[:out.index(line)].rsplit("exten => h,1,", 1)[1]
             self.assertIn("Gosub(hangup-by,s,1)", handler, direction)
         routine = out.split("[hangup-by]", 1)[1].split("\n[", 1)[0]

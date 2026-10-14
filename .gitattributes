@@ -3,3 +3,4 @@
 # `patch -p1`).
 *.sh    text eol=lf
 *.patch text eol=lf
+hooks/* text eol=lf

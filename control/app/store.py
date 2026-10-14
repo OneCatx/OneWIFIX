@@ -30,7 +30,7 @@ DATA_DIR = os.environ.get("MDD_DATA", os.path.join(os.getcwd(), "data"))
 ADMIN_OWNER = 1
 DB_PATH = os.path.join(DATA_DIR, "mdd-sim-gateway.sqlite")
 PREVIOUS_DB_PATH = os.path.join(DATA_DIR, "vowifi.sqlite")
-_lock = threading.Lock()
+_lock = threading.RLock()
 
 # Connectivity timeline. Line state is sampled every few seconds, so it is stored as merged
 # segments instead of one row per sample: two days of history stays a handful of rows.
@@ -795,9 +795,17 @@ def _migration_completed_ts(c) -> None:
         pass
 
 
+def _migration_engine_call_id(c) -> None:
+    try:
+        c.execute("ALTER TABLE calls ADD COLUMN call_id TEXT NOT NULL DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    c.execute("CREATE INDEX IF NOT EXISTS idx_calls_engine_id ON calls(instance,call_id)")
+
+
 _MIGRATIONS = (_migration_message_identity, _migration_modem_object_on_message, _migration_mms,
                _migration_identity_scope, lambda c: _migration_filed_mms_pushes(c),
-               _migration_read_baseline, _migration_completed_ts)
+               _migration_read_baseline, _migration_completed_ts, _migration_engine_call_id)
 
 
 def _sweep_binary_messages(c) -> int:
@@ -2307,6 +2315,26 @@ def list_messages(instance: str, peer: str, limit: int = 200) -> list:
         return _with_mms(c, [dict(r) for r in rows])
 
 
+def list_messages_page(instance: str, peer: str, before_id: int | None = None,
+                       limit: int = 100) -> list:
+    """Newest bounded page returned oldest-first for a conversation view."""
+    with _lock, _conn() as c:
+        rows = c.execute(
+            "SELECT * FROM messages WHERE instance=? AND peer=? AND (? IS NULL OR id<?) "
+            "ORDER BY id DESC LIMIT ?", (str(instance), str(peer), before_id, before_id,
+                                           max(1, min(int(limit), 500)))).fetchall()
+        return _with_mms(c, [dict(row) for row in reversed(rows)])
+
+
+def inbound_sms_after_id(after_id: int, limit: int = 100) -> list[dict]:
+    """Global monotonically ordered SMS replay cursor for paired iOS receivers."""
+    with _lock, _conn() as c:
+        return [dict(row) for row in c.execute(
+            "SELECT id, instance, peer, body, ts FROM messages "
+            "WHERE id>? AND direction='in' AND kind='sms' ORDER BY id ASC LIMIT ?",
+            (max(0, int(after_id)), max(1, min(int(limit), 100)))).fetchall()]
+
+
 def recent_messages(instance: str, limit: int = 10) -> list:
     """The newest messages of a line across every peer, newest first. The WebUI reads one
     conversation at a time; a chat/bot view wants the tail of the whole line."""
@@ -2358,16 +2386,40 @@ def clear_messages(instance: str) -> int:
 
 
 def add_call(instance: str, direction: str, peer: str, status: str = "ringing",
-             transport: str = "vowifi") -> dict:
+             transport: str = "vowifi", call_id: str = "") -> dict:
     ts = int(time.time())
     with _lock, _conn() as c:
         cur = c.execute(
-            "INSERT INTO calls(instance,direction,peer,status,start_ts,transport) VALUES(?,?,?,?,?,?)",
-            (str(instance), direction, peer, status, ts, str(transport)),
+            "INSERT INTO calls(instance,direction,peer,status,start_ts,transport,call_id) "
+            "VALUES(?,?,?,?,?,?,?)",
+            (str(instance), direction, peer, status, ts, str(transport), str(call_id)),
         )
         cid = cur.lastrowid
     return {"id": cid, "instance": str(instance), "direction": direction,
-            "peer": peer, "status": status, "start_ts": ts, "transport": str(transport)}
+            "peer": peer, "status": status, "start_ts": ts, "transport": str(transport),
+            "call_id": str(call_id)}
+
+
+def add_call_correlated(instance: str, direction: str, peer: str,
+                        status: str = "dialing", call_id: str = "") -> dict:
+    """Idempotent engine callback insertion, including after its result overtook a retry."""
+    if not call_id:
+        return add_call(instance, direction, peer, status=status)
+    with _lock, _conn() as c:
+        row = c.execute(
+            "SELECT * FROM calls WHERE instance=? AND direction=? AND call_id=? "
+            "ORDER BY id DESC LIMIT 1", (str(instance), direction, str(call_id))).fetchone()
+        if row:
+            if peer and not row["peer"]:
+                c.execute("UPDATE calls SET peer=? WHERE id=?", (peer, row["id"]))
+                row = c.execute("SELECT * FROM calls WHERE id=?", (row["id"],)).fetchone()
+            return dict(row)
+        ts = int(time.time())
+        cur = c.execute(
+            "INSERT INTO calls(instance,direction,peer,status,start_ts,transport,call_id) "
+            "VALUES(?,?,?,?,?,?,?)",
+            (str(instance), direction, peer, status, ts, "vowifi", str(call_id)))
+        return dict(c.execute("SELECT * FROM calls WHERE id=?", (cur.lastrowid,)).fetchone())
 
 
 def get_open_call_for_transport(instance: str, transport: str) -> dict | None:
@@ -2379,24 +2431,28 @@ def get_open_call_for_transport(instance: str, transport: str) -> dict | None:
     return dict(row) if row else None
 
 
-def get_open_call(instance: str, direction: str, within_s: int | None = None) -> dict | None:
-    """The most recent still-open (not yet finalized) call for (instance, direction), or None.
-
-    A softphone handles one call at a time, so an inbound INVITE that the IMS delivers more
-    than once (VoLTE preconditions / GRUU fork / retransmit) fires `call_in` several times
-    for the SAME call. Reusing the open record instead of inserting a new one keeps one row
-    per call — otherwise every extra `call_in` leaves a ghost 'ringing' entry that the single
-    `call_result` never finalizes. `within_s` bounds how old the open record may be so a
-    genuinely new call (after a stale unfinalized one) still starts fresh."""
+def get_open_call_by_id(instance: str, call_id: str) -> dict | None:
+    if not call_id:
+        return None
     with _lock, _conn() as c:
-        row = c.execute(
-            "SELECT * FROM calls WHERE instance=? AND direction=? AND end_ts IS NULL "
-            "ORDER BY start_ts DESC LIMIT 1", (str(instance), direction)).fetchone()
-        if not row:
-            return None
-        if within_s is not None and int(time.time()) - row["start_ts"] > within_s:
-            return None
-        return dict(row)
+        row = c.execute("SELECT * FROM calls WHERE instance=? AND call_id=? AND end_ts IS NULL "
+                        "ORDER BY id DESC LIMIT 1", (str(instance), str(call_id))).fetchone()
+        return dict(row) if row else None
+
+
+def get_call_by_id(instance: str, call_id: str, direction: str = "in") -> dict | None:
+    if not call_id:
+        return None
+    with _lock, _conn() as c:
+        row = c.execute("SELECT * FROM calls WHERE instance=? AND direction=? AND call_id=? "
+                        "ORDER BY id DESC LIMIT 1", (str(instance), direction, str(call_id))).fetchone()
+    return dict(row) if row else None
+
+
+def get_call(cid: int) -> dict | None:
+    with _lock, _conn() as c:
+        row = c.execute("SELECT * FROM calls WHERE id=?", (int(cid),)).fetchone()
+    return dict(row) if row else None
 
 
 def get_open_call(instance: str, direction: str, within_s: int | None = None) -> dict | None:
@@ -2415,7 +2471,7 @@ def get_open_call(instance: str, direction: str, within_s: int | None = None) ->
 
 
 def add_call_deduped(instance: str, direction: str, peer: str, status: str = "ringing",
-                     open_within_s: int = 90) -> dict:
+                     open_within_s: int = 90, call_id: str = "") -> dict:
     """Insert an inbound-call record, coalescing concurrent duplicate `call_in` events for the
     SAME still-ringing call into ONE record.
 
@@ -2430,19 +2486,20 @@ def add_call_deduped(instance: str, direction: str, peer: str, status: str = "ri
     needed here.)
 
     An anonymous first call_in ('') whose number arrives on a later duplicate is filled in."""
-    open_rec = get_open_call(instance, direction, within_s=open_within_s)
-    # Only coalesce into an open record with a compatible peer: an anonymous dup ('') matches
-    # anything; a numbered dup must match (or fill) the open record's peer. A different number
-    # is a distinct call and starts its own record.
-    if open_rec:
-        rp = open_rec.get("peer") or ""
-        if not peer or not rp or peer == rp:
-            if peer and not rp:
-                with _lock, _conn() as c:
-                    c.execute("UPDATE calls SET peer=? WHERE id=?", (peer, open_rec["id"]))
-                open_rec["peer"] = peer
-            return open_rec
-    return add_call(instance, direction, peer, status)
+    with _lock:
+        rec = (get_call_by_id(instance, call_id, direction) if call_id else
+               get_open_call(instance, direction, within_s=open_within_s))
+        if rec:
+            rp = rec.get("peer") or ""
+            # An exact engine identity always wins over a changed/late peer. Do not create a
+            # second row or reopen a terminal call when an INVITE retransmission arrives.
+            if call_id or not peer or not rp or peer == rp:
+                if peer and not rp:
+                    with _conn() as c:
+                        c.execute("UPDATE calls SET peer=? WHERE id=?", (peer, rec["id"]))
+                    rec["peer"] = peer
+                return rec
+        return add_call(instance, direction, peer, status, call_id=call_id)
 
 
 def update_call(cid: int, status: str, ended: bool = False):
@@ -2479,7 +2536,8 @@ def set_ussd_for_peer(instance: str, peer: str, text: str) -> dict | None:
         return dict(r) if r else None
 
 
-def update_last_call(instance: str, direction: str, peer: str | None, status: str) -> dict | None:
+def update_last_call(instance: str, direction: str, peer: str | None, status: str,
+                     call_id: str = "") -> dict | None:
     """Finalize the most recent still-open call for (instance, direction[, peer]).
 
     peer may be None/empty: Asterisk's 'h' hangup handler loses pre-Dial channel variables
@@ -2488,7 +2546,12 @@ def update_last_call(instance: str, direction: str, peer: str | None, status: st
     handles one call at a time, finalizing the most-recent OPEN call of that direction is
     unambiguous and correct in that case."""
     with _lock, _conn() as c:
-        if peer:
+        if call_id:
+            row = c.execute(
+                "SELECT id FROM calls WHERE instance=? AND direction=? AND call_id=? "
+                "AND end_ts IS NULL ORDER BY id DESC LIMIT 1",
+                (str(instance), direction, str(call_id))).fetchone()
+        elif peer:
             row = c.execute(
                 "SELECT id FROM calls WHERE instance=? AND direction=? AND peer=? AND end_ts IS NULL "
                 "ORDER BY start_ts DESC LIMIT 1", (str(instance), direction, peer)).fetchone()
@@ -2502,6 +2565,29 @@ def update_last_call(instance: str, direction: str, peer: str | None, status: st
                   (status, int(time.time()), row["id"]))
         r = c.execute("SELECT * FROM calls WHERE id=?", (row["id"],)).fetchone()
         return dict(r) if r else None
+
+
+def finalize_call_by_id(instance: str, direction: str, call_id: str,
+                        peer: str, status: str) -> dict:
+    """Persist an exact terminal callback even when its start arrives much later."""
+    if not call_id:
+        raise ValueError("engine call ID required")
+    with _lock, _conn() as c:
+        row = c.execute(
+            "SELECT * FROM calls WHERE instance=? AND direction=? AND call_id=? "
+            "ORDER BY id DESC LIMIT 1", (str(instance), direction, str(call_id))).fetchone()
+        now = int(time.time())
+        if row:
+            c.execute("UPDATE calls SET status=?, end_ts=?, peer=? WHERE id=? AND end_ts IS NULL",
+                      (status, now, str(peer or row["peer"]), row["id"]))
+            result_id = row["id"]
+        else:
+            cur = c.execute(
+                "INSERT INTO calls(instance,direction,peer,status,start_ts,end_ts,transport,call_id) "
+                "VALUES(?,?,?,?,?,?,?,?)",
+                (str(instance), direction, str(peer), status, now, now, "vowifi", str(call_id)))
+            result_id = cur.lastrowid
+        return dict(c.execute("SELECT * FROM calls WHERE id=?", (result_id,)).fetchone())
 
 
 

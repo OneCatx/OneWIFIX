@@ -525,7 +525,7 @@ TV =  1
 KEY_LENGTH = (14, TV)
 
 
-def ike_proposals_for_plmn(mcc, mnc):
+def ike_proposals_for_plmn(mcc, mnc, proposal=None):
     """Return IKE proposals for the home PLMN.
 
     DITO Telecommunity's ePDG (515-66) advertises only the legacy 3GPP suite
@@ -533,7 +533,7 @@ def ike_proposals_for_plmn(mcc, mnc):
     proposal set for every other carrier instead of weakening negotiation globally.
     """
     plmn = (str(mcc or "").zfill(3), str(mnc or "").zfill(3))
-    if plmn == ("515", "066"):
+    if proposal == "legacy-sha1-modp1024" or (proposal is None and plmn == ("515", "066")):
         return [[
             [IKE, 0],
             [ENCR, ENCR_AES_CBC, [KEY_LENGTH, 128]],
@@ -3730,15 +3730,21 @@ class swu():
         # deletes any older IKE SA it still holds for this subscriber (e.g. after a hard kill),
         # avoiding single-SA-per-subscriber conflicts on reconnect. Standard IKEv2 behaviour
         # (strongSwan sends it too).
-        payload += self.encode_generic_payload_header(N,0,self.encode_payload_type_n(RESERVED,b'',INITIAL_CONTACT))
+        eap_only = os.environ.get("SWU_EAP_ONLY", "1") not in ("0", "", "no")
+        reselection = os.environ.get("SWU_PCSCF_RESELECTION_SUPPORT", "0") not in ("0", "", "no")
+        payload += self.encode_generic_payload_header(N if (eap_only or reselection) else NONE,
+                0,self.encode_payload_type_n(RESERVED,b'',INITIAL_CONTACT))
         # P0-3 (optional, env SWU_PCSCF_RESELECTION_SUPPORT=1): advertise UE support for the
         # P-CSCF restoration extension (TS 24.302 7.2.2.1) so the ePDG may enable P-CSCF
         # reselection. Default OFF for carrier compatibility (Telus is CFG/notify-sensitive).
         # Inserted BEFORE the terminating EAP_ONLY_AUTHENTICATION notify so it stays a mid-chain
         # Notify (next_payload=N); the final notify remains the sole next_payload=NONE terminator.
-        if os.environ.get("SWU_PCSCF_RESELECTION_SUPPORT", "0") not in ("0", "", "no"):
-            payload += self.encode_generic_payload_header(N,0,self.encode_payload_type_n(RESERVED,b'',P_CSCF_RESELECTION_SUPPORT))
-        payload += self.encode_generic_payload_header(NONE,0,self.encode_payload_type_n(RESERVED,b'',EAP_ONLY_AUTHENTICATION))
+        if reselection:
+            payload += self.encode_generic_payload_header(N if eap_only else NONE,0,
+                    self.encode_payload_type_n(RESERVED,b'',P_CSCF_RESELECTION_SUPPORT))
+        if eap_only:
+            payload += self.encode_generic_payload_header(NONE,0,
+                    self.encode_payload_type_n(RESERVED,b'',EAP_ONLY_AUTHENTICATION))
         packet = self.set_ike_packet_length(header+payload)        
         
         encrypted_and_integrity_packet = self.encode_payload_type_sk(packet)     
@@ -6740,6 +6746,26 @@ def https_res_ck_ik(server, rand, autn):
 
 
 
+def resolve_epdg_ipv4(host, client_subnet=""):
+    """Use EDNS client subnet only for an explicitly profiled ePDG hostname."""
+    if client_subnet:
+        try:
+            network = ipaddress.ip_network(client_subnet, strict=False)
+            if network.version != 4 or not (0 < network.prefixlen <= 32):
+                raise ValueError("invalid ePDG ECS")
+            response = subprocess.check_output(
+                ["dig", "+time=3", "+tries=1", "+short", "+subnet=" + str(network),
+                 host, "A"], timeout=5, text=True)
+            for line in response.splitlines():
+                try:
+                    return str(ipaddress.IPv4Address(line.strip()))
+                except ipaddress.AddressValueError:
+                    continue
+        except (ValueError, subprocess.SubprocessError, OSError) as exc:
+            swu_log("ePDG ECS lookup failed for %s: %s; using system resolver" % (host, exc))
+    return socket.gethostbyname(host)
+
+
 def main():
 
     # CP+TS address-family mode (per line, from cfg.cp_mode). The CFG config-request family MUST
@@ -6832,11 +6858,13 @@ def main():
                       help="IMEISV (16 digits) for DEVICE_IDENTITY; auto-derived from IMEI if blank")
 
     (options, args) = parser.parse_args()
-    sa_list = ike_proposals_for_plmn(options.mcc, options.mnc)
+    sa_list = ike_proposals_for_plmn(options.mcc, options.mnc,
+                                    os.environ.get("SWU_IKE_PROPOSAL") or None)
     if (str(options.mcc).zfill(3), str(options.mnc).zfill(3)) == ("515", "066"):
         print("[swu_ike] DITO 515-66: using AES-CBC-128/SHA1/MODP-1024 IKE proposal")
     try:
-        destination_addr = socket.gethostbyname(options.destination_addr)
+        destination_addr = resolve_epdg_ipv4(options.destination_addr,
+                                               os.environ.get("SWU_DNS_CLIENT_SUBNET", ""))
     except:
         print('Unable to resolve ' + options.destination_addr + '. Exiting.')
         exit(1)

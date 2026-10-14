@@ -1,0 +1,16 @@
+test_reader_definitions_stay_readable_by_an_unprivileged_pcscd (tests.test_device_state.DeviceStateTests.test_reader_definitions_stay_readable_by_an_unprivileged_pcscd)
+The service's UMask=0077 made the file 0600 root, which a pcscd that runs as ... ok
+test_install_writes_the_rule_and_reapplies_it (tests.test_install_mms_rule.InstallMmsRuleTests.test_install_writes_the_rule_and_reapplies_it) ... ok
+test_relay_container_holds_no_capability_and_is_not_replaced_needlessly (tests.test_media_relay.MediaRelayTests.test_relay_container_holds_no_capability_and_is_not_replaced_needlessly) ... 2026-10-14 02:10:28,083 INFO mdd.media started media relay mdd-sim-gateway-relay on port 8478
+2026-10-14 02:10:28,083 INFO mdd.media started media relay mdd-sim-gateway-relay on port 9478
+ok
+test_state_file_is_private (tests.test_media_relay.MediaRelayTests.test_state_file_is_private) ... ok
+test_database_is_backed_up_before_the_first_destructive_step (tests.test_message_identity.MigrationBackupTests.test_database_is_backed_up_before_the_first_destructive_step) ... ok
+test_sensitive_config_files_are_owner_only (tests.test_operations.OperationsTests.test_sensitive_config_files_are_owner_only) ... ok
+test_a_request_is_published_privately_for_each_supported_scope (tests.test_operations.ServiceRestartTests.test_a_request_is_published_privately_for_each_supported_scope) ... ok
+test_library_proxy_is_resolved_into_private_file_not_command_line (tests.test_update_apply.OrchestratorUpdateTests.test_library_proxy_is_resolved_into_private_file_not_command_line) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 15.216s
+
+OK

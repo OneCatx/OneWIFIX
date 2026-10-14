@@ -1,0 +1,11 @@
+{
+  "recorded_utc": "2026-10-13T12:48:31.980024+00:00",
+  "exit_code": 0,
+  "log_sha256": "df201303039cd3d1b80aaca9d43bc689c3a617e92ea1c65c229b0471ef035540",
+  "inputs": {
+    "tests\\test_ui_vowifi_history.py": "5c757a3af125b0d4b316550849540a2e1a1c1a8b97d1a36e3f7059c02f0b8ac4",
+    "webui\\tests\\vowifi-history.test.mjs": "1cdb806d6e29821e3043f22ba36a67901ae094dee30fbca53e945a996b31b9a2",
+    "webui\\src\\api.js": "a5a25e9e0c9ffe25d746dd0821cf9f2b504675850fa54033db52d08dd9253840"
+  },
+  "boundary": "Same original UI race case on Windows Node, separate from one WSL skip"
+}

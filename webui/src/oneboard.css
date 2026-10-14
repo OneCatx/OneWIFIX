@@ -1,0 +1,106 @@
+/* OneBoard visual shell adapted from ONWIFI's MIT-licensed Sidebar/MainLayout.
+   The original license is retained in public/ONWIFI-LICENSE.txt. */
+:root {
+  --ob-gutter: 28px;
+  --ob-gap: 24px;
+  --ob-dock-bg: linear-gradient(165deg,rgba(255,255,255,.82),rgba(240,249,255,.78) 45%,rgba(236,253,245,.74));
+  --ob-dock-border: rgba(148,163,184,.28);
+  --ob-dock-shadow: inset 0 1px 0 rgba(255,255,255,.95),0 16px 36px rgba(148,163,184,.18);
+  --ob-dock-divider: rgba(148,163,184,.18);
+  --ob-nav-color: #475569;
+  --ob-nav-active: #0f766e;
+  --ob-nav-active-bg: rgba(255,255,255,.88);
+  --ob-nav-active-border: rgba(94,234,212,.35);
+}
+:root[data-theme="dark"] {
+  --bg: #0c121d;
+  --panel: #1a2635;
+  --sidebar: #18222f;
+  --border: #344253;
+  --active: #173c3a;
+  --primary: #39c49d;
+  --primary-hover: #23a981;
+  --ob-dock-bg: linear-gradient(168deg,rgba(34,44,58,.94),rgba(24,32,46,.96) 48%,rgba(18,26,38,.97));
+  --ob-dock-border: rgba(125,211,252,.22);
+  --ob-dock-shadow: inset 0 1px 0 rgba(255,255,255,.1),0 18px 40px rgba(0,0,0,.38),0 0 48px rgba(34,197,94,.04);
+  --ob-dock-divider: rgba(148,163,184,.18);
+  --ob-nav-color: rgba(226,232,240,.82);
+  --ob-nav-active: #86efac;
+  --ob-nav-active-bg: rgba(52,211,153,.16);
+  --ob-nav-active-border: rgba(110,231,183,.32);
+}
+@media (prefers-color-scheme:dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --ob-dock-bg: linear-gradient(168deg,rgba(34,44,58,.94),rgba(24,32,46,.96) 48%,rgba(18,26,38,.97));
+    --ob-dock-border: rgba(125,211,252,.22);
+    --ob-dock-shadow: inset 0 1px 0 rgba(255,255,255,.1),0 18px 40px rgba(0,0,0,.38);
+    --ob-dock-divider: rgba(148,163,184,.18);
+    --ob-nav-color: rgba(226,232,240,.82);
+    --ob-nav-active: #86efac;
+    --ob-nav-active-bg: rgba(52,211,153,.16);
+    --ob-nav-active-border: rgba(110,231,183,.32);
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eaf3f4;
+  --panel: rgba(255,255,255,.83);
+  --active: #d9f4ee;
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+}
+.u-shell { padding: var(--ob-gutter); gap: var(--ob-gap); background:var(--bg); }
+.u-sidebar { align-self:center; flex:0 0 196px; width:196px; max-height:min(86dvh,720px); height:auto; padding:14px 12px; border:1px solid var(--ob-dock-border); border-radius:22px; background:var(--ob-dock-bg); box-shadow:var(--ob-dock-shadow); backdrop-filter:blur(22px) saturate(140%); -webkit-backdrop-filter:blur(22px) saturate(140%); overflow:hidden; }
+.u-brand { display:flex; flex-direction:column; align-items:center; gap:0; padding:4px 4px 12px; border-bottom:1px solid var(--ob-dock-divider); text-align:center; }
+.u-brand-avatar { display:grid; place-items:center; flex:none; width:54px; height:54px; margin:0 auto 10px; border-radius:50%; overflow:hidden; box-shadow:0 0 0 1px rgba(148,163,184,.25),0 8px 20px rgba(15,23,42,.12); background:var(--panel); }
+.u-brand-avatar img { width:100%; height:100%; object-fit:contain; }
+.u-brand strong { width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; line-height:1.25; }
+.u-brand small { max-width:100%; margin:4px 0 0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; font-weight:400; }
+.u-brand-badges { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:10px; }
+.u-brand-badges span { padding:3px 9px; border:1px solid var(--ob-dock-divider); border-radius:999px; background:rgba(148,163,184,.08); color:var(--text-dim); font-size:10px; font-weight:600; text-transform:uppercase; }
+.u-brand-badges .is-online { color:#059669; border-color:rgba(5,150,105,.18); background:rgba(5,150,105,.08); }
+.u-brand-badges .is-unavailable { color:#b45309; border-color:rgba(180,83,9,.2); }
+.u-sidebar nav { flex:1 1 auto; min-height:0; overflow-y:auto; gap:3px; padding:12px 2px; scrollbar-width:thin; }
+.u-sidebar nav button { min-height:38px; width:100%; padding:6px 8px; border:1px solid transparent; border-radius:12px; color:var(--ob-nav-color); font-size:12px; font-weight:500; gap:10px; }
+.u-sidebar nav button:hover { background:rgba(148,163,184,.14); color:var(--text); }
+.u-sidebar nav button.active { border-color:var(--ob-nav-active-border); background:var(--ob-nav-active-bg); color:var(--ob-nav-active); box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 20px rgba(52,211,153,.1); font-weight:650; }
+.u-sidebar nav button .u-nav-icon { display:grid; place-items:center; flex:0 0 27px; width:27px; height:27px; border:1px solid var(--ob-dock-divider); border-radius:8px; background:rgba(148,163,184,.08); font-size:16px; }
+.u-sidebar nav button.active .u-nav-icon { border-color:var(--ob-nav-active-border); background:rgba(52,211,153,.14); }
+.u-nav-label { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.u-nav-divider { height:1px; margin:8px 6px; background:var(--ob-dock-divider); }
+.u-sidebar-foot { flex:0 0 auto; border-color:var(--ob-dock-divider); padding:12px 4px 0; }
+.u-theme button { min-height:30px; border-color:var(--ob-dock-divider); }
+.u-main { min-height:0; overflow:hidden; }
+.u-main>header { border:0; border-bottom:1px solid var(--border); border-radius:12px 12px 0 0; background:var(--panel); }
+.u-content { padding:24px 28px 36px; }
+.u-page { max-width:none; }
+.u-device-card,.u-metric,.u-empty { border-radius:8px; box-shadow:0 4px 18px rgba(15,23,42,.05); }
+.u-destination-editor .u-inline { flex-wrap:wrap; }
+.u-destination-editor .u-inline strong { font-size:12px; }
+.u-destination-editor textarea { min-width:0; margin-top:6px; overflow-wrap:anywhere; }
+.u-mobile-head,.u-mobile-tabs { display:none; }
+.u-sidebar button:focus-visible,.u-mobile-tabs button:focus-visible,.u-menu:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+@media (max-width:900px) {
+  :root { --ob-gutter:12px; --ob-gap:12px; }
+  .u-shell { display:flex; flex-direction:column; gap:12px; padding:12px 12px 0; }
+  .u-mobile-head { display:flex; align-items:center; gap:10px; flex:0 0 auto; min-height:60px; padding:9px 58px 9px 12px; border:1px solid var(--ob-dock-border); border-radius:18px; background:var(--ob-dock-bg); box-shadow:var(--ob-dock-shadow); backdrop-filter:blur(22px); }
+  .u-mobile-head .u-brand-avatar { width:38px; height:38px; margin:0; }
+  .u-mobile-head>span:not(.u-brand-avatar) { min-width:0; display:grid; gap:1px; }
+  .u-mobile-head strong,.u-mobile-head small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .u-mobile-head strong { font-size:14px; }.u-mobile-head small { color:var(--text-mute); font-size:11px; }
+  .u-mobile-head .u-theme { display:flex; flex:none; margin-left:auto; gap:2px; }
+  .u-mobile-head .u-theme button { width:29px; min-height:30px; font-size:12px; }
+  .u-sidebar { position:fixed; inset:76px 12px auto auto; width:min(290px,calc(100vw - 24px)); max-height:calc(100dvh - 164px); height:auto; visibility:hidden; transform:translateX(calc(100% + 20px)); border-radius:18px; box-shadow:var(--ob-dock-shadow); }
+  .u-sidebar.open { visibility:visible; transform:none; }
+  .u-sidebar>.u-brand,.u-sidebar-foot .u-theme { display:none; }
+  .u-menu { z-index:35; top:22px; left:auto; right:22px; width:38px; height:38px; border-radius:10px; }
+  .u-scrim { z-index:25; }
+  .u-main { flex:1; min-height:0; border-radius:12px 12px 0 0; }
+  .u-main>header { padding:13px 16px; }.u-main>header h1 { font-size:19px; }
+  .u-content { padding:16px 16px 98px; }
+  .u-mobile-tabs { position:fixed; z-index:24; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:2px; left:max(12px,env(safe-area-inset-left)); right:max(12px,env(safe-area-inset-right)); bottom:max(12px,env(safe-area-inset-bottom)); min-height:60px; padding:5px; border:1px solid var(--ob-dock-border); border-radius:18px; background:var(--ob-dock-bg); box-shadow:var(--ob-dock-shadow); backdrop-filter:blur(22px); }
+  .u-mobile-tabs button { position:relative; min-width:0; display:grid; place-items:center; gap:1px; padding:5px 2px; border:0; border-radius:12px; background:transparent; color:var(--ob-nav-color); cursor:pointer; }
+  .u-mobile-tabs button.active { background:var(--ob-nav-active-bg); color:var(--ob-nav-active); }
+  .u-mobile-tabs button>span { font-size:21px; line-height:1; }.u-mobile-tabs button>small { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; }
+  .u-tab-unread { position:absolute; top:4px; right:20%; width:6px; height:6px; border-radius:50%; background:#dc2626; }
+}
+@media (max-width:420px) { .u-mobile-head .u-theme button { width:25px; }.u-mobile-head { gap:7px; }.u-content { padding:12px 12px 98px; } }

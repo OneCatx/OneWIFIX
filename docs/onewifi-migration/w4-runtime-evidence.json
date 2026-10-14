@@ -1,0 +1,60 @@
+{
+  "window": "W4",
+  "captured_at": "2026-10-14T13:21:22+08:00",
+  "host": {
+    "name": "Halo",
+    "os": "Windows 11 专业工作站版",
+    "docker_command": false,
+    "ssh_command": true,
+    "adb_command": true,
+    "xcodebuild_command": false,
+    "mdd_listeners": {
+      "8443": [],
+      "10443": []
+    },
+    "adb_devices": [],
+    "docker_processes": [],
+    "hardware_services": []
+  },
+  "remote": {
+    "endpoint": "8.137.155.86:1818",
+    "known_hosts_fingerprint_observed": "SHA256:aCczQdbDa7WCjRR8PGzL7HpBq/gpFmY0o/E+//krOpY",
+    "previously_recorded_fingerprint": "SHA256:UCsIToi7JUllVbBmlb8X5ggtsEy+tARcTTfj0fG81a8",
+    "fingerprint_verified": true,
+    "connection_attempted": true,
+    "strict_host_key_check": true,
+    "authenticated": true,
+    "hostname": "TTFN",
+    "architecture": "aarch64",
+    "docker_server": "28.5.2",
+    "reason": "strict connection succeeded; user confirmed the current known_hosts fingerprint as the latest FNOS ED25519 key"
+  },
+  "hardware_inventory": {
+    "modem_count": 4,
+    "modem_model": "Quectel EC25",
+    "qmi_nodes": ["/dev/cdc-wdm0", "/dev/cdc-wdm1", "/dev/cdc-wdm2", "/dev/cdc-wdm3"],
+    "pcsc_reader_count": 3,
+    "pcsc_cards_inserted": 3,
+    "subscriber_identifiers_recorded": false,
+    "mdd_containers_present": false,
+    "mdd_images_present": false
+  },
+  "gates": {
+    "mdd_control_start": "BLOCKED",
+    "remote_preflight": "PASS",
+    "fingerprint_provenance": "PASS",
+    "remote_hardware_inventory": "PASS",
+    "single_gateway_and_sim_owner": "NOT RUN",
+    "reader_sim": "NOT RUN",
+    "ims_vowifi": "NOT RUN",
+    "call_sip": "NOT RUN",
+    "sms_mms": "NOT RUN",
+    "esim_apns": "NOT RUN",
+    "rollback": "NOT RUN"
+  },
+  "prohibited_actions_performed": [],
+  "artifacts": [
+    "docs/onewifi-migration/w4-runtime-report.md",
+    "docs/onewifi-migration/w4-runtime-evidence.json"
+  ]
+}

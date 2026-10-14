@@ -1,0 +1,6 @@
+test_request_generations (tests.test_ui_vowifi_history.VowifiHistoryRaceTests.test_request_generations) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.222s
+
+OK

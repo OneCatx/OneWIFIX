@@ -1,0 +1,123 @@
+CURRENT SOURCE: /mnt/e/GQ/Ultra/mdd-sim-gateway
+RUNNING ALL 2097 discovered tests; NO MODULE EXCLUSIONS
+FILESYSTEM: test_container_update.ContainerUpdateRollbackTests.test_failed_base_recreation_restores_the_original_compose -> /mnt/e/GQ/Ultra/mdd-sim-gateway/docs/onewifi-migration/tmp
+FILESYSTEM: test_container_update.ContainerUpdateRollbackTests.test_the_rollback_drill_fails_once_after_the_switch_and_restores_everything -> /mnt/e/GQ/Ultra/mdd-sim-gateway/docs/onewifi-migration/tmp
+FILESYSTEM: test_country_egress.IdleBackoffTests.test_waiting_ends_early_when_an_input_document_changes -> /mnt/e/GQ/Ultra/mdd-sim-gateway/docs/onewifi-migration/tmp
+exit reselect: US -> US Alpha (300ms, 2/2 candidates usable)
+exit reselect: US -> US Alpha (300ms, 2/2 candidates usable)
+exit reselect: every US candidate is cooling down; clearing the cooldown and retrying the whole pool
+exit reselect: US -> US Alpha (300ms, 2/2 candidates usable)
+exit reselect: no US candidate answered its probe
+exit reselect: no US candidate answered its probe
+exit reselect: no US candidate answered its probe
+exit reselect: no US candidate answered its probe
+exit reselect: no US candidate answered its probe
+exit reselect: no US candidate answered its probe
+exit reselect: no US candidate answered its probe
+exit reselect: no US candidate answered its probe
+exit reselect: no US candidate answered its probe
+exit reselect: abandoning US request after 3 failed rankings
+exit reselect: no US candidate answered its probe
+exit reselect: US -> US Alpha (400ms, preferred)
+exit reselect: US -> US Alpha (900ms, preferred)
+exit reselect: US -> US Bravo (800ms, 1/1 candidates usable)
+exit reselect: preferred US node US Alpha is unusable; falling back to the rest of the pool
+exit reselect: US -> US Bravo (800ms, 1/2 candidates usable)
+exit reselect: US -> US Bravo (800ms, 1/1 candidates usable)
+exit reselect: US -> US Bravo (800ms, 1/1 candidates usable)
+exit reselect: US -> US Bravo (800ms, 1/1 candidates usable)
+exit reselect: US -> US Bravo (800ms, 1/1 candidates usable)
+2026-10-14 01:38:10 removed mdd-us from the host DNS configuration (sing-box registers every tun as the catch-all resolver)
+exit reselect: US -> US Bravo (800ms, 1/2 candidates usable)
+exit reselect: no US candidate answered its probe
+2026-10-14 01:38:11 Xray failed; 1 exit(s) affected: Xray-core executable not found
+device id migrated: 2c7c-0125-1-1.2 -> 2c7c-0125-1-1.4 (same 2c7c-0125 model and hardware IMEI on a new USB path)
+2026-10-14 01:38:47 SIM bridge for a exited after 7s (rc=1, attempt 1): Traceback (most recent call last): | OSError: [Errno 71] Protocol error
+2026-10-14 01:39:01 SIM bridge for a exited after 7s (rc=1, attempt 2): OSError: [Errno 71] Protocol error
+2026-10-14 01:39:01 secured leftover cellular profile mdd-cell-0a05dad4d32d (no autoconnect, never the default route)
+2026-10-14 01:39:08 waiting for ModemManager to claim /dev/ttyUSB2
+2026-10-14 01:39:15 bridging /dev/ttyUSB2 over the serial port directly (ModemManager logged that it cannot create a modem for it). VoWiFi works; cellular data and flight mode do not, because they need a ModemManager modem.
+2026-10-14 01:39:22 waiting for ModemManager to claim /dev/ttyUSB2
+2026-10-14 01:39:29 bridging /dev/ttyUSB2 over the serial port directly (ModemManager has not claimed it in 180s). VoWiFi works; cellular data and flight mode do not, because they need a ModemManager modem.
+2026-10-14 01:39:56 SIM bridge for a exited after 1s (rc=1, attempt 1): ModemError: SIM logical channel allocation failed (0/3 allocated): GDBus.Error:org.freedesktop.ModemManager1.Error.MobileEquipment.PhoneFailure: Phone failure
+2026-10-14 01:39:56 SIM bridge for a exited after 1s (rc=1, attempt 2): ModemError: SIM logical channel allocation failed (0/3 allocated): GDBus.Error:org.freedesktop.ModemManager1.Error.MobileEquipment.PhoneFailure: Phone failure
+2026-10-14 01:39:56 ModemManager SIM access failed repeatedly for a; falling back to direct serial
+2026-10-14 01:39:56 SIM bridge for a exited after 1s (rc=1, attempt 3): ModemError: SIM logical channel allocation failed (0/3 allocated): GDBus.Error:org.freedesktop.ModemManager1.Error.MobileEquipment.PhoneFailure: Phone failure
+2026-10-14 01:40:29 disabled the packaged vpcd reader definition (/mnt/e/GQ/Ultra/mdd-sim-gateway/docs/onewifi-migration/linux-tmp/tmpjdkos3z_/conf.d/vpcd -> /mnt/e/GQ/Ultra/mdd-sim-gateway/docs/onewifi-migration/linux-tmp/tmpjdkos3z_/conf.d/.vpcd.mdd-disabled); it collides with this gateway's per-modem virtual readers
+2026-10-14 01:40:36 waiting for ModemManager to claim /dev/ttyUSB2
+[pin_keeper] refusing to use VoWiFi Modem second 00 00: VoWiFi Modem second 00 00 holds ICCID 8900000000000000031, line expects 8900000000000000022
+[pin_keeper] status=PIN_DISABLED tries_left=3 detail=None
+[pin_keeper] bound to USB port 1-1 (reader index 0)
+Found target SIM on reader 0
+2026-10-14 01:40:59 stopped VPCD bridge for eUICC profile refresh: modem-1
+2026-10-14 01:40:59 stopped VPCD bridge for eUICC profile refresh: modem-2
+2026-10-14 01:40:59 stopped VPCD bridge for eUICC profile refresh: modem-1
+2026-10-14 01:40:59 VPCD bridge ready after eUICC profile refresh: modem-1
+2026-10-14 01:41:02 stopped VPCD bridge for eUICC profile refresh: modem-1
+2026-10-14 01:41:02 VPCD bridge ready after eUICC profile refresh: modem-1
+2026-10-14 01:41:02 hardware reconcile failed; retrying: RuntimeError: mmcli unavailable
+2026-10-14 01:41:02 device id migrated: 2c7c-0125-1-3 -> 2c7c-0125-1-3.1 (same 2c7c-0125 hardware IMEI on a new USB path)
+[render] asterisk.conf.j2 -> /etc/asterisk/asterisk.conf
+[render] modules.conf.j2 -> /etc/asterisk/modules.conf
+[render] logger.conf.j2 -> /etc/asterisk/logger.conf
+[render] manager.conf.j2 -> /etc/asterisk/manager.conf
+[render] acl.conf.j2 -> /etc/asterisk/acl.conf
+[render] cdr.conf.j2 -> /etc/asterisk/cdr.conf
+[render] cel.conf.j2 -> /etc/asterisk/cel.conf
+[render] features.conf.j2 -> /etc/asterisk/features.conf
+[render] ccss.conf.j2 -> /etc/asterisk/ccss.conf
+[render] indications.conf.j2 -> /etc/asterisk/indications.conf
+[render] pjproject.conf.j2 -> /etc/asterisk/pjproject.conf
+[render] stasis.conf.j2 -> /etc/asterisk/stasis.conf
+[render] udptl.conf.j2 -> /etc/asterisk/udptl.conf
+[render] rtp.conf.j2 -> /etc/asterisk/rtp.conf
+[render] http.conf.j2 -> /etc/asterisk/http.conf
+[render] pjsip.conf.j2 -> /etc/asterisk/pjsip.conf
+[render] extensions.conf.j2 -> /etc/asterisk/extensions.conf
+[render] ami_usim.ini.j2 -> /usr/local/etc/ami_usim.ini
+[render] sound vm-beep.wav -> /var/lib/asterisk/mdd-sounds
+[render] env -> /mnt/e/GQ/Ultra/mdd-sim-gateway/docs/onewifi-migration/linux-tmp/tmptqgkxx1w/run/engine.env
+[render] asterisk.conf.j2 -> /etc/asterisk/asterisk.conf
+[render] modules.conf.j2 -> /etc/asterisk/modules.conf
+[render] logger.conf.j2 -> /etc/asterisk/logger.conf
+[render] manager.conf.j2 -> /etc/asterisk/manager.conf
+[render] acl.conf.j2 -> /etc/asterisk/acl.conf
+[render] cdr.conf.j2 -> /etc/asterisk/cdr.conf
+[render] cel.conf.j2 -> /etc/asterisk/cel.conf
+[render] features.conf.j2 -> /etc/asterisk/features.conf
+[render] ccss.conf.j2 -> /etc/asterisk/ccss.conf
+[render] indications.conf.j2 -> /etc/asterisk/indications.conf
+[render] pjproject.conf.j2 -> /etc/asterisk/pjproject.conf
+[render] stasis.conf.j2 -> /etc/asterisk/stasis.conf
+[render] udptl.conf.j2 -> /etc/asterisk/udptl.conf
+[render] rtp.conf.j2 -> /etc/asterisk/rtp.conf
+[render] http.conf.j2 -> /etc/asterisk/http.conf
+[render] pjsip.conf.j2 -> /etc/asterisk/pjsip.conf
+[render] extensions.conf.j2 -> /etc/asterisk/extensions.conf
+[render] ami_usim.ini.j2 -> /usr/local/etc/ami_usim.ini
+[render] sound vm-beep.wav -> /var/lib/asterisk/mdd-sounds
+[render] env -> /mnt/e/GQ/Ultra/mdd-sim-gateway/docs/onewifi-migration/linux-tmp/tmpa89nj10v/run/engine.env
+[bridge] SIM granted 1 of 3 logical channels (MANAGE CHANNEL OPEN failed: 006a81); slots will share
+[bridge] MANAGE CHANNEL OPEN returned channel 1 again; settling the AT port and retrying (attempt 2/3)
+[bridge] MANAGE CHANNEL OPEN returned channel 1 again; settling the AT port and retrying (attempt 3/3)
+[bridge] SIM granted 1 of 3 logical channels (duplicate logical channel allocated: 1); slots will share
+[bridge] MANAGE CHANNEL OPEN returned channel 1 again; settling the AT port and retrying (attempt 2/3)
+2026-10-14 01:57:30 ModemManager failed a (unknown-capabilities); rebooting the module (attempt 1 of 3)
+2026-10-14 01:57:30 ModemManager failed a (unknown-capabilities); rebooting the module (attempt 1 of 3)
+2026-10-14 01:57:30 could not reboot a: port busy
+2026-10-14 01:57:30 ModemManager failed a (unknown-capabilities); rebooting the module (attempt 2 of 3)
+2026-10-14 01:57:30 could not reboot a: port busy
+2026-10-14 01:57:30 ModemManager failed a (unknown-capabilities); rebooting the module (attempt 3 of 3)
+2026-10-14 01:57:30 could not reboot a: port busy
+2026-10-14 01:57:30 ModemManager failed a (unknown-capabilities); rebooting the module (attempt 1 of 3)
+2026-10-14 01:57:30 ModemManager failed a (unknown-capabilities); rebooting the module (attempt 2 of 3)
+2026-10-14 01:57:30 ModemManager failed a (unknown-capabilities); rebooting the module (attempt 3 of 3)
+2026-10-14 01:57:30 ModemManager failed a (unknown-capabilities); rebooting the module (attempt 1 of 3)
+patched O2 REGISTER headers and Ultra Mobile Contact features
+carrier REGISTER patch already applied
+exit cleanup: cannot list GB connections: refused
+2026-10-14 02:01:27 restarting on request: scope=host
+2026-10-14 02:01:27 restarting on request: scope=services
+2026-10-14 02:01:27 retired an abandoned update at phase downloading
+2026-10-14 02:01:28 restarting on request: scope=control
+2026-10-14 02:01:28 restarting on request: scope=control

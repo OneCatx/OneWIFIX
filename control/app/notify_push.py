@@ -30,6 +30,7 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from typing import Any
 from urllib.parse import quote
+from urllib.parse import urlsplit
 
 import requests
 
@@ -86,6 +87,7 @@ EV_SOFTWARE_UPDATE = "software_update"
 _TIMEOUT = 8  # seconds; keep short so a dead endpoint never piles up threads
 _DELIVERY_EXECUTOR = ThreadPoolExecutor(max_workers=8, thread_name_prefix="mdd-notify")
 _TOKEN = re.compile(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}")
+_ENGINE_CALL_ID = re.compile(r"[0-9]+\.[0-9]+\Z")
 _HISTORY_LOCK = threading.RLock()
 _PENDING: dict[str, dict] = {}
 # Telegram message id of a delivered incoming-SMS notification -> the line and peer it came
@@ -187,7 +189,7 @@ def _events_enabled(chan: dict) -> dict:
 def has_enabled_channel(settings: dict, event: str) -> bool:
     standard = any(bool((settings.get(key) or {}).get("enabled"))
                and bool(_events_enabled(settings.get(key) or {}).get(event))
-               for key in ("webhook", "telegram", "pushplus"))
+               for key in ("webhook", "telegram", "pushplus", "wecom", "bark"))
     return standard or any(
         bool(channel.get("enabled")) and bool(_events_enabled(channel).get(event))
         for channel in feishu_channels(settings.get("feishu") or {})
@@ -239,12 +241,15 @@ def validate_feishu_channels(cfg: dict) -> list[dict]:
     return channels
 
 
-def build_payload(event: str, instance: dict, source: str, text: str | None) -> dict:
+def build_payload(event: str, instance: dict, source: str, text: str | None,
+                  *, call_id: str = "") -> dict:
     """The canonical event body both channels are built from. `instance` is the stored
     line config (for ICCID + MSISDN); `source` is the event's originating number; `text`
     is the SMS body (None for calls)."""
     return {
         "event": event,                                   # incoming_sms | incoming_call
+        **({"call_id": call_id, "pickup_uri": f"mddpickup-{call_id}"}
+           if event == EV_INCOMING_CALL and _ENGINE_CALL_ID.fullmatch(call_id or "") else {}),
         "instance": str(instance.get("id", "")),
         "sim_name": instance.get("name", "") or "",
         "iccid": instance.get("iccid", "") or "",
@@ -581,6 +586,81 @@ def send_feishu(cfg: dict, payload: dict) -> dict:
     return {"ok": True, "status_code": response.status_code}
 
 
+def _endpoint_urls(cfg: dict, channel: str) -> list[str]:
+    urls = cfg.get("urls") or []
+    if not isinstance(urls, list) or not urls or len(urls) > 10:
+        raise ValueError(f"{channel} requires 1-10 URLs")
+    result = []
+    for url in urls:
+        if not isinstance(url, str) or len(url) > 2048:
+            raise ValueError(f"invalid {channel} URL")
+        parsed = urlsplit(url)
+        if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password \
+                or parsed.fragment:
+            raise ValueError(f"invalid {channel} HTTPS URL")
+        if channel == "wecom" and (parsed.hostname != "qyapi.weixin.qq.com"
+                                   or parsed.path != "/cgi-bin/webhook/send"
+                                   or not parsed.query.startswith("key=")):
+            raise ValueError("invalid WeCom bot URL")
+        result.append(url)
+    return result
+
+
+def validate_wecom(cfg: dict) -> list[str]:
+    urls = _endpoint_urls(cfg, "wecom")
+    template = cfg.get("payload_template") or ""
+    if not isinstance(template, str) or len(template) > 4000:
+        raise ValueError("invalid WeCom payload template")
+    _validate_message_template(template)
+    return urls
+
+
+def validate_bark(cfg: dict) -> list[str]:
+    urls = _endpoint_urls(cfg, "bark")
+    if str(cfg.get("level") or "active") not in {"active", "timeSensitive", "passive", "critical"}:
+        raise ValueError("invalid Bark interruption level")
+    return urls
+
+
+def send_wecom(cfg: dict, payload: dict) -> dict:
+    urls = validate_wecom(cfg)
+    message = build_notification_message(payload, cfg)
+    text = "\n\n".join(part for part in (message["title"], message["content"]) if part)
+    if cfg.get("payload_template"):
+        text = str(_render(cfg["payload_template"], {**payload, **message}))
+    for url in urls:
+        try:
+            response = requests.post(url, json={"msgtype": "text", "text": {"content": text}},
+                                     timeout=_TIMEOUT)
+            response.raise_for_status()
+            result = response.json()
+        except (requests.RequestException, ValueError):
+            raise RuntimeError("WeCom request failed") from None
+        if not isinstance(result, dict) or result.get("errcode") != 0:
+            raise RuntimeError("WeCom rejected the message")
+    return {"ok": True, "status_code": 200}
+
+
+def send_bark(cfg: dict, payload: dict) -> dict:
+    urls = validate_bark(cfg)
+    message = build_notification_message(payload, cfg)
+    body = {"title": message["title"], "body": message["content"],
+            "level": str(cfg.get("level") or "active")}
+    for field in ("group", "icon"):
+        if cfg.get(field):
+            body[field] = str(cfg[field])
+    for url in urls:
+        try:
+            response = requests.post(url, json=body, timeout=_TIMEOUT)
+            response.raise_for_status()
+            result = response.json()
+        except (requests.RequestException, ValueError):
+            raise RuntimeError("Bark request failed") from None
+        if not isinstance(result, dict) or result.get("code") != 200:
+            raise RuntimeError("Bark rejected the message")
+    return {"ok": True, "status_code": 200}
+
+
 def _telegram_headline(icon: str, text: str) -> str:
     """Telegram's own first line. The icon stays leftmost — it is what makes the event type
     scannable in a chat list — and the brand follows it, for the same reason the titles carry
@@ -788,7 +868,7 @@ def _post_telegram(cfg: dict, payload: dict):
 
 
 def dispatch(settings: dict, event: str, instance: dict, source: str, text: str | None = None,
-             match_instances: list[str] | None = None):
+             match_instances: list[str] | None = None, *, call_id: str = ""):
     """Queue independent deliveries on the notification pool and return their futures.
 
     HTTP and retry waits never run on the caller's thread. Each destination is gated on its
@@ -798,7 +878,7 @@ def dispatch(settings: dict, event: str, instance: dict, source: str, text: str 
     """
     futures = []
     try:
-        payload = build_payload(event, instance, source, text)
+        payload = build_payload(event, instance, source, text, call_id=call_id)
         deliveries = []
         wh = settings.get("webhook") or {}
         if wh.get("enabled") and _events_enabled(wh).get(event):
@@ -809,6 +889,14 @@ def dispatch(settings: dict, event: str, instance: dict, source: str, text: str 
         pp = settings.get("pushplus") or {}
         if pp.get("enabled") and _events_enabled(pp).get(event):
             deliveries.append(("pushplus", send_pushplus, pp))
+        for channel, sender in (("wecom", send_wecom), ("bark", send_bark)):
+            target = settings.get(channel) or {}
+            if target.get("enabled") and _events_enabled(target).get(event):
+                # Each endpoint retries independently: a failed destination never resends
+                # to another destination which already accepted the event.
+                for index, url in enumerate(target.get("urls") or [], start=1):
+                    deliveries.append((f"{channel}:{index}", sender,
+                                       {**target, "urls": [url]}))
         for position, fs in enumerate(feishu_channels(settings.get("feishu") or {}), start=1):
             if (fs.get("enabled") and _events_enabled(fs).get(event)
                     and any(feishu_channel_matches(fs, iid) for iid in

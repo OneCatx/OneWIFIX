@@ -268,29 +268,30 @@ async def run_lpac(
 
 def _signal_cancel(proc: asyncio.subprocess.Process):
     if proc.returncode is not None:
-        return
+        return False
     try:
         if os.name == "nt":
             proc.terminate()
         else:
             proc.send_signal(signal.SIGINT)
+        return True
     except ProcessLookupError:
-        pass
+        return False
     except Exception as e:  # noqa
         log.debug("lpac cancel signal failed: %r", e)
         try:
             proc.kill()
+            return True
         except Exception:  # noqa
-            pass
+            return False
 
 
 async def cancel_download(reader_name: str) -> bool:
-    """Send SIGINT to an in-flight download for this reader. Returns True if a process was signalled."""
+    """Attempt to interrupt the active process; True means a signal was sent."""
     proc = _active.get(reader_name)
     if not proc or proc.returncode is not None:
         return False
-    _signal_cancel(proc)
-    return True
+    return _signal_cancel(proc)
 
 
 # ----------------------------- high-level ops -----------------------------

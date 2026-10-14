@@ -1,0 +1,1565 @@
+{
+  "label": "checkpoint",
+  "recorded_at": "2026-10-14T05:48:13.658754+00:00",
+  "acceptance": "NOT IMPLIED: hashes do not prove tests, builds, installation or runtime",
+  "projects": {
+    "mdd": {
+      "root": "E:\\GQ\\Ultra\\mdd-sim-gateway",
+      "head": "fa812bf691f3c2458c2ec236d3d591f1ac9f3415",
+      "changed_source": [
+        {
+          "path": ".gitattributes",
+          "sha256": "790c2acc0104da85e1510d1f72d07f5650e3d51239e2e61a6f399bcc46dc85a0",
+          "bytes": 240
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "sha256": "19002ddca113c008071f65f3bec31f40745a6189036c4e07d34254053dba67a2",
+          "bytes": 5250
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "sha256": "d7262cf2233409b0933dbfff5bebef26544156e6a10fb661a13c3373b2a10edb",
+          "bytes": 20401
+        },
+        {
+          "path": "control/app/authz.py",
+          "sha256": "43f2e5d2168a7087bf3ccafae1db0ae549fe34d10d179588157ea9c12bc252ff",
+          "bytes": 8805
+        },
+        {
+          "path": "control/app/carrier_profiles.json",
+          "sha256": "23148f1f6593430613342114dd09792646cc9bf51de3e08ad54a5672de47b3c9",
+          "bytes": 5339
+        },
+        {
+          "path": "control/app/carrier_profiles.py",
+          "sha256": "347fe58d22ec1d0be3c32181b5156250f794e7499259afdc69f9d8a965836ad4",
+          "bytes": 9223
+        },
+        {
+          "path": "control/app/clients.py",
+          "sha256": "bfb29ee35f1d95b771e4e403c16c77f6ed77f1a5b22fe7e239c2a893515bb537",
+          "bytes": 9694
+        },
+        {
+          "path": "control/app/config.py",
+          "sha256": "f25a10aee5b7836b7937d9a9e60a685576226d0d966dc50e37bc0c5a9d2e46ba",
+          "bytes": 75298
+        },
+        {
+          "path": "control/app/egress.py",
+          "sha256": "8f082829489422bb48ec8d43b41ddaded474482e597f5eb841b41fec910ea40f",
+          "bytes": 37694
+        },
+        {
+          "path": "control/app/engine.py",
+          "sha256": "b6abf7d7421f98b9f861e8ca2eac09d621ea42c4a73eded418ab55e1f0276c7a",
+          "bytes": 41248
+        },
+        {
+          "path": "control/app/gate.py",
+          "sha256": "5185ed120baf5a51975033d0f440ddc2defda9b467b7a1b9e21faf23f70cf222",
+          "bytes": 20644
+        },
+        {
+          "path": "control/app/lpa.py",
+          "sha256": "b135de9dee2f19d8b43e67f02c1d6fd7d66fc3d8c9ec77d65271be4019d5ce76",
+          "bytes": 18118
+        },
+        {
+          "path": "control/app/main.py",
+          "sha256": "8a9c08abe7e932cb5cccb3b055e1cf40cf0fb7684aec04cfef982fc3e6249ab8",
+          "bytes": 471130
+        },
+        {
+          "path": "control/app/mobile_api.py",
+          "sha256": "3e61955a3d79a0d35c7049d6c2facee1d700e314711be98339054e56c2b97732",
+          "bytes": 24328
+        },
+        {
+          "path": "control/app/mobile_apns.py",
+          "sha256": "2fba87083f5505be4f9edea4d7de0c8b9dc301ab0b6331724d251bd87a69f8a0",
+          "bytes": 7667
+        },
+        {
+          "path": "control/app/mobile_dto.py",
+          "sha256": "53a6224996b00d605efc4dfaf270b1352560278e5b3839357a8bea8762cffbcf",
+          "bytes": 7718
+        },
+        {
+          "path": "control/app/mobile_notify.py",
+          "sha256": "0690b1fe77f6b41c6ce023068ff1bb8c69ddb07bc6bce362cbabd01758997af2",
+          "bytes": 2586
+        },
+        {
+          "path": "control/app/mobile_pairing.py",
+          "sha256": "0d3e58ffb900dc90f57714be1785fd4072c0713fd4da954c08a783e773a11add",
+          "bytes": 10094
+        },
+        {
+          "path": "control/app/mobile_settings.py",
+          "sha256": "6f89302d127d58121bf7967ab8ef50c314533430d740b30f7022c510cbe8e29e",
+          "bytes": 9340
+        },
+        {
+          "path": "control/app/notify_push.py",
+          "sha256": "48b5064da9945d950cb8966f698ed2dd9ad34dfb95628d667785ce63fe5922d4",
+          "bytes": 44346
+        },
+        {
+          "path": "control/app/store.py",
+          "sha256": "b904e57c674cb85ca0d96f2fdaf10675616e50521319aeb381bdfd43547e5b59",
+          "bytes": 159504
+        },
+        {
+          "path": "control/requirements.txt",
+          "sha256": "362b2cc91153912e4ed61ecc80cfcecd3e3e7cb9f49cbb2696944e53581bc83a",
+          "bytes": 318
+        },
+        {
+          "path": "engine/asterisk-keep-modules.txt",
+          "sha256": "7a086e7c0213e5a9c513af31f71ed9248ac36d70eb4d9c87c799888d4d5f1a52",
+          "bytes": 10416
+        },
+        {
+          "path": "engine/patches/asterisk/zz_carrier_register_profiles.py",
+          "sha256": "21897ac75a9ed7630fa69e59be898a20a107a3cf770c22cecedec83621db9a8e",
+          "bytes": 9504
+        },
+        {
+          "path": "engine/render.py",
+          "sha256": "cf5fbb581d67c1e63dbbc2869660b450970ef2a9c9b526c22eb352e1b287ba72",
+          "bytes": 28073
+        },
+        {
+          "path": "engine/swu_ike.py",
+          "sha256": "4933767f35bef0bc8661588687b570f4ff75f220a4fabd3c7dc9f5055fd10535",
+          "bytes": 371198
+        },
+        {
+          "path": "engine/templates/extensions.conf.j2",
+          "sha256": "19fddec69bcdfd630368cd75328db6c0095baf4e858f84ec47eb0874f2e9cea4",
+          "bytes": 17074
+        },
+        {
+          "path": "engine/templates/pjsip.conf.j2",
+          "sha256": "5d55729d5ae563952bb8cdc31e75cdd41968abf089812e4acf1a116b7358bd78",
+          "bytes": 6553
+        },
+        {
+          "path": "tests/test_att_three_blockers.py",
+          "sha256": "7a248e67b63ce73714110ea77beb420787f60d847ffbb622e64bc3927e690098",
+          "bytes": 3906
+        },
+        {
+          "path": "tests/test_authz.py",
+          "sha256": "52fe5ded0b88da3ec6c6f70fbf230c7fe7f02f07509c93fe8655a89ca71c2323",
+          "bytes": 9888
+        },
+        {
+          "path": "tests/test_client_signin.py",
+          "sha256": "1cd064ecd4e6a0d211b05c0b49293a783b3c7b1495d01db8610cb31100ba2c06",
+          "bytes": 35024
+        },
+        {
+          "path": "tests/test_clients.py",
+          "sha256": "88fcb0dd31e716c8c241a17533d789525b0455949fbc57e6e389f8abe9404656",
+          "bytes": 6319
+        },
+        {
+          "path": "tests/test_country_egress.py",
+          "sha256": "284dd6192740b9bde9e8984bd8ef52a3e392b0ceade50e1318aa5bb9f9e72298",
+          "bytes": 75089
+        },
+        {
+          "path": "tests/test_engine_paths.py",
+          "sha256": "2fcf5a280cee7d6a095992569054156aa2baf33a00ffb84c15bab923d84924f7",
+          "bytes": 34327
+        },
+        {
+          "path": "tests/test_esim_profile_switch.py",
+          "sha256": "2a9ea488d90822e98e11aae17ad90009263b7082d1fe1514b42cc103bef8519d",
+          "bytes": 67170
+        },
+        {
+          "path": "tests/test_gate.py",
+          "sha256": "589eb02c0d558b069a33042b28655674eb13c98f7e6b88715f6db2115b5341eb",
+          "bytes": 20901
+        },
+        {
+          "path": "tests/test_mobile_apns.py",
+          "sha256": "2d1cd141986988190b8c5132763bc15d9eee75395cd994d7834988bbf7f20e4f",
+          "bytes": 2808
+        },
+        {
+          "path": "tests/test_mobile_call_correlation.py",
+          "sha256": "e4285219d47f804ff6a1a994b30cd2ca21c45f18aafb95de6dd4a3369243893b",
+          "bytes": 11908
+        },
+        {
+          "path": "tests/test_mobile_dto.py",
+          "sha256": "2153e6da37fca4ef182fc90361dad4dd443a0ec72afd9899add8e8ab2c229506",
+          "bytes": 3972
+        },
+        {
+          "path": "tests/test_mobile_notifications.py",
+          "sha256": "5eccbca658048f899efdd269de771d1a1f78aded28fe5c110c23e71482c4bd9b",
+          "bytes": 7558
+        },
+        {
+          "path": "tests/test_mobile_pairing.py",
+          "sha256": "c9713d80aa2c1524eb3137d9c28a43baaac08b05a6e321f3ad2cda9371c1adbe",
+          "bytes": 4117
+        },
+        {
+          "path": "tests/test_mobile_resident_contract.py",
+          "sha256": "ee1f36bb511fdb9401dd54f54d49ac9a678b85786c129f5fe0317ab5afc729e3",
+          "bytes": 11166
+        },
+        {
+          "path": "tests/test_onewifi_asterisk_patch.py",
+          "sha256": "7e1b2e51d1210fea68948e0571ed00eb0bb928d9703930e7083f36f680cabccc",
+          "bytes": 6044
+        },
+        {
+          "path": "tests/test_onewifi_carrier_profiles.py",
+          "sha256": "9ecaabdaf866566541f584b3c7d25144851974a23b5af44cb07bd91eae0ee525",
+          "bytes": 15260
+        },
+        {
+          "path": "tests/test_sms_inbound_dialplan.py",
+          "sha256": "453fe40d5871449db6be98df30de8fe254fc25af7bd22d616f7e1b04ce33d453",
+          "bytes": 3695
+        },
+        {
+          "path": "tests/test_voicemail.py",
+          "sha256": "4b96c38786aef8698fc3ae945329d5d5ab84a600fc7989701cb6b871e8b0d017",
+          "bytes": 19436
+        },
+        {
+          "path": "webui/public/ONWIFI-LICENSE.txt",
+          "sha256": "09f783ae7a53b539311a3761785520564509e767c1671f0935a11988e34b721f",
+          "bytes": 1063
+        },
+        {
+          "path": "webui/src/App.jsx",
+          "sha256": "9741a16fbefa59de887b59f9258cf36cb550850c4ce9ea21e88ed28b63395809",
+          "bytes": 40646
+        },
+        {
+          "path": "webui/src/api.js",
+          "sha256": "a5a25e9e0c9ffe25d746dd0821cf9f2b504675850fa54033db52d08dd9253840",
+          "bytes": 20822
+        },
+        {
+          "path": "webui/src/i18n.jsx",
+          "sha256": "17e1474edb996fde35cf6345316f8d73c4ae47ac88becf1f07847ffd7c0f4359",
+          "bytes": 121603
+        },
+        {
+          "path": "webui/src/main.jsx",
+          "sha256": "0c909b95c9915cb130c0fd43e855c603a1d044f0da0cabe20cd41379e54bc82a",
+          "bytes": 285
+        },
+        {
+          "path": "webui/src/notificationDestinations.js",
+          "sha256": "0bf0214f25894d937b30ae5eef7128271d648867f2d4932bc67ffd8a44a583e8",
+          "bytes": 859
+        },
+        {
+          "path": "webui/src/oneboard.css",
+          "sha256": "81d03cc499b647d465430700a4fb8dcf3be5d71a759c3cdbe26744707cac6b7c",
+          "bytes": 8596
+        },
+        {
+          "path": "webui/src/views/NotificationProviders.jsx",
+          "sha256": "a3f28b29161f8b05cf849761a04cb0d09b8ef1251f00e77b8bc464b3cb367062",
+          "bytes": 6378
+        },
+        {
+          "path": "webui/src/views/UnifiedPages.jsx",
+          "sha256": "389b1dcbd8d29c9ef719b735999fa961ccc460164e8cb80088e1ded721b0dbd4",
+          "bytes": 131546
+        },
+        {
+          "path": "webui/tests/notification-destinations.test.mjs",
+          "sha256": "71e927339a50f7a7c818adab06305cb23645484bc04e598d3e95745cf814e9dc",
+          "bytes": 1887
+        },
+        {
+          "path": "webui/tests/visual-preview.mjs",
+          "sha256": "2ab3999a3ccf022d4c841fad989e30bc8a34265f7d6811c04d18cbe65f168591",
+          "bytes": 2693
+        }
+      ]
+    },
+    "ios": {
+      "root": "E:\\GQ\\Ultra\\ONEWIFI\\IOS",
+      "head": "1194ec755cd99319ae29c44130c37d111f8f56ac",
+      "changed_source": [
+        {
+          "path": "ios/Runner/AppDelegate.swift",
+          "sha256": "21a123689d317bcaeeeb3fb26b3efb7c3d20fc181e9ef07004a931d5b607d4c4",
+          "bytes": 6724
+        },
+        {
+          "path": "ios/Runner/Calls/CallKitCoordinator.swift",
+          "sha256": "5ab7c0f036b794747ea37a8906fccf0ee93615b0750a468504d85d6588375026",
+          "bytes": 49733
+        },
+        {
+          "path": "ios/Runner/Calls/CallPushRegistry.swift",
+          "sha256": "c1f08cd8cfad7675e722b9d7e1d4a1863b4fec766e8335c689165ab08e22601c",
+          "bytes": 5119
+        },
+        {
+          "path": "ios/Runner/Calls/CallSessionChannel.swift",
+          "sha256": "8a9085d351071db945951e6ed3c064b88b9fb3b359d2035d76e3d5dfaac2810a",
+          "bytes": 2745
+        },
+        {
+          "path": "ios/Runner/Info.plist",
+          "sha256": "8db4d4a3a5bd21cfcb9ff7309f7c528ed03280d8a43bfaacbecd525133b428ad",
+          "bytes": 2996
+        },
+        {
+          "path": "ios/RunnerTests/CallCoordinatorTests.swift",
+          "sha256": "3f1325360de7ad80c564db42e44e33fb6061c2fde5abd016987143fce9322d0e",
+          "bytes": 59288
+        },
+        {
+          "path": "lib/app/android_oneims_shell.dart",
+          "sha256": "0f3edbb90b6d4896c9f1add542a104fcd7be27c1b8e78ba247c6a8fa3b48e7cc",
+          "bytes": 14023
+        },
+        {
+          "path": "lib/app/app_dependencies.dart",
+          "sha256": "0beda935c9d579cb7f4c89483658cc125e96f0d36d5d7960bd40b80c81e21809",
+          "bytes": 12611
+        },
+        {
+          "path": "lib/core/config/gateway_client.dart",
+          "sha256": "583000a306f1c3ea945d556057e956c208c02ed3beaf4da6b4f525e18ab494c9",
+          "bytes": 3455
+        },
+        {
+          "path": "lib/core/config/mdd_mobile_contract.dart",
+          "sha256": "123bb65ebad1db1d694608c74d9b55e13ed5bb5303e798bfdff5bfa5d8ac4f42",
+          "bytes": 4865
+        },
+        {
+          "path": "lib/core/http/http_transport.dart",
+          "sha256": "cfccdf1d2e7761a9d432d1d07ba5a1cf278d1db10a73d550c2c6752510d9c463",
+          "bytes": 17718
+        },
+        {
+          "path": "lib/features/auth/data/auth_api.dart",
+          "sha256": "d996ff9a1d54f194f46e0ceb42c7a67f3bded50e430528d0c42927d305bca223",
+          "bytes": 1740
+        },
+        {
+          "path": "lib/features/auth/data/auth_dto.dart",
+          "sha256": "342cd8b1e0cc1398560e4afb45c5b339b4fb06d1ca3c7a312b3dd95a2a642c1e",
+          "bytes": 1995
+        },
+        {
+          "path": "lib/features/auth/data/auth_repository.dart",
+          "sha256": "4e031792ac8f08ae12d46dca650fbdb85ccd5c3feb317273de464584e30e60d5",
+          "bytes": 2194
+        },
+        {
+          "path": "lib/features/auth/presentation/login_screen.dart",
+          "sha256": "4eb3dc548ed38294121c882bd4b6e4ce6e31745ede656ac26ed7bb5942cdfcbe",
+          "bytes": 7887
+        },
+        {
+          "path": "lib/features/calls/data/call_push_registrar.dart",
+          "sha256": "b28fdd73a400198d6d447664f178d3b507865b967bb5ccc2290e5698bc8ff3ed",
+          "bytes": 1100
+        },
+        {
+          "path": "lib/features/calls/data/calls_api.dart",
+          "sha256": "b223ddd3854e8fa84044d522c1ba270eb0ed227956306652776af0d932c173a4",
+          "bytes": 1837
+        },
+        {
+          "path": "lib/features/calls/data/calls_dto.dart",
+          "sha256": "a1fc9c4f56cacae8bdb1d4af6ab1f350d6f59a731840f27a0abdb4feb22cbe74",
+          "bytes": 2851
+        },
+        {
+          "path": "lib/features/calls/data/mdd_sip_background.dart",
+          "sha256": "39c2dbe553da2f44b184439f39286e327b09d0993909c6718c09e99d872abc7e",
+          "bytes": 16979
+        },
+        {
+          "path": "lib/features/calls/data/native_call_snapshot.dart",
+          "sha256": "1faf0e02dbe90900fa7313dcc826f656dc6ee7aa93ce113c676726dfbc28a269",
+          "bytes": 7955
+        },
+        {
+          "path": "lib/features/calls/data/sip_call_service.dart",
+          "sha256": "d14a4044a8c08cf6beaf325b0e12c9e388ec05c979d25b1fc337f66c932f892b",
+          "bytes": 22208
+        },
+        {
+          "path": "lib/features/calls/presentation/call_dialpad.dart",
+          "sha256": "2a6c05121b377ed802ef03184a0be0e72e43620bbe0597c49d75ff16b5ab8dd3",
+          "bytes": 5607
+        },
+        {
+          "path": "lib/features/calls/presentation/call_glass.dart",
+          "sha256": "fa528c024f521eb5fd2c6a072534f278b70d0a636acbab984d348f9fe28b2ac0",
+          "bytes": 3109
+        },
+        {
+          "path": "lib/features/calls/presentation/call_history.dart",
+          "sha256": "f9039e83de470df3095a23df53c43042b2e74a7b35c93b3aaf3b1af0f6bad2c0",
+          "bytes": 4192
+        },
+        {
+          "path": "lib/features/calls/presentation/call_settings.dart",
+          "sha256": "0ccee76ee0f70544f207cb890470455e6999536fdf7a9b6379e108bfa65413d4",
+          "bytes": 3124
+        },
+        {
+          "path": "lib/features/calls/presentation/calls_screen.dart",
+          "sha256": "e9b8b1ec30e224485c57f8a7f86bd198b4d7df7a5ffd1015eb6722ec5a949ad1",
+          "bytes": 7057
+        },
+        {
+          "path": "lib/features/calls/presentation/native_call_panel.dart",
+          "sha256": "ecb547689e3a1ee5350899ff884d32da83df58aa618e415f5ecd75e7d10818b5",
+          "bytes": 4488
+        },
+        {
+          "path": "lib/features/calls/state/calls_controller.dart",
+          "sha256": "62fee234375b2247db60afa769766d4345bb25408734a04f471d283688cb86f6",
+          "bytes": 27062
+        },
+        {
+          "path": "lib/features/devices/data/device_dto.dart",
+          "sha256": "d0c871b88ea55334169b4f7097f35c7f729fb53efb964419c1710dbe1446f386",
+          "bytes": 21890
+        },
+        {
+          "path": "lib/features/devices/data/device_repository.dart",
+          "sha256": "8b9475773a10bf8687f612f2813d3d62bccd8f5218856c795372807148bea23b",
+          "bytes": 5576
+        },
+        {
+          "path": "lib/features/devices/data/reader_provision_api.dart",
+          "sha256": "7cb9722db24ef88a82feea95630960f7b5d95675b4e5a1006c4cc2a8638dcf8c",
+          "bytes": 2383
+        },
+        {
+          "path": "lib/features/devices/domain/device.dart",
+          "sha256": "37eab571febc173a4e28377ec56c5a6d949fade6775e37e4f793ecebd58129d8",
+          "bytes": 10380
+        },
+        {
+          "path": "lib/features/devices/presentation/device_detail_runtime_panel.dart",
+          "sha256": "9f0e6bf4914f2b7d5ab5c2f03ce49a3ba6d6d398bf2eaebd8b8ced75b142b1ec",
+          "bytes": 7716
+        },
+        {
+          "path": "lib/features/devices/presentation/device_detail_view.dart",
+          "sha256": "3c1331b2faf6139ff739d4b38613ded12a57e48caba1be3fa4c3f23677beeaf1",
+          "bytes": 13102
+        },
+        {
+          "path": "lib/features/devices/presentation/devices_screen.dart",
+          "sha256": "7b84800885f349ae7c97dab450af2996e341ff6d2a445992452008a3b8f79329",
+          "bytes": 11296
+        },
+        {
+          "path": "lib/features/devices/presentation/fleet_device_card.dart",
+          "sha256": "bb05beffa57b70f6c23e8e2fe2277f6fdb484419586a786d5b8986fdc27777c4",
+          "bytes": 6971
+        },
+        {
+          "path": "lib/features/devices/state/device_list_controller.dart",
+          "sha256": "aa7a1028e044eeca5280425f3031cf0654c08de4aa556a389a8b3a1802245b1c",
+          "bytes": 5827
+        },
+        {
+          "path": "lib/features/esim/data/esim_api.dart",
+          "sha256": "75789835ac3db7514d4c8752ce4a42b2b912cb11372addca0ef6045f1d1fe8d9",
+          "bytes": 9111
+        },
+        {
+          "path": "lib/features/esim/domain/esim.dart",
+          "sha256": "3df66138dedd4ef47dd11ed7a337bb1ebe5792191fd846e80190f4e4426b39b7",
+          "bytes": 1944
+        },
+        {
+          "path": "lib/features/esim/state/esim_controller.dart",
+          "sha256": "31b6fd9eb13c5fce1e25d3ffb1ed0a1d45843f6d46e8c47000cd7c46eed1b210",
+          "bytes": 12622
+        },
+        {
+          "path": "lib/features/overview/data/overview_dto.dart",
+          "sha256": "ce2e107c2d071286d5564ed524d81b4fff960fb78965906908839945db63b6b9",
+          "bytes": 7892
+        },
+        {
+          "path": "lib/features/overview/domain/overview.dart",
+          "sha256": "3277880339f405a90a42be49a91b77cbe9941e5d7e9c170ffa38cc44339b2720",
+          "bytes": 2299
+        },
+        {
+          "path": "lib/features/overview/presentation/widgets/overview_host_metrics.dart",
+          "sha256": "fb3dbff593fc942de8e6bc3a2b886d234bae8720777992543bedf83c541e4d3a",
+          "bytes": 1539
+        },
+        {
+          "path": "lib/features/overview/presentation/widgets/overview_usage_panel.dart",
+          "sha256": "fd91607d2ac498bd11399bffad63fc6d23a214562712268f37dcb7f0a5d978e7",
+          "bytes": 3311
+        },
+        {
+          "path": "lib/features/settings/data/settings_dto.dart",
+          "sha256": "3e61cec3d1747a835ccd81bcc4ba051bbc27a83404f8e2fa86ecfa5ca5320131",
+          "bytes": 7830
+        },
+        {
+          "path": "lib/features/settings/domain/gateway_settings.dart",
+          "sha256": "3d2dfc316f9ca88fdac0716346cc81cd240f8d2a7f517c5a982aef12f94aa335",
+          "bytes": 9867
+        },
+        {
+          "path": "lib/features/settings/presentation/settings_notify_sheet.dart",
+          "sha256": "c74cfd82c931453d4985c5f2565c06129adba446f16e3925bf8a92ce79f6c094",
+          "bytes": 14359
+        },
+        {
+          "path": "lib/features/settings/presentation/settings_screen.dart",
+          "sha256": "5150be56454ed089b7989decc5a0b80366a62d18f3893fad9ade11b31d75129d",
+          "bytes": 8458
+        },
+        {
+          "path": "lib/features/settings/presentation/widgets/settings_entry_tile.dart",
+          "sha256": "baf198c2c03f00d18d253b9806449e6c5dacd1c7d128a0e7cb0a2e771dde7681",
+          "bytes": 1642
+        },
+        {
+          "path": "lib/features/settings/presentation/widgets/settings_notify_grid.dart",
+          "sha256": "31b726d0ad7ce73cb0ef00554a4a5fb9f9958379bc488dda45b4e1e2132926b9",
+          "bytes": 1447
+        },
+        {
+          "path": "lib/features/settings/presentation/widgets/settings_vowifi_tiles.dart",
+          "sha256": "b9bf69e692df59d38c69021db401c5e54594896bf365ddaf18bcf0dcb04ad05f",
+          "bytes": 2519
+        },
+        {
+          "path": "lib/features/settings/state/settings_controller.dart",
+          "sha256": "682d3d1aaed49c06ad35224b111fdaf58a27074756cea429c4a9601dcd556ee4",
+          "bytes": 23474
+        },
+        {
+          "path": "lib/features/sms/data/remote_otp_pairing_store.dart",
+          "sha256": "4f8a0d2162a9c3e8cf91f37dbe6b7aa1e87da4fb715018916b90080ca4900232",
+          "bytes": 3744
+        },
+        {
+          "path": "lib/features/sms/data/remote_otp_stream_client.dart",
+          "sha256": "6ac681081bcd4fe289bbfd7fe06c05fd85d2ed189d823405249bfc4477a6c238",
+          "bytes": 4380
+        },
+        {
+          "path": "lib/features/sms/data/sms_api.dart",
+          "sha256": "e925e9dff35c05b36eadea09397ae651c9a66f4f0ba252be7dc285880a5bdbca",
+          "bytes": 4966
+        },
+        {
+          "path": "lib/features/sms/domain/remote_otp_pairing.dart",
+          "sha256": "69cd63add6c0e40d046c59c278382d76afb92bcbcf16d0350725cd66414182ec",
+          "bytes": 5118
+        },
+        {
+          "path": "lib/features/sms/domain/sms.dart",
+          "sha256": "b76a013004b31263b6df4f22b464323d629977aab5f78c9faee087441cfaaaf7",
+          "bytes": 3883
+        },
+        {
+          "path": "lib/features/sms/domain/sms_notification_text.dart",
+          "sha256": "27c8ad6f5fdfafd6cdcc5ce1a183a0980b759840d319a5edbe09362a527fd2a3",
+          "bytes": 949
+        },
+        {
+          "path": "lib/features/sms/presentation/widgets/sms_composer.dart",
+          "sha256": "44b6429a694dc92688bae32663dcb0b9ec3d7d142b9b113c24069e5fc6b51e38",
+          "bytes": 4565
+        },
+        {
+          "path": "lib/features/sms/state/remote_otp_controller.dart",
+          "sha256": "6ad910bb95f6ced339c53793cbb78a8adfc62bdc6a3b4432463eb0ed1530dc9c",
+          "bytes": 12158
+        },
+        {
+          "path": "lib/main.dart",
+          "sha256": "baf4d2409ec5d7f1680416d7285a445e369933c749341c81485faff1648dcbba",
+          "bytes": 280
+        },
+        {
+          "path": "pubspec.lock",
+          "sha256": "2666d016e4f06144fbd017b0805a725919bd351dc0f03ae4addde13ba09ef1da",
+          "bytes": 23706
+        },
+        {
+          "path": "pubspec.yaml",
+          "sha256": "bd7469b8d811c71a05fe1fa408f3639b28af50d9c90d41810df296615a4c46d8",
+          "bytes": 693
+        },
+        {
+          "path": "test/app/appearance_session_reuse_test.dart",
+          "sha256": "bc2d44f1ec8c0ae529e23c9b6da54e8ce697c6b2d4f4411a2832a9563e256c56",
+          "bytes": 3492
+        },
+        {
+          "path": "test/app/auth_overview_logout_flow_test.dart",
+          "sha256": "15cc79ac07fa2631b65dc3ae9ed394f936d558a1cbe0eb6de401e872d7a2b933",
+          "bytes": 12896
+        },
+        {
+          "path": "test/app/certificate_trust_dialog_test.dart",
+          "sha256": "2c838109baee6bc35f91983320275159903451bcbd78b49b8c6518ade88c5533",
+          "bytes": 2861
+        },
+        {
+          "path": "test/app/devices_flow_test.dart",
+          "sha256": "e70356600bfbf300e5041e608ec8fd0147f2cb7377209b3c60875268950ed931",
+          "bytes": 17824
+        },
+        {
+          "path": "test/core/config/mdd_mobile_contract_test.dart",
+          "sha256": "f645e851bd903ff3e2efc08f89a25b02b5b4a1d15834049122b2345634a33768",
+          "bytes": 5634
+        },
+        {
+          "path": "test/features/auth/auth_api_test.dart",
+          "sha256": "b20574e40756026d71c870533aa4a4a39225ea46142338c54eb3f3b19d29839f",
+          "bytes": 2643
+        },
+        {
+          "path": "test/features/auth/auth_repository_test.dart",
+          "sha256": "d4aec488b4e08892cfe69d15cb3bccb6e444051218dbe3c559e1c50ff01541c4",
+          "bytes": 3202
+        },
+        {
+          "path": "test/features/auth/mdd_auth_test.dart",
+          "sha256": "eb034359a5ec3ebdaf843a9484f64e5f5ca90174e2c4be16fdf5b32eae86f672",
+          "bytes": 3158
+        },
+        {
+          "path": "test/features/auth/presentation/login_screen_test.dart",
+          "sha256": "36b66527f68d75b5393e285d80d9ec3e2acdd20a4fce9e5648659dfe488fc1ca",
+          "bytes": 10659
+        },
+        {
+          "path": "test/features/calls/data/call_push_registrar_test.dart",
+          "sha256": "fbe0e5d758e3a4eb114d88f2eed86d298e7524e79a598905b932435847d8bac4",
+          "bytes": 2895
+        },
+        {
+          "path": "test/features/calls/data/calls_api_test.dart",
+          "sha256": "92675424ef92bf5960caece159756b50116ff515bf85d5cbc3098c5705f7f904",
+          "bytes": 2057
+        },
+        {
+          "path": "test/features/calls/data/mdd_sip_background_test.dart",
+          "sha256": "aabb5911316fc13b9f915bb7c271a9f8fa790e0df3e2087a0e1f2ed50222850a",
+          "bytes": 11673
+        },
+        {
+          "path": "test/features/calls/data/sip_call_service_test.dart",
+          "sha256": "38498d249424c14c6cc26ec53892d9abe105f0495a593b36a08ea16af3102f9e",
+          "bytes": 7608
+        },
+        {
+          "path": "test/features/calls/state/call_session_binding_test.dart",
+          "sha256": "94d6b1024e815341da868fc261e4692c8f0a51db924182aede68b1dcbbda994c",
+          "bytes": 46048
+        },
+        {
+          "path": "test/features/devices/data/device_dto_test.dart",
+          "sha256": "a4bbfdd789be8972f6685b979bea78c6cd43104b07d277d331d914d34380fc98",
+          "bytes": 53325
+        },
+        {
+          "path": "test/features/devices/data/reader_provision_api_test.dart",
+          "sha256": "0a6b383f47a43ec324f65a07641790f672c7752101e7f002efa3346fa346ff23",
+          "bytes": 2969
+        },
+        {
+          "path": "test/features/devices/presentation/device_esim_regression_test.dart",
+          "sha256": "eb548857c3e0d53f4012e760030a851ba5a15ee227c6aa5fb98af77b9e28c079",
+          "bytes": 27144
+        },
+        {
+          "path": "test/features/devices/presentation/devices_presentation_test.dart",
+          "sha256": "d01ffc6182140b56f5a04919c90c37d5fe3d2124fd7cd409039ff5e18f1896f9",
+          "bytes": 26495
+        },
+        {
+          "path": "test/features/esim/data/esim_api_test.dart",
+          "sha256": "5259708cd339e3fd6e0553725d87155d88ac3b39a61114d5b7c101f75ebefccf",
+          "bytes": 16758
+        },
+        {
+          "path": "test/features/esim/presentation/esim_edit_sheet_test.dart",
+          "sha256": "b8c6353c9eb63f282314342cb063092437831919981df20d387eac9a1cf74b6a",
+          "bytes": 35175
+        },
+        {
+          "path": "test/features/esim/presentation/esim_panel_test.dart",
+          "sha256": "b9f5e9d9e763b38d116f1e3f125c9f8c89d395ac81373b3d08816e2da68266a4",
+          "bytes": 7397
+        },
+        {
+          "path": "test/features/esim/presentation/esim_policy_regression_test.dart",
+          "sha256": "03955f6c9b41420b0215a8ec61a90d53e683fd442dc118a8c1fd790f15f44f9b",
+          "bytes": 16613
+        },
+        {
+          "path": "test/features/esim/state/esim_controller_lifecycle_test.dart",
+          "sha256": "69e22eb5e574bb08d1c56c532db993a7b4058b3bcc066222089217a23d812575",
+          "bytes": 17523
+        },
+        {
+          "path": "test/features/esim/state/esim_controller_test.dart",
+          "sha256": "8b9fac71855f01a454e8562c7ea402b5ed785085489cae03f6014827ab6cae2d",
+          "bytes": 9634
+        },
+        {
+          "path": "test/features/esim/state/esim_switch_bughunt_test.dart",
+          "sha256": "e0b3b1079df2ea321e69b4fb1e7ce522c45b523a9ed4c4bffce352706df91ba4",
+          "bytes": 4796
+        },
+        {
+          "path": "test/features/overview/data/overview_api_test.dart",
+          "sha256": "5a05689eb69e6e76530def9f1ae897a42bafdbc1b68013ba7d0249977724b43f",
+          "bytes": 7454
+        },
+        {
+          "path": "test/features/overview/data/overview_dto_test.dart",
+          "sha256": "8a0fe81cbd7f5ba2b1f87d2f9337c3d73d8c6d6a83123843e4c9b308e2d28346",
+          "bytes": 10251
+        },
+        {
+          "path": "test/features/settings/data/settings_api_test.dart",
+          "sha256": "33219ac0ee666b29ba1bb648d9142cb6d3ff1709ee86b60b4fa3aae20708f86d",
+          "bytes": 12472
+        },
+        {
+          "path": "test/features/settings/presentation/settings_async_regression_test.dart",
+          "sha256": "be85093db2ea39254b9afa2ec5619c5a1247b1dfe9c0451e7e32b58fd72da842",
+          "bytes": 6508
+        },
+        {
+          "path": "test/features/settings/presentation/settings_notify_sheet_test.dart",
+          "sha256": "80855eb19923dbacc29a73c43402d20cf5d1dfbaf840dad8a8dd9fa13e140f0a",
+          "bytes": 27530
+        },
+        {
+          "path": "test/features/settings/presentation/settings_screen_test.dart",
+          "sha256": "7275da5d2a414d78a97d9545548e8f8b1288e5b6753e07f379b1ab72c022edda",
+          "bytes": 19500
+        },
+        {
+          "path": "test/features/sms/data/ios_push_endpoint_client_test.dart",
+          "sha256": "e39658f5bc8adc449bfaeb69d9286cac931464d21bd249779ce3c4db88c8d5c0",
+          "bytes": 2164
+        },
+        {
+          "path": "test/features/sms/data/sms_api_test.dart",
+          "sha256": "b79f80b01cf6529dfe5853417585199e1ccb68499c54902e66382954f224423e",
+          "bytes": 8441
+        },
+        {
+          "path": "test/features/sms/presentation/remote_otp_pairing_tile_test.dart",
+          "sha256": "6b72d7eea317f51cb3d54449778794d0b6a2a1a2d03303bc93fd8548db00ebc3",
+          "bytes": 8788
+        },
+        {
+          "path": "test/features/sms/state/remote_otp_controller_test.dart",
+          "sha256": "643bdfc88a058a3097786a5cebb120960614343f0b2ffdac83990ab36242b5e4",
+          "bytes": 24110
+        },
+        {
+          "path": "test/features/sms/state/sms_otp_watch_test.dart",
+          "sha256": "3091ae102401e914e76fc6d4bf4c0767f450e2d1e3d72e834cd87f5049a42d23",
+          "bytes": 16924
+        },
+        {
+          "path": "test/fixtures/mdd/dashboard-devices.json",
+          "sha256": "9830941b76581c23d3f0c97a9a02421ac4142a49ece761b6814aef1d592fdd5a",
+          "bytes": 5630
+        },
+        {
+          "path": "test/fixtures/mdd/dashboard-host.json",
+          "sha256": "87858b08fb98446ee081820c2a781cc666a97d44177ba0daec0a1f1d8e5285e7",
+          "bytes": 448
+        },
+        {
+          "path": "test/fixtures/mdd/device-overview.json",
+          "sha256": "f688770af386b993d379462719efb883a8bc5fba84c3c6f30c5cc43016b6863e",
+          "bytes": 3054
+        },
+        {
+          "path": "test/fixtures/mdd/devices.json",
+          "sha256": "341e6677bf3313fa3321dc02e490e0db29ca482375e41e47c170512305ab75b3",
+          "bytes": 6073
+        },
+        {
+          "path": "test/fixtures/mdd/esim-overview.json",
+          "sha256": "bf9381d4f4daeb5acd4d511facbdeab60020580e0a37e34ec0245b0bd41938dc",
+          "bytes": 629
+        },
+        {
+          "path": "test/fixtures/mdd/esim-profiles.json",
+          "sha256": "a912cbf3d6d290bc085ac8c407ca6a4817c5460a6d13c402e9348965c219b52a",
+          "bytes": 369
+        },
+        {
+          "path": "test/fixtures/mdd/notification-settings.json",
+          "sha256": "3f3d6dca15d7fbb5fe19263e9d0eb6c55b2512a162b4fbafe966d01fdf667b4e",
+          "bytes": 765
+        },
+        {
+          "path": "test/fixtures/mdd/preferences.json",
+          "sha256": "7fe19164fcf644850c39df5a920843833c2b7c2bf30fd0badcf91e19b5de0f13",
+          "bytes": 41
+        },
+        {
+          "path": "test/fixtures/mdd/sms-contacts.json",
+          "sha256": "4821d9d4033e621830d1d73576a3dcd9e712a0912897ac25ad7e05dc36b5ad13",
+          "bytes": 353
+        },
+        {
+          "path": "test/fixtures/mdd/sms-settings.json",
+          "sha256": "2ae6f3c81e411c7091ec8d84844ac47f078ff04878f0050fc80a758f42bc6459",
+          "bytes": 57
+        },
+        {
+          "path": "test/fixtures/mdd/system-info.json",
+          "sha256": "16e8289f77bf50c840fd522dd3954ea42c8c5e0b2d7c32c3f892ee921f81fb19",
+          "bytes": 90
+        },
+        {
+          "path": "test/mdd_generated_contract_test.dart",
+          "sha256": "bf9dbfa3fbf2e708a7d495edf02633d3de93400c417d052d1ffea2422d71febb",
+          "bytes": 4070
+        }
+      ]
+    },
+    "android": {
+      "root": "E:\\GQ\\Ultra\\ONEWIFI\\android",
+      "head": "7c87fb1d6959c9060db1e1814dc32890c5267d42",
+      "changed_source": [
+        {
+          "path": "android/app/src/main/kotlin/com/oneims/onewifi/MainActivity.kt",
+          "sha256": "7c2faad7f01dc732066b0b7f1db2e9c4d1130a730c2a700c84c56c0bba5fd935",
+          "bytes": 6914
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/oneims/onewifi/RemoteOtpService.kt",
+          "sha256": "1801b7cc4f0945e69351769192db9c972a98c6f0fd6618a472be7843a1c539fb",
+          "bytes": 6664
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/oneims/onewifi/calls/AndroidCallHost.kt",
+          "sha256": "9d7ada98c413319f2a6a33bd9ff15dc800222b41c058bd58754156979a3662f7",
+          "bytes": 3101
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/oneims/onewifi/calls/AndroidSipBridge.kt",
+          "sha256": "61f37598453be56f925a5c41ddd567587b593ef9d8c8f15fb15169df7fbbb0c4",
+          "bytes": 7449
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/oneims/onewifi/calls/CallCoordinator.kt",
+          "sha256": "d822d18cf82159d28ddeb6e01f22bebe83bba539cd370ae89814913f4a1c5d22",
+          "bytes": 22807
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/oneims/onewifi/calls/CallEventSnapshot.kt",
+          "sha256": "bc73cc37c1441f2a9a7e09550cb20308adfc2f1636d8de1f698aa1636da41ae0",
+          "bytes": 6203
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/oneims/onewifi/calls/NativePcmSession.kt",
+          "sha256": "9f5a0c5fd0808b34bb77ec32979d3a6a0d6d61235d1ecc179790f103c5ca6b0c",
+          "bytes": 9703
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/oneims/onewifi/calls/ResidentCallSource.kt",
+          "sha256": "ec87b32545e27ccd9408daa001b7c978504e341c011d268d8a0350a93c5e6216",
+          "bytes": 13120
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/oneims/onewifi/calls/SipCallSource.kt",
+          "sha256": "2f5aaf51bd6fb668c7c7e50ebedd3b75cceeaa61a215b24811fab48eda87b075",
+          "bytes": 9990
+        },
+        {
+          "path": "android/app/src/main/res/raw/gateway_selfsigned",
+          "sha256": "de7b31e8ce61d520841ff3e3c7c91599421885ad818deb498b334d84a5da6d1d",
+          "bytes": 786
+        },
+        {
+          "path": "android/app/src/main/res/xml/network_security_config.xml",
+          "sha256": "be1801eb668e90134a911e68bcd5266a727929a1d7e13a1de6335961ababc400",
+          "bytes": 1043
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/oneims/onewifi/calls/CallCoordinatorTest.kt",
+          "sha256": "7599fc77ebfb867f5fc276daeec6dd2f65041250a71961379abeccd0f9a8f8bb",
+          "bytes": 14115
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/oneims/onewifi/calls/ResidentCallSourceTest.kt",
+          "sha256": "888f00fade5cfee2fd77360dc26f4ea168c9923479f5ee3a9823f858d9de104e",
+          "bytes": 7010
+        },
+        {
+          "path": "android/app/src/test/kotlin/com/oneims/onewifi/calls/SipCallSourceTest.kt",
+          "sha256": "2956f55c0d9cc2158ae9332ee29ef3404dd83f262dad96d16fbbd3da8e63c643",
+          "bytes": 5925
+        },
+        {
+          "path": "lib/app/android_oneims_shell.dart",
+          "sha256": "6860f1bd7b14dc566e263676da9d6fff4bbffa8fffb3d17edad7174ccc690804",
+          "bytes": 13867
+        },
+        {
+          "path": "lib/app/app_dependencies.dart",
+          "sha256": "22318a2cf5ff0fdbc044fd9354b79a9eb6cb0e6e66ca3776652cd812c4c707a0",
+          "bytes": 11907
+        },
+        {
+          "path": "lib/core/config/gateway_auth.dart",
+          "sha256": "ee798ed3a96473ee922f43f2e893bee90a01c07b3e2cfa6ce485c7d5c6637dd3",
+          "bytes": 631
+        },
+        {
+          "path": "lib/core/config/gateway_client.dart",
+          "sha256": "bbf29efbbabefc73ce66ce1370b7b20bab5fa92f7990901dfb08561f431d42a5",
+          "bytes": 3278
+        },
+        {
+          "path": "lib/core/config/mdd_mobile_contract.dart",
+          "sha256": "123bb65ebad1db1d694608c74d9b55e13ed5bb5303e798bfdff5bfa5d8ac4f42",
+          "bytes": 4865
+        },
+        {
+          "path": "lib/core/http/backend_error_codes.dart",
+          "sha256": "eb730bed08387b998014e060f459d3c5b0a8b670e57055eda129b3a86e27a4a1",
+          "bytes": 4043
+        },
+        {
+          "path": "lib/core/http/http_transport.dart",
+          "sha256": "d757c9b83cda7032c02f57b65383af7165511e556635af967e7ee9194e888e9b",
+          "bytes": 17916
+        },
+        {
+          "path": "lib/design/widgets/system_controls.dart",
+          "sha256": "378120a7d6b1816efe1adf51e3bcc715c553b8297bbc26bb0fbabd02b81891e1",
+          "bytes": 2789
+        },
+        {
+          "path": "lib/features/auth/data/auth_api.dart",
+          "sha256": "64fc8a1d1896d441f3dd77ab9cf422cb314a9d48a51bea10e840188b305550e1",
+          "bytes": 1715
+        },
+        {
+          "path": "lib/features/auth/data/auth_dto.dart",
+          "sha256": "0965345524924cf8e2b6af850454a449c5a2da101c796f032c020d802a1f6ddc",
+          "bytes": 2165
+        },
+        {
+          "path": "lib/features/calls/data/android_sip_entrypoint.dart",
+          "sha256": "ec3e467df6ac02dbc5086168b7260f4f0c6afb5aa9e535f23b9b23fbaa275e58",
+          "bytes": 23290
+        },
+        {
+          "path": "lib/features/calls/data/calls_api.dart",
+          "sha256": "f45f2bcd062379b6960a33c856058f98096892c97e6e5e9c366f40c93f1e0d36",
+          "bytes": 2851
+        },
+        {
+          "path": "lib/features/calls/data/calls_dto.dart",
+          "sha256": "1365adbb14b66ea66ced705fb88a590d2a77092fc0564606ade8769f2d491233",
+          "bytes": 1631
+        },
+        {
+          "path": "lib/features/calls/data/sip_call_service.dart",
+          "sha256": "d14a4044a8c08cf6beaf325b0e12c9e388ec05c979d25b1fc337f66c932f892b",
+          "bytes": 22208
+        },
+        {
+          "path": "lib/features/calls/presentation/calls_screen.dart",
+          "sha256": "45f2d655c327451a7b5404d90cba6b01aed0681ecd0a9909a808c86f707b44a3",
+          "bytes": 17174
+        },
+        {
+          "path": "lib/features/calls/state/calls_controller.dart",
+          "sha256": "eb00c59f0e50b41b62189c9eb9b5ac77121b97dd5bd5526f75c2bfdb809513c3",
+          "bytes": 20889
+        },
+        {
+          "path": "lib/features/devices/data/device_dto.dart",
+          "sha256": "d0c871b88ea55334169b4f7097f35c7f729fb53efb964419c1710dbe1446f386",
+          "bytes": 21890
+        },
+        {
+          "path": "lib/features/devices/data/device_repository.dart",
+          "sha256": "8b9475773a10bf8687f612f2813d3d62bccd8f5218856c795372807148bea23b",
+          "bytes": 5576
+        },
+        {
+          "path": "lib/features/devices/data/reader_provision_api.dart",
+          "sha256": "9b3c252076e601be8056ec695802fcbc56d7d4ad0218ae3f9e37c10a1442833f",
+          "bytes": 2299
+        },
+        {
+          "path": "lib/features/devices/domain/device.dart",
+          "sha256": "37eab571febc173a4e28377ec56c5a6d949fade6775e37e4f793ecebd58129d8",
+          "bytes": 10380
+        },
+        {
+          "path": "lib/features/devices/presentation/device_detail_runtime_panel.dart",
+          "sha256": "9f0e6bf4914f2b7d5ab5c2f03ce49a3ba6d6d398bf2eaebd8b8ced75b142b1ec",
+          "bytes": 7716
+        },
+        {
+          "path": "lib/features/devices/presentation/device_detail_sim_panel.dart",
+          "sha256": "a20f62d5b954a3b132e492e40284a83f57d9a3206d80c5fb5b20013016ad1ece",
+          "bytes": 11046
+        },
+        {
+          "path": "lib/features/devices/presentation/device_detail_view.dart",
+          "sha256": "3c1331b2faf6139ff739d4b38613ded12a57e48caba1be3fa4c3f23677beeaf1",
+          "bytes": 13102
+        },
+        {
+          "path": "lib/features/devices/presentation/devices_screen.dart",
+          "sha256": "7b84800885f349ae7c97dab450af2996e341ff6d2a445992452008a3b8f79329",
+          "bytes": 11296
+        },
+        {
+          "path": "lib/features/devices/presentation/fleet_device_card.dart",
+          "sha256": "bb05beffa57b70f6c23e8e2fe2277f6fdb484419586a786d5b8986fdc27777c4",
+          "bytes": 6971
+        },
+        {
+          "path": "lib/features/devices/state/device_detail_controller.dart",
+          "sha256": "7aedd49b552de5948f19c235a20403896acb6e58c8daf0d0d70cd57afadfcf5e",
+          "bytes": 4617
+        },
+        {
+          "path": "lib/features/devices/state/device_list_controller.dart",
+          "sha256": "aa7a1028e044eeca5280425f3031cf0654c08de4aa556a389a8b3a1802245b1c",
+          "bytes": 5827
+        },
+        {
+          "path": "lib/features/esim/data/esim_api.dart",
+          "sha256": "75789835ac3db7514d4c8752ce4a42b2b912cb11372addca0ef6045f1d1fe8d9",
+          "bytes": 9111
+        },
+        {
+          "path": "lib/features/esim/domain/esim.dart",
+          "sha256": "3df66138dedd4ef47dd11ed7a337bb1ebe5792191fd846e80190f4e4426b39b7",
+          "bytes": 1944
+        },
+        {
+          "path": "lib/features/esim/state/esim_controller.dart",
+          "sha256": "413d732558f93145b542a874fa59a49dad5c21eb23c7dc3a117e08fe4b54d49f",
+          "bytes": 12502
+        },
+        {
+          "path": "lib/features/overview/data/overview_dto.dart",
+          "sha256": "ce2e107c2d071286d5564ed524d81b4fff960fb78965906908839945db63b6b9",
+          "bytes": 7892
+        },
+        {
+          "path": "lib/features/overview/domain/overview.dart",
+          "sha256": "3277880339f405a90a42be49a91b77cbe9941e5d7e9c170ffa38cc44339b2720",
+          "bytes": 2299
+        },
+        {
+          "path": "lib/features/overview/presentation/widgets/overview_host_metrics.dart",
+          "sha256": "fb3dbff593fc942de8e6bc3a2b886d234bae8720777992543bedf83c541e4d3a",
+          "bytes": 1539
+        },
+        {
+          "path": "lib/features/overview/presentation/widgets/overview_usage_panel.dart",
+          "sha256": "fd91607d2ac498bd11399bffad63fc6d23a214562712268f37dcb7f0a5d978e7",
+          "bytes": 3311
+        },
+        {
+          "path": "lib/features/proxy/data/wifi_pin_store.dart",
+          "sha256": "277612d3ec7ee27d5f76ed229dee6c06700cf0b2919470d309c861d1cf8064ab",
+          "bytes": 1429
+        },
+        {
+          "path": "lib/features/settings/data/settings_dto.dart",
+          "sha256": "aa9eac4e01b487c5afd17f9a098842a8dd118bef354aa092bb2f27e28146d815",
+          "bytes": 7929
+        },
+        {
+          "path": "lib/features/settings/domain/gateway_settings.dart",
+          "sha256": "767dd8077982bc8e27df11c31122c8d2689f0fbfabea963a0af0c5ad7fd6f591",
+          "bytes": 11168
+        },
+        {
+          "path": "lib/features/settings/presentation/settings_notify_sheet.dart",
+          "sha256": "c74cfd82c931453d4985c5f2565c06129adba446f16e3925bf8a92ce79f6c094",
+          "bytes": 14359
+        },
+        {
+          "path": "lib/features/settings/presentation/settings_screen.dart",
+          "sha256": "1e1f7ea9949447124363970585b139c354cfd94b1083b247e6e3fb51187fda33",
+          "bytes": 14207
+        },
+        {
+          "path": "lib/features/settings/presentation/widgets/settings_entry_tile.dart",
+          "sha256": "baf198c2c03f00d18d253b9806449e6c5dacd1c7d128a0e7cb0a2e771dde7681",
+          "bytes": 1642
+        },
+        {
+          "path": "lib/features/settings/presentation/widgets/settings_notify_grid.dart",
+          "sha256": "31b726d0ad7ce73cb0ef00554a4a5fb9f9958379bc488dda45b4e1e2132926b9",
+          "bytes": 1447
+        },
+        {
+          "path": "lib/features/settings/presentation/widgets/settings_vowifi_tiles.dart",
+          "sha256": "b9bf69e692df59d38c69021db401c5e54594896bf365ddaf18bcf0dcb04ad05f",
+          "bytes": 2519
+        },
+        {
+          "path": "lib/features/settings/state/settings_controller.dart",
+          "sha256": "bd044f80c1a24931835ec5af962326a2c05dcb898ca68f0378cc60c96182ff4f",
+          "bytes": 23326
+        },
+        {
+          "path": "lib/features/sms/data/remote_otp_pairing_store.dart",
+          "sha256": "fb89564a975985006bf04a447747dd7a21c269dbadcb60882a0797ed165a53d4",
+          "bytes": 3637
+        },
+        {
+          "path": "lib/features/sms/data/remote_otp_stream_client.dart",
+          "sha256": "6633f43dd4dfae287ef44c704ffa5a3fbe5926b8d4f84e91beef00da4648cdfa",
+          "bytes": 4236
+        },
+        {
+          "path": "lib/features/sms/data/sms_api.dart",
+          "sha256": "e925e9dff35c05b36eadea09397ae651c9a66f4f0ba252be7dc285880a5bdbca",
+          "bytes": 4966
+        },
+        {
+          "path": "lib/features/sms/domain/remote_otp_pairing.dart",
+          "sha256": "7f996b4336adf058bf0ac6093f19a85d40881e5b5ad4a281974ec7086422be12",
+          "bytes": 4968
+        },
+        {
+          "path": "lib/features/sms/domain/sms.dart",
+          "sha256": "b76a013004b31263b6df4f22b464323d629977aab5f78c9faee087441cfaaaf7",
+          "bytes": 3883
+        },
+        {
+          "path": "lib/features/sms/presentation/widgets/sms_composer.dart",
+          "sha256": "44b6429a694dc92688bae32663dcb0b9ec3d7d142b9b113c24069e5fc6b51e38",
+          "bytes": 4565
+        },
+        {
+          "path": "lib/features/sms/state/remote_otp_controller.dart",
+          "sha256": "9201dd69e2cb4b61b87eaee926f0c9d4180106f660565358d44fa98d049d0815",
+          "bytes": 8633
+        },
+        {
+          "path": "lib/main.dart",
+          "sha256": "91a3aae251909f234a538ae1cb2f84f7547762001389c7ea496e6c37f13219f2",
+          "bytes": 281
+        },
+        {
+          "path": "pubspec.lock",
+          "sha256": "4a4bd52d98d170c6867206bf2b3f006cd902d6a85e3acbeeb7c2ccfac972e7e1",
+          "bytes": 23708
+        },
+        {
+          "path": "pubspec.yaml",
+          "sha256": "731f563488de501e7861aba828e42dc5f24ba214fae6922a11df3086a873ee7b",
+          "bytes": 693
+        },
+        {
+          "path": "test/app/appearance_session_reuse_test.dart",
+          "sha256": "48ee0e2ae41749d1be1d786a975f5be3f79d8cda24db458655489a2fb5271b83",
+          "bytes": 4274
+        },
+        {
+          "path": "test/app/auth_overview_logout_flow_test.dart",
+          "sha256": "2fc7af32f30694d395fdc35f89cfffdf77f1be81e60f628e5b80095c7ceb4bcc",
+          "bytes": 14110
+        },
+        {
+          "path": "test/app/devices_flow_test.dart",
+          "sha256": "968408f542c70f0a9fbd57851574e7a6e231ab889dd68e00c0eb73fdd9843bbd",
+          "bytes": 19130
+        },
+        {
+          "path": "test/core/http/mdd_route_test.dart",
+          "sha256": "2f48fd0eb187cdaa8304d3c6a845e3c60c7e44a6129a0e17dbc3524bbcbb7c63",
+          "bytes": 2686
+        },
+        {
+          "path": "test/design/one_design_test.dart",
+          "sha256": "709ed8009b1e07905b2e2080715fad3d5b5ec5149eb3c2d5db00251746d3bf9d",
+          "bytes": 16693
+        },
+        {
+          "path": "test/features/auth/auth_api_test.dart",
+          "sha256": "9e2fc42bb055c5268f8583fb5cb666c7c561fbcd9117cdf87570ea6a0b3854c2",
+          "bytes": 2656
+        },
+        {
+          "path": "test/features/auth/auth_repository_test.dart",
+          "sha256": "a3926b4b495a2f8c3e2d2be8f602efcc4be2e45d01394ec9d6be48cd2c3565e8",
+          "bytes": 10040
+        },
+        {
+          "path": "test/features/auth/mdd_auth_test.dart",
+          "sha256": "561d5536c18899fa0d016d763eecbc9f84543e2f211984d5bcb21a9527434a0c",
+          "bytes": 3064
+        },
+        {
+          "path": "test/features/automation/data/automation_api_test.dart",
+          "sha256": "8dc8c2617d27567a02f411b6d2519d07e5528a14ba557253366f63ce80cda4cb",
+          "bytes": 10636
+        },
+        {
+          "path": "test/features/calls/data/android_sip_dial_lease_test.dart",
+          "sha256": "0ab6f8a26431c54f9c2d0f5acd44e8f7f42a15e784b1e222f26efaaf70b6f4aa",
+          "bytes": 952
+        },
+        {
+          "path": "test/features/calls/data/android_sip_runtime_test.dart",
+          "sha256": "32c120a968aee89f2f07380ca36bc8bfda5a8c02a8ec171268532f918d5a7645",
+          "bytes": 9960
+        },
+        {
+          "path": "test/features/calls/data/calls_api_test.dart",
+          "sha256": "36838a3fc38fc209e47f836b3015c05cd01ef665a5c1e2acd318fc458a7a4860",
+          "bytes": 1940
+        },
+        {
+          "path": "test/features/calls/data/mdd_calls_history_test.dart",
+          "sha256": "63b8926cd8f8705b55368ebc203b2f4d586720b105acd122c9487af3bfdea779",
+          "bytes": 1940
+        },
+        {
+          "path": "test/features/calls/data/mdd_pickup_contract_test.dart",
+          "sha256": "eb757d58a09b6f348155f8f7a8d352af5bed27b8209bd8320e2ee7dd9c1c9d24",
+          "bytes": 1232
+        },
+        {
+          "path": "test/features/calls/data/sip_call_service_test.dart",
+          "sha256": "38498d249424c14c6cc26ec53892d9abe105f0495a593b36a08ea16af3102f9e",
+          "bytes": 7608
+        },
+        {
+          "path": "test/features/devices/data/device_api_test.dart",
+          "sha256": "b83dfbd6bd446ed59a1baca4c679f60f27473e282523fcc0b733ea361111c8ab",
+          "bytes": 12214
+        },
+        {
+          "path": "test/features/devices/data/device_dto_test.dart",
+          "sha256": "63e416e911087946753cf63795e002642c7e729d7c344562c3281ed293436ebc",
+          "bytes": 53393
+        },
+        {
+          "path": "test/features/esim/data/esim_api_test.dart",
+          "sha256": "91010c17ae5c369098bc74d21bdabf87747f17001115d0aa5836dcc0bfad8d9d",
+          "bytes": 16775
+        },
+        {
+          "path": "test/features/esim/presentation/esim_edit_sheet_test.dart",
+          "sha256": "2f42b3c6132a4ba7bccb98412955f33cab697b3e18c2ad165c9ce1302dfe69d3",
+          "bytes": 35049
+        },
+        {
+          "path": "test/features/esim/presentation/esim_panel_test.dart",
+          "sha256": "b9f5e9d9e763b38d116f1e3f125c9f8c89d395ac81373b3d08816e2da68266a4",
+          "bytes": 7397
+        },
+        {
+          "path": "test/features/esim/presentation/esim_policy_regression_test.dart",
+          "sha256": "21ef81553e266942bb469267e5f912b86976a208d2190cfe351fc279173d8ea6",
+          "bytes": 16481
+        },
+        {
+          "path": "test/features/esim/state/esim_controller_lifecycle_test.dart",
+          "sha256": "69e22eb5e574bb08d1c56c532db993a7b4058b3bcc066222089217a23d812575",
+          "bytes": 17523
+        },
+        {
+          "path": "test/features/esim/state/esim_controller_test.dart",
+          "sha256": "2496a6fddbe1768400ec33dfb783659394151573ef53a6c147efeef0e78e2342",
+          "bytes": 10501
+        },
+        {
+          "path": "test/features/esim/state/esim_switch_bughunt_test.dart",
+          "sha256": "e0b3b1079df2ea321e69b4fb1e7ce522c45b523a9ed4c4bffce352706df91ba4",
+          "bytes": 4796
+        },
+        {
+          "path": "test/features/logs/data/logs_api_test.dart",
+          "sha256": "c05cbece2133ced0a5f0df123f74a544ad78f0ad9e32c5d92892bd3912396240",
+          "bytes": 1617
+        },
+        {
+          "path": "test/features/overview/data/overview_api_test.dart",
+          "sha256": "2ceec51cfec8841a296679f5df6146820faa5d72163059e192a6cb3efa7640f5",
+          "bytes": 7484
+        },
+        {
+          "path": "test/features/overview/data/overview_dto_test.dart",
+          "sha256": "7d165c67461a71b311eaccc5a07600d903a8eba09cbed0a310f89bcae2a25e49",
+          "bytes": 10977
+        },
+        {
+          "path": "test/features/settings/data/settings_api_test.dart",
+          "sha256": "ef4dc5882f67cac9026677e7a258af1e16e953d587e943ed092e5e0973050949",
+          "bytes": 12461
+        },
+        {
+          "path": "test/features/settings/data/settings_notify_roundtrip_bughunt_test.dart",
+          "sha256": "aec4f66a54269b0d629ce552bfea5034b227e73ba3de172560ebe388a91c139f",
+          "bytes": 4524
+        },
+        {
+          "path": "test/features/settings/presentation/settings_notify_sheet_test.dart",
+          "sha256": "87af5208a79eaf5db97c7869858ff8cf29a43ac1a1130817ffbdac17a58faef3",
+          "bytes": 27115
+        },
+        {
+          "path": "test/features/settings/presentation/settings_screen_test.dart",
+          "sha256": "ae771d5cca02e1a9a018e76a281922280c3ecbc771fd68a2ca20159704774840",
+          "bytes": 23422
+        },
+        {
+          "path": "test/features/settings/state/settings_controller_test.dart",
+          "sha256": "7e049961b03367c23083d36563cf759b466779eff1676bd8a0a114c6a93f018c",
+          "bytes": 11607
+        },
+        {
+          "path": "test/features/sms/data/remote_otp_pairing_test.dart",
+          "sha256": "e4183e62c82f74397d88dabadd7ac19f38d210fb4603ae65f6e9926379a587aa",
+          "bytes": 3093
+        },
+        {
+          "path": "test/features/sms/data/sms_api_test.dart",
+          "sha256": "d9a8056b056efdc37522426038721266ffb0b39c86fa9842048c121c06197abb",
+          "bytes": 7540
+        },
+        {
+          "path": "test/fixtures/mdd/dashboard-devices.json",
+          "sha256": "9830941b76581c23d3f0c97a9a02421ac4142a49ece761b6814aef1d592fdd5a",
+          "bytes": 5630
+        },
+        {
+          "path": "test/fixtures/mdd/dashboard-host.json",
+          "sha256": "87858b08fb98446ee081820c2a781cc666a97d44177ba0daec0a1f1d8e5285e7",
+          "bytes": 448
+        },
+        {
+          "path": "test/fixtures/mdd/device-overview.json",
+          "sha256": "f688770af386b993d379462719efb883a8bc5fba84c3c6f30c5cc43016b6863e",
+          "bytes": 3054
+        },
+        {
+          "path": "test/fixtures/mdd/devices.json",
+          "sha256": "341e6677bf3313fa3321dc02e490e0db29ca482375e41e47c170512305ab75b3",
+          "bytes": 6073
+        },
+        {
+          "path": "test/fixtures/mdd/esim-overview.json",
+          "sha256": "bf9381d4f4daeb5acd4d511facbdeab60020580e0a37e34ec0245b0bd41938dc",
+          "bytes": 629
+        },
+        {
+          "path": "test/fixtures/mdd/esim-profiles.json",
+          "sha256": "a912cbf3d6d290bc085ac8c407ca6a4817c5460a6d13c402e9348965c219b52a",
+          "bytes": 369
+        },
+        {
+          "path": "test/fixtures/mdd/notification-settings.json",
+          "sha256": "3f3d6dca15d7fbb5fe19263e9d0eb6c55b2512a162b4fbafe966d01fdf667b4e",
+          "bytes": 765
+        },
+        {
+          "path": "test/fixtures/mdd/preferences.json",
+          "sha256": "7fe19164fcf644850c39df5a920843833c2b7c2bf30fd0badcf91e19b5de0f13",
+          "bytes": 41
+        },
+        {
+          "path": "test/fixtures/mdd/sms-contacts.json",
+          "sha256": "4821d9d4033e621830d1d73576a3dcd9e712a0912897ac25ad7e05dc36b5ad13",
+          "bytes": 353
+        },
+        {
+          "path": "test/fixtures/mdd/sms-settings.json",
+          "sha256": "2ae6f3c81e411c7091ec8d84844ac47f078ff04878f0050fc80a758f42bc6459",
+          "bytes": 57
+        },
+        {
+          "path": "test/fixtures/mdd/system-info.json",
+          "sha256": "16e8289f77bf50c840fd522dd3954ea42c8c5e0b2d7c32c3f892ee921f81fb19",
+          "bytes": 90
+        },
+        {
+          "path": "test/mdd_generated_contract_test.dart",
+          "sha256": "8cb4292b0d554b4d4a1737c94fb551645f7e7ecde35d560b877ae64f3a82246b",
+          "bytes": 3953
+        }
+      ]
+    }
+  },
+  "shared_dart": [
+    {
+      "path": "lib/core/config/mdd_mobile_contract.dart",
+      "ios": "123bb65ebad1db1d694608c74d9b55e13ed5bb5303e798bfdff5bfa5d8ac4f42",
+      "android": "123bb65ebad1db1d694608c74d9b55e13ed5bb5303e798bfdff5bfa5d8ac4f42",
+      "equal": true
+    },
+    {
+      "path": "lib/features/calls/data/sip_call_service.dart",
+      "ios": "d14a4044a8c08cf6beaf325b0e12c9e388ec05c979d25b1fc337f66c932f892b",
+      "android": "d14a4044a8c08cf6beaf325b0e12c9e388ec05c979d25b1fc337f66c932f892b",
+      "equal": true
+    }
+  ],
+  "asgi_fixtures": [
+    {
+      "name": "dashboard-devices.json",
+      "mdd": "9830941b76581c23d3f0c97a9a02421ac4142a49ece761b6814aef1d592fdd5a",
+      "ios": "9830941b76581c23d3f0c97a9a02421ac4142a49ece761b6814aef1d592fdd5a",
+      "android": "9830941b76581c23d3f0c97a9a02421ac4142a49ece761b6814aef1d592fdd5a",
+      "equal": true
+    },
+    {
+      "name": "dashboard-host.json",
+      "mdd": "87858b08fb98446ee081820c2a781cc666a97d44177ba0daec0a1f1d8e5285e7",
+      "ios": "87858b08fb98446ee081820c2a781cc666a97d44177ba0daec0a1f1d8e5285e7",
+      "android": "87858b08fb98446ee081820c2a781cc666a97d44177ba0daec0a1f1d8e5285e7",
+      "equal": true
+    },
+    {
+      "name": "device-overview.json",
+      "mdd": "f688770af386b993d379462719efb883a8bc5fba84c3c6f30c5cc43016b6863e",
+      "ios": "f688770af386b993d379462719efb883a8bc5fba84c3c6f30c5cc43016b6863e",
+      "android": "f688770af386b993d379462719efb883a8bc5fba84c3c6f30c5cc43016b6863e",
+      "equal": true
+    },
+    {
+      "name": "devices.json",
+      "mdd": "341e6677bf3313fa3321dc02e490e0db29ca482375e41e47c170512305ab75b3",
+      "ios": "341e6677bf3313fa3321dc02e490e0db29ca482375e41e47c170512305ab75b3",
+      "android": "341e6677bf3313fa3321dc02e490e0db29ca482375e41e47c170512305ab75b3",
+      "equal": true
+    },
+    {
+      "name": "esim-overview.json",
+      "mdd": "bf9381d4f4daeb5acd4d511facbdeab60020580e0a37e34ec0245b0bd41938dc",
+      "ios": "bf9381d4f4daeb5acd4d511facbdeab60020580e0a37e34ec0245b0bd41938dc",
+      "android": "bf9381d4f4daeb5acd4d511facbdeab60020580e0a37e34ec0245b0bd41938dc",
+      "equal": true
+    },
+    {
+      "name": "esim-profiles.json",
+      "mdd": "a912cbf3d6d290bc085ac8c407ca6a4817c5460a6d13c402e9348965c219b52a",
+      "ios": "a912cbf3d6d290bc085ac8c407ca6a4817c5460a6d13c402e9348965c219b52a",
+      "android": "a912cbf3d6d290bc085ac8c407ca6a4817c5460a6d13c402e9348965c219b52a",
+      "equal": true
+    },
+    {
+      "name": "notification-settings.json",
+      "mdd": "3f3d6dca15d7fbb5fe19263e9d0eb6c55b2512a162b4fbafe966d01fdf667b4e",
+      "ios": "3f3d6dca15d7fbb5fe19263e9d0eb6c55b2512a162b4fbafe966d01fdf667b4e",
+      "android": "3f3d6dca15d7fbb5fe19263e9d0eb6c55b2512a162b4fbafe966d01fdf667b4e",
+      "equal": true
+    },
+    {
+      "name": "preferences.json",
+      "mdd": "7fe19164fcf644850c39df5a920843833c2b7c2bf30fd0badcf91e19b5de0f13",
+      "ios": "7fe19164fcf644850c39df5a920843833c2b7c2bf30fd0badcf91e19b5de0f13",
+      "android": "7fe19164fcf644850c39df5a920843833c2b7c2bf30fd0badcf91e19b5de0f13",
+      "equal": true
+    },
+    {
+      "name": "sms-contacts.json",
+      "mdd": "4821d9d4033e621830d1d73576a3dcd9e712a0912897ac25ad7e05dc36b5ad13",
+      "ios": "4821d9d4033e621830d1d73576a3dcd9e712a0912897ac25ad7e05dc36b5ad13",
+      "android": "4821d9d4033e621830d1d73576a3dcd9e712a0912897ac25ad7e05dc36b5ad13",
+      "equal": true
+    },
+    {
+      "name": "sms-settings.json",
+      "mdd": "2ae6f3c81e411c7091ec8d84844ac47f078ff04878f0050fc80a758f42bc6459",
+      "ios": "2ae6f3c81e411c7091ec8d84844ac47f078ff04878f0050fc80a758f42bc6459",
+      "android": "2ae6f3c81e411c7091ec8d84844ac47f078ff04878f0050fc80a758f42bc6459",
+      "equal": true
+    },
+    {
+      "name": "system-info.json",
+      "mdd": "16e8289f77bf50c840fd522dd3954ea42c8c5e0b2d7c32c3f892ee921f81fb19",
+      "ios": "16e8289f77bf50c840fd522dd3954ea42c8c5e0b2d7c32c3f892ee921f81fb19",
+      "android": "16e8289f77bf50c840fd522dd3954ea42c8c5e0b2d7c32c3f892ee921f81fb19",
+      "equal": true
+    }
+  ],
+  "webui_build": [
+    {
+      "path": "webui/dist/assets/index-C2XIokM5.js",
+      "sha256": "2b6b97c15ecd43281ae675ee1924bba2ba9762a0c63acaae73f69139417cb47a"
+    },
+    {
+      "path": "webui/dist/assets/index-CFTgGXmZ.css",
+      "sha256": "24c84cc6195cfdc75b98f8a37f659a775b2be196a885cdbd7eff09137dba10ff"
+    },
+    {
+      "path": "webui/dist/assets/jsQR-CE-85tRk.js",
+      "sha256": "57563b3195391c4ec2749acafc903c6fe352b92aa96f163e4774ca230606d08f"
+    },
+    {
+      "path": "webui/dist/assets/react-C8w-UNLI.js",
+      "sha256": "e3433df4feab965bf9eddd674fcf1eab77c0329b3cd1469ba2cbab2498bb9dc3"
+    },
+    {
+      "path": "webui/dist/assets/sip-B6C4mmii.js",
+      "sha256": "a50cdd6b90b3dd20a51c1396b1f99b34c9e143cd8ca642158242d6c8a6440f60"
+    },
+    {
+      "path": "webui/dist/assets/Twemoji.Mozilla-Cf7TwsdM.ttf",
+      "sha256": "61db6397b8b32b72c585d538ef698a84cf78cf2558a14046b3fa0ec4cc362540"
+    },
+    {
+      "path": "webui/dist/index.html",
+      "sha256": "22928e53bba5ff083d5d9eb227e3c95bffc9ae3c3be6949008307cffbbe8d9af"
+    },
+    {
+      "path": "webui/dist/logo.svg",
+      "sha256": "f9188232b9dd89e11439fd97983e2b414e7fd02c8fadce30acbcf7175e052f9e"
+    },
+    {
+      "path": "webui/dist/ONWIFI-LICENSE.txt",
+      "sha256": "09f783ae7a53b539311a3761785520564509e767c1671f0935a11988e34b721f"
+    }
+  ],
+  "preserved_android_tls": {
+    "sha256": "be1801eb668e90134a911e68bcd5266a727929a1d7e13a1de6335961ababc400",
+    "matches_original_dirty_baseline": true
+  }
+}

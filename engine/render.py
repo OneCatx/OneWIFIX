@@ -218,6 +218,14 @@ def sanitize_user_agent(value):
     return " ".join(cleaned.split())[:MAX_USER_AGENT_LEN].strip()
 
 
+def profile_user_agent(value):
+    """Printable bundled carrier UA; semicolons are escaped in the template."""
+    value = str(value or "")
+    if len(value) > 192 or any(ch < " " or ch > "~" for ch in value):
+        raise ValueError("invalid bundled carrier User-Agent")
+    return value
+
+
 MAX_URI_PARAMS_LEN = 128
 _URI_PARAM = re.compile(r"[A-Za-z0-9._~+%:-]+(?:=[A-Za-z0-9._~+%:-]+)?")
 
@@ -237,7 +245,7 @@ def sanitize_uri_params(value):
 def build_context(cfg):
     mcc = str(cfg["mcc"])
     mnc = str(cfg["mnc"]).zfill(3)
-    imsi = str(cfg["imsi"])
+    imsi = str(cfg.get("subscriber_imsi") or cfg["imsi"])
     realm = cfg.get("realm") or f"ims.mnc{mnc}.mcc{mcc}.3gppnetwork.org"
     epdg = cfg.get("epdg") or f"epdg.epc.mnc{mnc}.mcc{mcc}.pub.3gppnetwork.org"
     nai = f"0{imsi}@nai.epc.mnc{mnc}.mcc{mcc}.3gppnetwork.org"
@@ -249,6 +257,7 @@ def build_context(cfg):
         except Exception:
             pcscf = ""
     sip = cfg.get("sip", {})
+    carrier_ike = cfg.get("carrier_ike", {}) or {}
     webrtc = sip.get("webrtc", {}) or {}
     ami_secret = str(cfg.get("ami_secret") or "")
     webrtc_password = str(webrtc.get("password") or "")
@@ -281,13 +290,14 @@ def build_context(cfg):
     ctx = {
         "id": str(cfg.get("id", "1")),
         "imsi": imsi,
-        "reader": cfg.get("reader") or f"imsi:{imsi}",
-        "ami_reader": cfg.get("ami_reader") or cfg.get("reader") or f"imsi:{imsi}",
+        "reader": cfg.get("reader") or f"imsi:{cfg['imsi']}",
+        "ami_reader": cfg.get("ami_reader") or cfg.get("reader") or f"imsi:{cfg['imsi']}",
         "mcc": mcc,
         "mnc": mnc,
         "imei": cfg.get("imei", ""),
         "realm": realm,
         "epdg": epdg,
+        "carrier_profile": cfg.get("carrier_profile", "standard-3gpp"),
         "nai": nai,
         "msisdn": cfg.get("msisdn", ""),
         "smsc": cfg.get("smsc", ""),
@@ -302,10 +312,23 @@ def build_context(cfg):
         # P-Access-Network-Info: i-wlan-node-id should be the Wi-Fi AP BSSID (MAC). The
         # carrier P-CSCF augments this; a bogus value can make some SMSCs reject MO SMS.
         "pani": (sip.get("pani") or r"IEEE-802.11\;i-wlan-node-id=ffffffffffff"),
+        "pani_enabled": sip.get("pani_enabled", True),
         "access_type": (sip.get("access_type") or ""),
+        "ims_transport": sip.get("transport") if sip.get("transport") in ("tcp", "udp") else "tcp",
+        "ims_security": sip.get("security") if sip.get("security") in ("required", "optional", "disabled") else "required",
+        "ims_ipsec_encryption": (sip.get("ipsec_encryption")
+                                 if sip.get("ipsec_encryption") in ("aes-cbc", "null") else "aes-cbc"),
+        "ims_sec_port_c": 5062 if sip.get("ipsec_encryption") == "null" else None,
+        "ims_sec_port_s": 5063 if sip.get("ipsec_encryption") == "null" else None,
+        "register_expires": (max(60, min(86400, int(sip["register_expires"])))
+                             if sip.get("register_expires") else 600000),
+        "volte_o2_register": bool(sip.get("volte_o2_register", False)),
+        "volte_ultra_contact": bool(sip.get("volte_ultra_contact", False)),
         # Transparent product identity unless the line overrides it (carrier User-Agent
         # whitelists answer 403 to an unknown terminal). Blank/unset keeps the default.
-        "user_agent": sanitize_user_agent(sip.get("user_agent")) or DEFAULT_USER_AGENT,
+        "user_agent": (profile_user_agent(sip["carrier_user_agent"])
+                       if sip.get("carrier_user_agent")
+                       else sanitize_user_agent(sip.get("user_agent")) or DEFAULT_USER_AGENT),
         "user_eq_phone": bool(sip.get("user_eq_phone", False)),
         # Rendered by the manager only when switched on; a hand-authored file may still say
         # invite_uri_params_enable: false to keep the text without using it.
@@ -362,6 +385,7 @@ def main():
     with open(CFG_PATH) as f:
         cfg = json.load(f)
     ctx = build_context(cfg)
+    carrier_ike = cfg.get("carrier_ike", {}) or {}
 
     env = Environment(loader=FileSystemLoader(TPL_DIR), trim_blocks=True, lstrip_blocks=True,
                       keep_trailing_newline=True)
@@ -451,6 +475,9 @@ def main():
         # different order. Empty -> fall back to USIM_READER_INDEX.
         put("USIM_READER_PORT", cfg.get("reader_port", ""))
         put("USIM_IMSI", ctx["imsi"])
+        put("SWU_IKE_PROPOSAL", carrier_ike.get("proposal", ""))
+        put("SWU_EAP_ONLY", "1" if carrier_ike.get("advertise_eap_only", True) else "0")
+        put("SWU_DNS_CLIENT_SUBNET", cfg.get("epdg_dns_client_subnet", ""))
         # IMEI / IMEISV for the ePDG DEVICE_IDENTITY response. imeisv falls back to a value
         # derived from the IMEI if the instance didn't carry one (hand-authored config).
         imei_digits = "".join(ch for ch in str(cfg.get("imei", "")) if ch.isdigit())

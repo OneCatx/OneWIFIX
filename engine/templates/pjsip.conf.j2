@@ -1,7 +1,7 @@
 [global]
 type=global
 allow_sending_180_after_183=yes
-user_agent={{ user_agent }}
+user_agent={{ user_agent | replace(";", "\\;") }}
 
 [system]
 type=system
@@ -13,21 +13,21 @@ timer_b=128000
 ; ================= VoLTE / VoWiFi IMS core transport (over the ePDG tunnel) =================
 [volte_ims]
 type=transport
-protocol=tcp
+protocol={{ ims_transport }}
 {% if pcscf_is_v6 %}
 bind=[::]:5060
 {% else %}
 bind=0.0.0.0:5060
 {% endif %}
 bind_interface=ipsec0
-sec_port_c_min=40000
-sec_port_c_max=44999
-sec_port_s_min=50000
-sec_port_s_max=54999
-{% if pani %}
+sec_port_c_min={{ ims_sec_port_c or 40000 }}
+sec_port_c_max={{ ims_sec_port_c or 44999 }}
+sec_port_s_min={{ ims_sec_port_s or 50000 }}
+sec_port_s_max={{ ims_sec_port_s or 54999 }}
+{% if pani_enabled and pani %}
 p_access_network_info={{ pani }}
 {% endif %}
-sec_encryption=yes
+sec_encryption={{ 'no' if ims_security == 'disabled' or ims_ipsec_encryption == 'null' else 'yes' }}
 
 {% if pcscf %}
 [volte_ims]
@@ -43,8 +43,14 @@ client_uri=sip:{{ imsi }}@{{ realm }}
 retry_interval=30
 fatal_retry_interval=30
 max_retries=999999999
-expiration=600000
+expiration={{ register_expires }}
 volte=yes
+{% if volte_o2_register %}
+volte_o2_register=yes
+{% endif %}
+{% if volte_ultra_contact %}
+volte_ultra_contact=yes
+{% endif %}
 manual_register=yes
 endpoint=volte_ims
 receive_sms=yes

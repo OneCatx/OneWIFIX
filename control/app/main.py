@@ -20,6 +20,7 @@ import random
 import re
 import tempfile
 import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -36,7 +37,8 @@ from . import (store, engine, status as status_mod, sim, card, notify_push, lpa,
                estkme, usbreader, egress, device_state, operations, update_check, cellular_sms,
                sysinfo, failover, carrier_id, allowance, cellular_call, sms_pdu, ussd, mms,
                mms_media, mms_staging, mms_transport, softphone_ws, modem_ims, vowifi_support,
-               modem_voice, gate, line_offline, contacts, media, clients, authz)
+               modem_voice, gate, line_offline, contacts, media, clients, authz,
+               mobile_notify, mobile_apns, mobile_pairing, mobile_settings)
 from .version import VERSION
 from .ami import AmiClient
 from .runtime import RuntimeRegistry
@@ -483,6 +485,12 @@ class Hub:
         self.esim_switch_locks: dict[str, asyncio.Lock] = {}
         self.lpa_busy: dict[str, bool] = {}  # readers currently owned by an LPA op
         self.lpa_downloads: dict[str, dict] = {}  # reader_name -> active download handle
+        self.esim_download_listeners: dict[str, set[asyncio.Queue]] = {}
+        self.esim_download_ops: dict[str, str] = {}
+        self.esim_download_reservations: dict[str, str] = {}  # physical switch key -> operation ID
+        self.esim_download_cancelled: set[str] = set()
+        self.esim_download_started: set[str] = set()
+        self.esim_download_terminal: set[str] = set()
         self.card_rereads: set[str] = set()  # readers with a draft-completing re-read queued
         self.hotplug_starts: set[str] = set()  # debounce duplicate modem VPCD slots
         # When each line last became healthy, so a failure can be attributed. A line that
@@ -598,6 +606,9 @@ class Hub:
                     exit_record or "unrecorded")
 
     async def broadcast(self, msg: dict):
+        if msg.get("type") == "esim_download":
+            for queue in tuple(self.esim_download_listeners.get(str(msg.get("reader") or ""), ())):
+                queue.put_nowait(dict(msg))
         dead = []
         for ws in list(self.clients):
             view = authz.event_for(gate.current(ws), msg)
@@ -1999,6 +2010,11 @@ async def _publish_incoming_sms(rec: dict) -> None:
         return
     await asyncio.to_thread(_harvest_allowance_reply, iid, rec["peer"])
     _dispatch_push(notify_push.EV_INCOMING_SMS, iid, rec["peer"], rec["body"])
+    inst = cfg.get_instance(iid) or {}
+    event = {"id": rec["id"], "deviceId": iid,
+             "deviceLabel": str(inst.get("name") or iid), "number": rec["peer"],
+             "content": rec["body"], "atMs": int(rec["ts"]) * 1000}
+    asyncio.create_task(asyncio.to_thread(mobile_notify.incoming_sms, cfg.get_settings(), event))
 
 
 def _mms_push_text(rec: dict) -> str:
@@ -3071,10 +3087,11 @@ def api_auth_status(request: Request):
     body = {"configured": auth.configured(), "authenticated": who.kind == "admin",
             "username": auth.username(), "csrf": who.csrf,
             # What this gateway offers a client app, which may be newer or older than it.
-            "api": 1, "features": ["client_tokens"]}
+            "api": 1, "features": ["client_tokens", "mobile_api_v1"]}
     if who.kind == "client":
         # A client that reaches this is signed in: its token was checked on the way.
-        body.update({"authenticated": True, "kind": "client", "client_id": who.client_id})
+        body.update({"authenticated": True, "kind": "client", "client_id": who.client_id,
+                     "client": clients.get_public(who.client_id)})
     return body
 
 
@@ -3171,7 +3188,8 @@ def api_auth_client_login(body: dict, request: Request):
     try:
         client, token = clients.register(str(body.get("name") or ""),
                                          str(body.get("platform") or "other"),
-                                         str(body.get("app_version") or ""))
+                                         str(body.get("app_version") or ""),
+                                         body.get("capabilities"))
     except clients.ClientError as exc:
         raise HTTPException(400, str(exc)) from exc
     return {"token": token, "client": client}
@@ -3616,9 +3634,11 @@ async def _esim_prepare_reader_profile_switch(name: str) -> dict[str, dict]:
     return previous
 
 
-async def _esim_restore_profile_switch(previous: dict[str, dict]):
+async def _esim_restore_profile_switch(previous: dict[str, dict],
+                                       verified_iccid: str | None = None):
     """Restore both saved intent and the exact running snapshot after an LPA failure."""
     changed = False
+    restart_errors = []
     for iid, state in previous.items():
         inst = cfg.get_instance(iid)
         if not inst:
@@ -3628,15 +3648,123 @@ async def _esim_restore_profile_switch(previous: dict[str, dict]):
             inst = await asyncio.to_thread(
                 cfg.upsert_instance, {"id": iid, "enabled": enabled})
             changed = True
-        if state.get("running") and enabled:
+        if state.get("running") and enabled and (
+                verified_iccid is None or str(inst.get("iccid") or "") == verified_iccid):
             try:
                 await asyncio.to_thread(
                     _start_engine_checked, inst, cfg.get_settings(),
                     os.environ.get("MDD_DEV_MOUNTS", "") == "1")
             except Exception as exc:  # noqa
                 log.warning("could not restore line %s after failed eSIM switch: %s", iid, exc)
+                restart_errors.append(iid)
     if changed:
         egress.publish()
+    if restart_errors:
+        raise RuntimeError("original line restart failed for " + ", ".join(restart_errors))
+
+
+async def _esim_profile_inventory(name: str, aid: str | None) -> tuple[str, str, set[str]]:
+    """Read actual eUICC EID and enabled ICCID, never the optimistic UI cache."""
+    chip = await lpa.chip_info(name, aid=aid)
+    eid = str((chip or {}).get("eid") or "").strip()
+    profiles = await lpa.profile_list(name, aid=aid)
+    if not eid or not isinstance(profiles, list):
+        raise RuntimeError("eUICC identity or profile inventory is unavailable")
+    enabled = {str(p.get("iccid") or "") for p in profiles if isinstance(p, dict)
+               and str(p.get("profileState") or "").lower() == "enabled"}
+    if "" in enabled or len(enabled) > 1:
+        raise RuntimeError("ambiguous enabled profile inventory")
+    return eid, next(iter(enabled), ""), {
+        str(p.get("iccid")) for p in profiles if isinstance(p, dict) and p.get("iccid")}
+
+
+async def _esim_retry_profile_inventory(name: str, aid: str | None):
+    """Allow the eUICC's post-REFRESH PC/SC reset to settle before declaring unknown state."""
+    for attempt in range(ESIM_CARD_REFRESH_ATTEMPTS):
+        try:
+            return await _esim_profile_inventory(name, aid)
+        except (lpa.LpaError, OSError) as exc:
+            if attempt + 1 == ESIM_CARD_REFRESH_ATTEMPTS:
+                raise RuntimeError("eUICC inventory unavailable after refresh") from exc
+            await asyncio.sleep(ESIM_CARD_REFRESH_INTERVAL)
+
+
+async def _esim_enable_captured(name: str, iccid: str, aid: str | None,
+                                snapshot: dict):
+    """Called inside _esim_run's reader lock: snapshot and ES10 enable are one transaction."""
+    eid, previous_iccid, installed = await _esim_profile_inventory(name, aid)
+    if iccid not in installed:
+        raise HTTPException(404, "target profile is not installed on this eUICC")
+    snapshot.update(eid=eid, previous_iccid=previous_iccid, aid=aid)
+    if previous_iccid == iccid:
+        return
+    await lpa.profile_enable(name, iccid, aid=aid)
+
+
+async def _esim_active_profile_card(name: str, idx: int, iccid: str,
+                                    aid: str | None):
+    eid, active, installed = await _esim_profile_inventory(name, aid)
+    card_info = None
+    if active == iccid and iccid in installed:
+        card_info = await _esim_probe_card(
+            idx, expect_iccid=iccid, attempts=ESIM_CARD_REFRESH_ATTEMPTS)
+        if str(card_info.iccid or "") != iccid:
+            raise HTTPException(409, "enabled profile does not match the physical reader card")
+    return eid, active, installed, card_info
+
+
+async def _esim_compensate_enable(name: str, idx: int, hardware_id: str,
+                                  target_iccid: str, snapshot: dict,
+                                  previous_lines: dict[str, dict]) -> str:
+    """Prove eUICC and physical card before restoring any saved line intent."""
+    expected_eid = str(snapshot.get("eid") or "")
+    previous_iccid = str(snapshot.get("previous_iccid") or "")
+    aid = snapshot.get("aid")
+    if not expected_eid or not previous_iccid:
+        raise RuntimeError("no proven previous enabled profile; lines remain disabled")
+    # Recovery can have enabled the new line before a later stage fails. Stop only the
+    # exact target line on this physical modem before changing card credentials again.
+    target = _match_instance_by_iccid(target_iccid)
+    if target and hardware_id and _esim_instance_uses_modem(target, hardware_id):
+        iid = str(target["id"])
+        if await asyncio.to_thread(engine.is_running, iid):
+            await asyncio.to_thread(engine.stop, iid)
+            await hub.drop_ami(iid)
+        if target.get("enabled", True):
+            await asyncio.to_thread(cfg.upsert_instance, {"id": iid, "enabled": False})
+    async with hub.reader_lock(name):
+        eid, active, installed = await _esim_retry_profile_inventory(name, aid)
+        if eid != expected_eid:
+            raise RuntimeError("eUICC EID changed; refusing compensation")
+        if previous_iccid not in installed:
+            raise RuntimeError("original profile is missing from the same eUICC")
+        if active != previous_iccid:
+            await lpa.profile_enable(name, previous_iccid, aid=aid)
+            eid, active, _ = await _esim_retry_profile_inventory(name, aid)
+            if eid != expected_eid or active != previous_iccid:
+                raise RuntimeError("original profile re-enable did not verify")
+    if hardware_id:
+        await _esim_restart_modem_bridge(hardware_id, previous_iccid)
+        await _esim_refresh_modem_readers(name, hardware_id, previous_iccid)
+    else:
+        card_data = await _esim_probe_card(
+            idx, expect_iccid=previous_iccid, attempts=ESIM_CARD_REFRESH_ATTEMPTS)
+        if str(card_data.iccid or "") != previous_iccid:
+            raise RuntimeError("physical reader did not return to the original ICCID")
+        await _esim_refresh_card(name, idx, card_data=card_data, auto_start=False)
+    await _esim_restore_profile_switch(previous_lines, verified_iccid=previous_iccid)
+    return previous_iccid
+
+
+async def _esim_compensate_cancelled(*args):
+    """Keep the transaction lock until compensation finishes despite repeated cancellation."""
+    task = asyncio.create_task(_esim_compensate_enable(*args))
+    while not task.done():
+        try:
+            await asyncio.shield(task)
+        except asyncio.CancelledError:
+            continue
+    return task.result()
 
 
 def _esim_write_bridge_restart_request(hardware_id: str, iccid: str) -> tuple[str, str]:
@@ -3774,6 +3902,8 @@ async def _esim_run(
     try:
         await asyncio.to_thread(_esim_guard_engine, name)
         async with hub.reader_lock(name):
+            if hub.esim_download_reservations.get(_esim_switch_identity(name)[0]):
+                raise HTTPException(409, "an eSIM download is already running on this reader")
             hub.lpa_busy[name] = True
             try:
                 result = await coro
@@ -5206,13 +5336,14 @@ async def api_device_capabilities(device_id: str, body: dict):
 
 @app.get("/api/settings")
 def api_get_settings():
-    return {key: value for key, value in cfg.get_settings().items() if key != "system_name"}
+    return mobile_settings.native_view(cfg.get_settings())
 
 
 @app.put("/api/settings")
 def api_put_settings(body: dict):
     # Ignore the legacy field from older cached clients. Product identity is fixed.
     body.pop("system_name", None)
+    mobile_settings.prepare_native(body, cfg.get_settings())
     proxy = body.get("proxy")
     if proxy is not None:
         if not isinstance(proxy, dict) or not isinstance(proxy.get("profiles", {}), dict) \
@@ -5344,7 +5475,7 @@ def api_put_settings(body: dict):
     if defaults is not None:
         device_state.set_defaults(**defaults)
     egress.publish(settings=saved)
-    return {key: value for key, value in saved.items() if key != "system_name"}
+    return mobile_settings.native_view(saved)
 
 
 @app.get("/api/egress/status")
@@ -5502,6 +5633,60 @@ async def api_feishu_test(body: dict):
         raise HTTPException(400, str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(502, str(exc)) from exc
+
+
+@app.post("/api/notifications/wecom/test")
+async def api_wecom_test(body: dict):
+    try:
+        patch_data = {"wecom": dict(body)}
+        mobile_settings.prepare_native(patch_data, cfg.get_settings())
+        return await asyncio.to_thread(notify_push.send_wecom, patch_data["wecom"],
+                                       _test_push_payload())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
+@app.post("/api/notifications/bark/test")
+async def api_bark_test(body: dict):
+    try:
+        patch_data = {"bark": dict(body)}
+        mobile_settings.prepare_native(patch_data, cfg.get_settings())
+        return await asyncio.to_thread(notify_push.send_bark, patch_data["bark"],
+                                       _test_push_payload())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
+@app.post("/api/notifications/apns/test")
+async def api_apns_test(body: dict | None = None):
+    if body and set(body) - {"kind"}:
+        raise HTTPException(422, "APNs test cannot target arbitrary tokens")
+    if body and body.get("kind") not in (None, "sms"):
+        raise HTTPException(501, "VoIP APNs test needs a live ringing call")
+    settings = cfg.get_settings().get("apns") or {}
+    if not settings.get("enabled"):
+        raise HTTPException(409, "SMS APNs provider is disabled")
+    endpoints = [item for item in mobile_pairing.sms_endpoints()
+                 if item.get("environment") == settings.get("environment")]
+    if not endpoints:
+        raise HTTPException(409, "no owned SMS APNs endpoint registered for this environment")
+    event = {"id": int(time.time() * 1000), "content": "MDD APNs test",
+             "number": "", "deviceLabel": "MDD"}
+    accepted = 0
+    for endpoint in endpoints:
+        try:
+            await asyncio.to_thread(mobile_apns.send_sms, settings, endpoint["device_token"], event)
+            accepted += 1
+        except Exception as exc:  # noqa: do not leak token/key in exception text
+            log.warning("APNs test acceptance failed: %s", type(exc).__name__)
+    if accepted != len(endpoints):
+        raise HTTPException(502, f"APNs accepted {accepted}/{len(endpoints)} test requests")
+    return {"ok": True, "accepted": accepted, "attempted": len(endpoints),
+            "delivery_confirmed": False}
 
 
 @app.get("/api/notifications/deliveries")
@@ -8011,7 +8196,8 @@ async def api_engine_event(payload: dict):
         # trailing retransmit a few seconds AFTER it was finalized. add_call_deduped coalesces
         # both into the single record so no ghost 'ringing' row is left behind.
         peer = args[0] if args else ""
-        rec = store.add_call_deduped(iid, "in", peer, status="ringing")
+        call_id = str(args[1] or "") if len(args) > 1 else ""
+        rec = store.add_call_deduped(iid, "in", peer, status="ringing", call_id=call_id)
         await hub.broadcast({"type": "call", "instance": iid, "call": rec})
         # Push-notify ONCE per real inbound call. IMS re-delivers call_in several times for
         # one call (VoLTE preconditions / GRUU fork / retransmit); add_call_deduped folds
@@ -8022,13 +8208,24 @@ async def api_engine_event(payload: dict):
         cid = rec.get("id")
         if cid is not None and cid not in hub._pushed_calls:
             if peer or int(time.time()) - int(rec.get("start_ts", 0)) >= 4:
-                hub._pushed_calls.add(cid)
-                if len(hub._pushed_calls) > 512:      # bound the dedupe set
-                    hub._pushed_calls = set(list(hub._pushed_calls)[-256:])
-                _dispatch_push(notify_push.EV_INCOMING_CALL, iid, rec.get("peer") or peer)
+                await _push_ringing_call(iid, call_id, cid)
+            elif call_id:
+                asyncio.create_task(_push_anonymous_call(iid, call_id, cid))
     elif event == "call_out" and args:
-        rec = store.add_call(iid, "out", args[0], status="dialing")
+        call_id = str(args[1] or "") if len(args) > 1 else ""
+        rec = store.add_call_correlated(iid, "out", args[0], status="dialing", call_id=call_id)
         await hub.broadcast({"type": "call", "instance": iid, "call": rec})
+    elif event == "call_answer" and args:
+        call_id = str(args[0] or "")
+        rec = store.get_call_by_id(iid, call_id)
+        if call_id and not rec:
+            # The answer hook is a backgrounded process and may beat call_in. Reserve its
+            # exact identity as answered; the later call_in fills peer, never reopens it.
+            rec = store.add_call_correlated(iid, "in", "", status="answered", call_id=call_id)
+        if rec and rec.get("direction") == "in" and rec.get("status") == "ringing":
+            store.update_call(rec["id"], "answered")
+            rec["status"] = "answered"
+            await hub.broadcast({"type": "call", "instance": iid, "call": rec})
     elif event == "call_result" and args:
         # New form: call_result <direction> <peer> <dialstatus> <cause> (fired from the 'h'
         # hangup handler for BOTH directions). Legacy form: call_result <peer> <dialstatus>
@@ -8038,14 +8235,21 @@ async def api_engine_event(payload: dict):
             to = args[1] if len(args) > 1 else ""
             dialstatus = (args[2] if len(args) > 2 else "").upper()
             cause = int(args[3]) if len(args) > 3 and str(args[3]).isdigit() else 0
+            call_id = str(args[5] or "") if len(args) > 5 else ""
         else:
             direction = "out"
             to = args[0]
             dialstatus = (args[1] if len(args) > 1 else "").upper()
             cause = int(args[2]) if len(args) > 2 and str(args[2]).isdigit() else 0
+            call_id = ""
         disp = _call_disposition(dialstatus, cause, direction, to)
-        rec = store.update_last_call(iid, direction, to, disp)
-        if not rec and to:
+        exact = {"call_id": call_id} if call_id else {}
+        rec = store.update_last_call(iid, direction, to, disp, **exact)
+        if not rec and call_id:
+            # The backgrounded start callback can be delayed indefinitely or lost. Reserve
+            # the exact terminal identity now; a later start only fills its missing peer.
+            rec = store.finalize_call_by_id(iid, direction, call_id, to, disp)
+        if not rec and to and not call_id:
             # The dialplan fires call_out and call_result from separate backgrounded
             # notify.py processes ('&'), so nothing orders them. On a call that lasts under a
             # second — a dialled service code answered on the BYE does exactly that — the
@@ -8060,15 +8264,15 @@ async def api_engine_event(payload: dict):
             # overtook its own call_out.
             for _ in range(15):
                 await asyncio.sleep(0.2)
-                rec = store.update_last_call(iid, direction, to, disp)
+                rec = store.update_last_call(iid, direction, to, disp, **exact)
                 if rec:
                     log.info("call_result for %s arrived before its record; applied on retry",
                              to)
                     break
-        if not rec and to:
+        if not rec and to and not call_id:
             # Only now, with the ordering window spent: 'h' can lose the number to a
-            # masquerade, so finalize the latest open call of this direction rather than
-            # leaving it stuck on dialing forever.
+            # masquerade in legacy engines. ID-bearing callbacks must never take this
+            # fallback: two clients may be dialling the same peer concurrently.
             rec = store.update_last_call(iid, direction, None, disp)
         if rec:
             await hub.broadcast({"type": "call", "instance": iid, "call": rec})
@@ -8183,6 +8387,29 @@ async def push_status(iid: str):
 MISSED_CALL_VOICEMAIL_GRACE_SECONDS = 4.0
 
 
+async def _push_ringing_call(iid: str, call_id: str, record_id: int) -> None:
+    rec = store.get_open_call_by_id(iid, call_id) if call_id else store.get_call(record_id)
+    if not rec or rec.get("id") != record_id or rec.get("status") != "ringing" or \
+            record_id in hub._pushed_calls:
+        return
+    hub._pushed_calls.add(record_id)
+    if len(hub._pushed_calls) > 512:
+        hub._pushed_calls = set(list(hub._pushed_calls)[-256:])
+    inst = cfg.get_instance(iid) or {}
+    payload = notify_push.build_payload(notify_push.EV_INCOMING_CALL, inst,
+                                        rec.get("peer") or "", None, call_id=call_id)
+    _dispatch_push(notify_push.EV_INCOMING_CALL, iid, rec.get("peer") or "",
+                   call_id=call_id)
+    if payload.get("pickup_uri"):
+        asyncio.create_task(asyncio.to_thread(
+            mobile_notify.incoming_call, cfg.get_settings(), payload))
+
+
+async def _push_anonymous_call(iid: str, call_id: str, record_id: int) -> None:
+    await asyncio.sleep(4)
+    await _push_ringing_call(iid, call_id, record_id)
+
+
 def _voicemail_enabled(inst: dict) -> bool:
     """Resolve the same per-line-over-global order config.render_instance_json uses."""
     sip = (inst or {}).get("sip") or {}
@@ -8235,7 +8462,8 @@ def _harvest_allowance_reply(iid: str, sender: str) -> None:
         log.debug("allowance harvest failed instance=%s: %r", iid, exc)
 
 
-def _dispatch_push(event: str, iid: str, source: str, text: str | None = None):
+def _dispatch_push(event: str, iid: str, source: str, text: str | None = None,
+                   *, call_id: str = ""):
     """Fire outbound push notifications for an incoming event, off the
     event path so a slow endpoint can't stall engine-event handling. No-op unless a channel
     is enabled for this event."""
@@ -8249,7 +8477,8 @@ def _dispatch_push(event: str, iid: str, source: str, text: str | None = None):
     if not notify_push.has_enabled_channel(settings, event):
         return
     asyncio.create_task(
-        asyncio.to_thread(notify_push.dispatch, settings, event, inst, source, text))
+        asyncio.to_thread(notify_push.dispatch, settings, event, inst, source, text,
+                          call_id=call_id))
 
 
 
@@ -8406,61 +8635,98 @@ async def api_esim_enable(iccid: str, body: dict | None = None):
         _esim_resolve_reader, body.get("reader_index", 0), body.get("reader"))
     switch_key, hardware_id = _esim_switch_identity(name)
     async with hub.esim_switch_lock(switch_key):
+        snapshot: dict = {}
+        se = await asyncio.to_thread(
+            _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"),
+            body.get("aid"), require=True)
+        eid, active, installed, actual_card = await _esim_run(
+            name, idx, _esim_active_profile_card(name, idx, iccid, se.get("aid")))
+        if active == iccid and iccid in installed:
+            return {"ok": True, "iccid": iccid, "se_id": se["id"],
+                    "verified": True, "already_active": True, "eid": eid,
+                    "card": {"name": name, "index": idx, "iccid": str(actual_card.iccid)}}
         # Native readers have no host bridge to recycle and retain the established path.
         if not hardware_id:
-            se = await asyncio.to_thread(
-                _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"),
-                body.get("aid"), require=True)
             previous = await _esim_prepare_reader_profile_switch(name)
             try:
                 await _esim_run(
-                    name, idx, lpa.profile_enable(name, iccid, aid=se.get("aid")),
-                    refresh=True, refresh_expect_iccid=iccid)
-            except Exception:
-                await _esim_restore_profile_switch(previous)
+                    name, idx, _esim_enable_captured(name, iccid, se.get("aid"), snapshot))
+                hub.lpa_busy[name] = True
+                async with hub.reader_lock(name):
+                    actual_eid, active, _ = await _esim_retry_profile_inventory(name, se.get("aid"))
+                    if actual_eid != snapshot["eid"] or active != iccid:
+                        raise RuntimeError("new profile did not verify on the original eUICC")
+                    card_data = await _esim_probe_card(
+                        idx, expect_iccid=iccid, attempts=ESIM_CARD_REFRESH_ATTEMPTS)
+                    if str(card_data.iccid or "") != iccid:
+                        raise RuntimeError("physical reader did not report the target ICCID")
+                    refreshed = await _esim_refresh_card(
+                        name, idx, card_data=card_data, auto_start=False)
+                    if str(refreshed.get("iccid") or "") != iccid:
+                        raise RuntimeError("physical reader identity could not be refreshed")
+            except asyncio.CancelledError:
+                try:
+                    await _esim_compensate_cancelled(
+                        name, idx, "", iccid, snapshot, previous)
+                except Exception as rollback_exc:  # noqa
+                    log.error("cancelled eSIM enable compensation failed reader=%s: %s",
+                              name, rollback_exc)
                 raise
+            except Exception as exc:
+                try:
+                    await _esim_compensate_enable(name, idx, "", iccid, snapshot, previous)
+                except Exception as rollback_exc:  # noqa
+                    raise HTTPException(503, f"profile enable failed: {exc}; "
+                                        f"compensation failed: {rollback_exc}") from exc
+                raise HTTPException(503, f"profile enable failed: {exc}; "
+                                    "original profile restored and verified") from exc
+            finally:
+                hub.lpa_busy.pop(name, None)
             await asyncio.to_thread(_esim_cache_update_profile, iccid, state="enabled")
             return {"ok": True, "iccid": iccid, "se_id": se["id"],
-                    "card": hub.cards.get(name)}
+                    "verified": True, "card": refreshed}
 
         previous = await _esim_prepare_profile_switch(hardware_id)
         busy_readers = _esim_modem_reader_names(name, hardware_id)
         for reader in busy_readers:
             hub.lpa_busy[reader] = True
-        lpa_succeeded = False
         try:
-            se = await asyncio.to_thread(
-                _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"),
-                body.get("aid"), require=True)
             await _esim_run(
-                name, idx, lpa.profile_enable(name, iccid, aid=se.get("aid")),
+                name, idx, _esim_enable_captured(name, iccid, se.get("aid"), snapshot),
                 keep_busy=True)
-            lpa_succeeded = True
+            actual_eid, active, _ = await _esim_retry_profile_inventory(name, se.get("aid"))
+            if actual_eid != snapshot["eid"] or active != iccid:
+                raise RuntimeError("new profile did not verify on the original eUICC")
             await asyncio.to_thread(_esim_cache_update_profile, iccid, state="enabled")
-            try:
-                recovery = await _esim_recover_profile_switch(name, hardware_id, iccid)
-            except Exception as exc:  # noqa
-                # The eUICC already switched — reporting plain failure here made the UI
-                # keep the old profile marked active while the card ran the new one, the
-                # exact "switched but nothing happened" report in issue #26. Lines stay
-                # fail-closed (the new profile's keys are not the old line's), so answer
-                # with the truth: switched, but recovery still needs attention.
-                detail = exc.detail if isinstance(exc, HTTPException) else str(exc)
-                log.warning("eSIM profile switched but line recovery failed "
-                            "reader=%s hardware=%s: %s", name, hardware_id, detail)
-                return {"ok": True, "iccid": iccid, "se_id": se["id"],
-                        "card": hub.cards.get(name),
-                        "recovery_error": str(detail) or "line recovery failed"}
+            recovery = await _esim_recover_profile_switch(name, hardware_id, iccid)
             return {"ok": True, "iccid": iccid, "se_id": se["id"],
                     "card": recovery["card"], "recovery": {
                         "instance_id": recovery["instance_id"],
                         "readers": recovery["readers"],
                         "bridge_state": recovery["bridge"].get("state"),
                     }}
-        except Exception:
-            if not lpa_succeeded:
-                await _esim_restore_profile_switch(previous)
+        except asyncio.CancelledError:
+            try:
+                await _esim_compensate_cancelled(
+                    name, idx, hardware_id, iccid, snapshot, previous)
+            except Exception as rollback_exc:  # noqa
+                log.error("cancelled eSIM enable compensation failed reader=%s: %s",
+                          name, rollback_exc)
             raise
+        except Exception as exc:
+            try:
+                await _esim_compensate_enable(name, idx, hardware_id, iccid,
+                                              snapshot, previous)
+                if snapshot.get("previous_iccid"):
+                    await asyncio.to_thread(_esim_cache_update_profile,
+                                            snapshot["previous_iccid"], state="enabled")
+            except Exception as rollback_exc:  # noqa
+                log.error("eSIM enable and compensation both failed reader=%s hardware=%s: %s; %s",
+                          name, hardware_id, exc, rollback_exc)
+                raise HTTPException(503, f"profile enable/recovery failed: {exc}; "
+                                    f"compensation failed: {rollback_exc}") from exc
+            raise HTTPException(503, f"profile enable/recovery failed: {exc}; "
+                                "original profile restored and verified") from exc
         finally:
             for reader in set(busy_readers) | set(_esim_modem_reader_names(name, hardware_id)):
                 hub.lpa_busy.pop(reader, None)
@@ -8471,13 +8737,14 @@ async def api_esim_disable(iccid: str, body: dict | None = None):
     body = body or {}
     name, idx = await asyncio.to_thread(
         _esim_resolve_reader, body.get("reader_index", 0), body.get("reader"))
-    se = await asyncio.to_thread(
-        _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"), body.get("aid"),
-        require=True)
-    await _esim_run(
-        name, idx, lpa.profile_disable(name, iccid, aid=se.get("aid")), refresh=True)
-    await asyncio.to_thread(_esim_cache_update_profile, iccid, state="disabled")
-    return {"ok": True, "iccid": iccid, "se_id": se["id"], "card": hub.cards.get(name)}
+    async with hub.esim_switch_lock(_esim_switch_identity(name)[0]):
+        se = await asyncio.to_thread(
+            _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"), body.get("aid"),
+            require=True)
+        await _esim_run(
+            name, idx, lpa.profile_disable(name, iccid, aid=se.get("aid")), refresh=True)
+        await asyncio.to_thread(_esim_cache_update_profile, iccid, state="disabled")
+        return {"ok": True, "iccid": iccid, "se_id": se["id"], "card": hub.cards.get(name)}
 
 
 @app.delete("/api/esim/profiles/{iccid}")
@@ -8486,25 +8753,27 @@ async def api_esim_delete(
     se_id: str | None = None, aid: str | None = None,
 ):
     name, idx = await asyncio.to_thread(_esim_resolve_reader, reader_index, reader)
-    se = await asyncio.to_thread(_esim_resolve_se, name, idx, se_id, aid, require=True)
-    await _esim_run(
-        name, idx, lpa.profile_delete(name, iccid, aid=se.get("aid")), refresh=True)
-    await asyncio.to_thread(_esim_cache_update_profile, iccid, remove=True)
-    return {"ok": True, "iccid": iccid, "se_id": se["id"]}
+    async with hub.esim_switch_lock(_esim_switch_identity(name)[0]):
+        se = await asyncio.to_thread(_esim_resolve_se, name, idx, se_id, aid, require=True)
+        await _esim_run(
+            name, idx, lpa.profile_delete(name, iccid, aid=se.get("aid")), refresh=True)
+        await asyncio.to_thread(_esim_cache_update_profile, iccid, remove=True)
+        return {"ok": True, "iccid": iccid, "se_id": se["id"]}
 
 
 @app.post("/api/esim/profiles/{iccid}/nickname")
 async def api_esim_nickname(iccid: str, body: dict):
     name, idx = await asyncio.to_thread(
         _esim_resolve_reader, body.get("reader_index", 0), body.get("reader"))
-    se = await asyncio.to_thread(
-        _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"), body.get("aid"),
-        require=True)
-    nick = body.get("nickname", "")
-    await _esim_run(
-        name, idx, lpa.profile_nickname(name, iccid, nick, aid=se.get("aid")))
-    await asyncio.to_thread(_esim_cache_update_profile, iccid, nickname=nick)
-    return {"ok": True, "iccid": iccid, "nickname": nick, "se_id": se["id"]}
+    async with hub.esim_switch_lock(_esim_switch_identity(name)[0]):
+        se = await asyncio.to_thread(
+            _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"), body.get("aid"),
+            require=True)
+        nick = body.get("nickname", "")
+        await _esim_run(
+            name, idx, lpa.profile_nickname(name, iccid, nick, aid=se.get("aid")))
+        await asyncio.to_thread(_esim_cache_update_profile, iccid, nickname=nick)
+        return {"ok": True, "iccid": iccid, "nickname": nick, "se_id": se["id"]}
 
 
 @app.post("/api/esim/download")
@@ -8512,26 +8781,58 @@ async def api_esim_download(body: dict):
     """Start a profile download as a background task; progress via WS type=esim_download."""
     name, idx = await asyncio.to_thread(
         _esim_resolve_reader, body.get("reader_index", 0), body.get("reader"))
-    se = await asyncio.to_thread(
-        _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"), body.get("aid"),
-        require=True)
-    if hub.lpa_busy.get(name):
-        raise HTTPException(409, "an eSIM operation is already running on this reader")
-    await asyncio.to_thread(_esim_guard_engine, name)
-    imei = _esim_imei_for_reader(name, body.get("imei"))
-    # Claim busy before returning so a second concurrent POST cannot start another job.
-    hub.lpa_busy[name] = True
-    se_id = se["id"]
-    aid = se.get("aid")
+    switch_key = _esim_switch_identity(name)[0]
+    lock = hub.esim_switch_lock(switch_key)
+    async with lock:
+        se = await asyncio.to_thread(
+            _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"), body.get("aid"),
+            require=True)
+        if hub.lpa_busy.get(name) or hub.esim_download_reservations.get(switch_key):
+            raise HTTPException(409, "an eSIM operation is already running on this reader")
+        await asyncio.to_thread(_esim_guard_engine, name)
+        imei = _esim_imei_for_reader(name, body.get("imei"))
+        # Reserve the writer before yielding the transaction lock to the background job.
+        hub.lpa_busy[name] = True
+        operation_id = uuid.uuid4().hex
+        hub.esim_download_ops[name] = operation_id
+        hub.esim_download_reservations[switch_key] = operation_id
+        se_id = se["id"]
+        aid = se.get("aid")
 
     async def _job():
+        acquired = False
+
+        async def terminal(event):
+            # The result is committed before broadcast yields to cancellation.
+            hub.esim_download_terminal.add(operation_id)
+            await hub.broadcast(event)
+
         try:
+            await lock.acquire()
+            acquired = True
+            if operation_id in hub.esim_download_cancelled:
+                await terminal({"type": "esim_download", "reader": name,
+                    "reader_index": idx, "se_id": se_id, "event": "error",
+                    "error": "download cancelled before start", "operation_id": operation_id})
+                return
             async with hub.reader_lock(name):
                 try:
+                    if operation_id in hub.esim_download_cancelled:
+                        await terminal({"type": "esim_download", "reader": name,
+                            "reader_index": idx, "se_id": se_id, "event": "error",
+                            "error": "download cancelled before start", "operation_id": operation_id})
+                        return
+                    hub.esim_download_started.add(operation_id)
                     await hub.broadcast({
                         "type": "esim_download", "reader": name, "reader_index": idx,
                         "se_id": se_id, "event": "started", "step": "started", "imei": imei,
+                        "operation_id": operation_id,
                     })
+                    if operation_id in hub.esim_download_cancelled:
+                        await terminal({"type": "esim_download", "reader": name,
+                            "reader_index": idx, "se_id": se_id, "event": "error",
+                            "error": "download cancelled before start", "operation_id": operation_id})
+                        return
 
                     async def on_progress(event):
                         # lpa.run_lpac passes {"step", "data", "code"}
@@ -8540,6 +8841,7 @@ async def api_esim_download(body: dict):
                         msg = {
                             "type": "esim_download", "reader": name, "reader_index": idx,
                             "se_id": se_id, "event": "progress", "step": step,
+                            "operation_id": operation_id,
                         }
                         if isinstance(data, dict):
                             msg["metadata"] = data
@@ -8561,33 +8863,67 @@ async def api_esim_download(body: dict):
                         on_progress=on_progress,
                     )
                     await _esim_refresh_card(name, idx)
-                    await hub.broadcast({
+                    if operation_id in hub.esim_download_cancelled:
+                        await terminal({
+                            "type": "esim_download", "reader": name, "reader_index": idx,
+                            "se_id": se_id, "event": "error", "operation_id": operation_id,
+                            "error": "download outcome unknown after cancellation request; "
+                                     "check profiles before retrying",
+                        })
+                        return
+                    await terminal({
                         "type": "esim_download", "reader": name, "reader_index": idx,
                         "se_id": se_id, "event": "completed", "step": "completed",
+                        "operation_id": operation_id,
                         "result": result, "card": hub.cards.get(name),
                     })
                 except lpa.LpaError as e:
+                    if operation_id in hub.esim_download_terminal:
+                        raise
                     # lpac puts the failing function name in message (e.g. es9p_authenticate_client).
                     err = {
                         "type": "esim_download", "reader": name, "reader_index": idx,
                         "se_id": se_id, "event": "error",
+                        "operation_id": operation_id,
                         "step": (e.message or "").strip() or None,
                         "error": e.user_message(),
                     }
-                    await hub.broadcast(err)
+                    await terminal(err)
                 except Exception as e:  # noqa
+                    if operation_id in hub.esim_download_terminal:
+                        raise
                     log.exception("esim download failed")
-                    await hub.broadcast({
+                    await terminal({
                         "type": "esim_download", "reader": name, "reader_index": idx,
                         "se_id": se_id, "event": "error", "error": str(e),
+                        "operation_id": operation_id,
                     })
         finally:
-            hub.lpa_busy.pop(name, None)
+            if hub.esim_download_ops.get(name) == operation_id:
+                hub.esim_download_ops.pop(name, None)
+                hub.lpa_busy.pop(name, None)
+            if hub.esim_download_reservations.get(switch_key) == operation_id:
+                hub.esim_download_reservations.pop(switch_key, None)
+            hub.esim_download_cancelled.discard(operation_id)
+            hub.esim_download_started.discard(operation_id)
+            hub.esim_download_terminal.discard(operation_id)
+            if acquired:
+                lock.release()
 
-    asyncio.create_task(_job())
+    job = _job()
+    try:
+        asyncio.create_task(job)
+    except BaseException:
+        job.close()
+        hub.esim_download_ops.pop(name, None)
+        if hub.esim_download_reservations.get(switch_key) == operation_id:
+            hub.esim_download_reservations.pop(switch_key, None)
+        hub.lpa_busy.pop(name, None)
+        raise
     return {
         "ok": True, "started": True, "reader": name, "reader_index": idx,
         "se_id": se_id, "imei": imei,
+        "operation_id": operation_id,
     }
 
 
@@ -8596,11 +8932,30 @@ async def api_esim_download_cancel(body: dict | None = None):
     body = body or {}
     name, _idx = await asyncio.to_thread(
         _esim_resolve_reader, body.get("reader_index", 0), body.get("reader"))
-    cancelled = lpa.cancel_download(name)
-    if cancelled:
+    requested = str(body.get("operation_id") or "")
+    if "operation_id" in body and not requested:
+        raise HTTPException(422, "operation_id must be nonempty")
+    current = hub.esim_download_ops.get(name)
+    if requested and requested != current:
+        return {"ok": True, "cancelled": False}
+    if not current:
+        return {"ok": True, "cancelled": False}
+    if current in hub.esim_download_terminal:
+        return {"ok": True, "cancelled": False}
+    if current not in hub.esim_download_started:
+        hub.esim_download_cancelled.add(current)
+        cancelled = True
+    else:
+        # Record the exact operation's intent before signalling: lpac can ignore
+        # the signal or complete while it is being delivered. The job owns the
+        # writer lock and checks this intent before publishing completion.
+        hub.esim_download_cancelled.add(current)
+        await lpa.cancel_download(name)
+        cancelled = True
+    if cancelled and hub.esim_download_ops.get(name) == current:
         await hub.broadcast({
             "type": "esim_download", "reader": name,
-            "event": "cancelling", "step": "cancelling",
+            "event": "cancelling", "step": "cancelling", "operation_id": current,
         })
     return {"ok": True, "cancelled": cancelled}
 
@@ -8642,19 +8997,20 @@ async def api_esim_notifications_process(body: dict | None = None):
     body = body or {}
     name, idx = await asyncio.to_thread(
         _esim_resolve_reader, body.get("reader_index", 0), body.get("reader"))
-    se = await asyncio.to_thread(
-        _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"), body.get("aid"),
-        require=True)
-    seq = body.get("seq")
-    remove = bool(body.get("remove", True))
-    if seq is None:
-        coro = lpa.notification_process(
-            name, all_notifications=True, autoremove=remove, aid=se.get("aid"))
-    else:
-        coro = lpa.notification_process(
-            name, int(seq), autoremove=remove, aid=se.get("aid"))
-    await _esim_run(name, idx, coro)
-    return {"ok": True, "se_id": se["id"]}
+    async with hub.esim_switch_lock(_esim_switch_identity(name)[0]):
+        se = await asyncio.to_thread(
+            _esim_resolve_se, name, idx, body.get("se_id") or body.get("seId"), body.get("aid"),
+            require=True)
+        seq = body.get("seq")
+        remove = bool(body.get("remove", True))
+        if seq is None:
+            coro = lpa.notification_process(
+                name, all_notifications=True, autoremove=remove, aid=se.get("aid"))
+        else:
+            coro = lpa.notification_process(
+                name, int(seq), autoremove=remove, aid=se.get("aid"))
+        await _esim_run(name, idx, coro)
+        return {"ok": True, "se_id": se["id"]}
 
 
 @app.delete("/api/esim/notifications/{seq}")
@@ -8663,12 +9019,28 @@ async def api_esim_notification_remove(
     se_id: str | None = None, aid: str | None = None,
 ):
     name, idx = await asyncio.to_thread(_esim_resolve_reader, reader_index, reader)
-    se = await asyncio.to_thread(_esim_resolve_se, name, idx, se_id, aid, require=True)
-    await _esim_run(name, idx, lpa.notification_remove(name, seq, aid=se.get("aid")))
-    return {"ok": True, "seq": seq, "se_id": se["id"]}
+    async with hub.esim_switch_lock(_esim_switch_identity(name)[0]):
+        se = await asyncio.to_thread(_esim_resolve_se, name, idx, se_id, aid, require=True)
+        await _esim_run(name, idx, lpa.notification_remove(name, seq, aid=se.get("aid")))
+        return {"ok": True, "seq": seq, "se_id": se["id"]}
 
 
 # ----------------------------- WebSocket -----------------------------
+from . import mobile_api  # in-process page adapters; registered before the static catch-all
+import sys as _sys
+
+mobile_api.install(app, _sys.modules[__name__])
+
+
+@app.exception_handler(HTTPException)
+async def _mobile_http_error(request: Request, exc: HTTPException):
+    if request.url.path.startswith("/api/mobile/v1/"):
+        return mobile_api.error_response(exc.status_code, "unsupported" if exc.status_code == 501
+                                         else "http_error", str(exc.detail))
+    return JSONResponse({"detail": exc.detail}, status_code=exc.status_code,
+                        headers=exc.headers)
+
+
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket):
     # Signed-out browsers are closed with 4401 by the gateway middleware (gate.py).

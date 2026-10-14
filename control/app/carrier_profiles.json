@@ -1,0 +1,185 @@
+{
+  "version": 1,
+  "profiles": [
+    {
+      "id": "xesim-lebara-vodafone-uk",
+      "match": {
+        "home_plmns": ["20404"],
+        "imsi_prefixes": ["204047"],
+        "iccid_prefixes": ["894416"]
+      },
+      "route": { "mcc": "234", "mnc": "15" },
+      "dial": { "calling_code": "44", "national_prefix": "0" },
+      "ike": { "proposal": "legacy-sha1-modp1024" }
+    },
+    {
+      "id": "ctexcel-ee-uk",
+      "match": {
+        "home_plmns": ["23433"],
+        "imsi_prefixes": ["23433"],
+        "iccid_prefixes": ["894430"]
+      },
+      "route": { "mcc": "234", "mnc": "30" },
+      "ims": {
+        "dial_uri_scheme": "sip",
+        "user_eq_phone": true
+      },
+      "dial": {
+        "calling_code": "44",
+        "national_prefix": "0",
+        "service_number_uri": "e164",
+        "service_numbers": {
+          "888": "+447870020888"
+        }
+      }
+    },
+    {
+      "id": "att-us",
+      "match": {
+        "home_plmns": ["310280"],
+        "imsi_prefixes": ["310280"]
+      },
+      "epdg": { "hostname": "epdg.epc.att.net" },
+      "ims": {
+        "identity_profile": "att",
+        "register_profile": "att",
+        "ipsec_encryption": "aes-cbc"
+      }
+    },
+    {
+      "id": "o2-germany",
+      "match": { "home_plmns": ["26203"] },
+      "ike": { "advertise_eap_only": false },
+      "ims": {
+        "register_profile": "o2-germany",
+        "ipsec_encryption": "null"
+      }
+    },
+    {
+      "id": "vodafone-uk",
+      "match": { "home_plmns": ["23415"] },
+      "ike": { "proposal": "legacy-sha1-modp1024" },
+      "ims": { "sms_center": "+447785016005" }
+    },
+    {
+      "id": "vodafone-netherlands",
+      "match": { "home_plmns": ["20404"] },
+      "ike": { "proposal": "legacy-sha1-modp1024" }
+    },
+    {
+      "id": "o2-uk",
+      "match": { "home_plmns": ["23410"] },
+      "ims": {
+        "transport": "udp",
+        "sms_center": "+447802000332"
+      }
+    },
+    {
+      "id": "vodafone-germany",
+      "match": { "home_plmns": ["26202"] },
+      "epdg": {
+        "dns_hosts": ["epdg.epc.mnc002.mcc262.pub.3gppnetwork.org"],
+        "dns_client_subnet": "109.192.0.0/24"
+      }
+    },
+    {
+      "id": "dito-ph",
+      "match": {
+        "home_plmns": ["51566", "515066"],
+        "iccid_prefixes": ["896366"],
+        "spns": ["DITO"]
+      },
+      "match_any": [
+        {
+          "home_plmns": ["51566", "515066", "20404"],
+          "imsi_prefixes": ["204047616"],
+          "iccid_prefixes": ["89636626"]
+        }
+      ],
+      "identity": {
+        "subscriber_imsi_rewrite": {
+          "from_prefix": "204047616",
+          "to_prefix": "515661015"
+        }
+      },
+      "route": { "mcc": "515", "mnc": "66" },
+      "epdg": { "hostname": "epdg.epc.mnc066.mcc515.pub.3gppnetwork.org" },
+      "ike": { "proposal": "legacy-sha1-modp1024" },
+      "ims": { "ipsec_encryption": "aes-cbc" }
+    },
+    {
+      "id": "dito-ph-3610",
+      "match": {
+        "home_plmns": ["51566", "515066", "20404"],
+        "imsi_prefixes": ["204043610"],
+        "iccid_prefixes": ["89636626"]
+      },
+      "identity": {
+        "subscriber_imsi_rewrite": {
+          "from_prefix": "204043610",
+          "to_prefix": "515661037"
+        }
+      },
+      "route": { "mcc": "515", "mnc": "66" },
+      "epdg": { "hostname": "epdg.epc.mnc066.mcc515.pub.3gppnetwork.org" },
+      "ike": { "proposal": "legacy-sha1-modp1024" },
+      "ims": { "ipsec_encryption": "aes-cbc" }
+    },
+    {
+      "id": "dito-ph-618",
+      "match": {
+        "home_plmns": ["51566", "515066", "20404"],
+        "imsi_prefixes": ["204047618"],
+        "iccid_prefixes": ["89636626"]
+      },
+      "identity": {
+        "subscriber_imsi_rewrite": {
+          "from_prefix": "204047618",
+          "to_prefix": "515661015"
+        }
+      },
+      "route": { "mcc": "515", "mnc": "66" },
+      "epdg": { "hostname": "epdg.epc.mnc066.mcc515.pub.3gppnetwork.org" },
+      "ike": { "proposal": "legacy-sha1-modp1024" },
+      "ims": { "ipsec_encryption": "aes-cbc" }
+    },
+    {
+      "id": "three-hk",
+      "match": { "mcc": "454", "mnc": "03" },
+      "epdg": { "hostname": "wlan.three.com.hk" },
+      "ims": {
+        "security": "disabled",
+        "initial_authorization": "eap_direct",
+        "pani_enabled": false,
+        "register_expires": 7200,
+        "register_options": {
+          "user_agent": "Apple iPhone17,2/26.6 (17,2; iOS 26.6; 23G82) Boot/3.0.0 VoIP/1.0 Carrier/59.0",
+          "supported_header": "path,gruu",
+          "allow_header": "OPTIONS,REGISTER,SUBSCRIBE,NOTIFY,PUBLISH,INVITE,ACK,BYE,CANCEL,UPDATE,PRACK,REFER,INFO,MESSAGE",
+          "include_accept_contact": true,
+          "include_p_preferred_id": true
+        }
+      }
+    },
+    {
+      "id": "ultra-mobile-us",
+      "match": {
+        "home_plmns": ["310240", "310260"],
+        "gid1_prefixes": ["4153", "6132", "354D", "364D", "756D", "4154"]
+      },
+      "route": { "mcc": "310", "mnc": "240" },
+      "epdg": { "hostname": "epdg.epc.mnc240.mcc310.pub.3gppnetwork.org" },
+      "ike": { "proposal": "modern" },
+      "ims": {
+        "ipsec_encryption": "aes-cbc",
+        "register_options": {
+          "contact_extra_tags": [
+            "+g.3gpp.accesstype=\"wlan1\"",
+            "+g.3gpp.smsip-msisdnless",
+            "+g.3gpp.smsip-msisdn-less"
+          ]
+        }
+      }
+    }
+  ]
+}

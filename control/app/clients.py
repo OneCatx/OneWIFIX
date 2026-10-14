@@ -42,6 +42,7 @@ MAX_CLIENTS = 20
 PLATFORMS = ("ios", "android", "other")
 NAME_MAX = 64
 VERSION_MAX = 32
+CAPABILITIES = frozenset({"manage_devices", "manage_esim", "manage_settings"})
 
 _lock = threading.RLock()
 # id -> record, and the token digest -> id index the gate looks tokens up in.
@@ -87,7 +88,10 @@ def _load() -> None:
                       "token_hash": str(item["token_hash"]),
                       "created_at": int(item.get("created_at") or 0),
                       "last_seen": int(item.get("last_seen") or 0),
-                      "expires_at": int(item["expires_at"])}
+                      "expires_at": int(item["expires_at"]),
+                      "capabilities": sorted(CAPABILITIES.intersection(
+                          item.get("capabilities") if isinstance(item.get("capabilities"), list)
+                          else []))}
         except (KeyError, TypeError, ValueError):
             continue
         records[record["id"]] = record
@@ -105,15 +109,21 @@ def _load() -> None:
 def public(record: dict) -> dict:
     """What the API shows about a client: never its token or the token's digest."""
     return {key: record[key] for key in ("id", "name", "platform", "app_version", "created_at",
-                                         "last_seen", "expires_at")}
+                                         "last_seen", "expires_at", "capabilities")}
 
 
-def register(name: str = "", platform: str = "other", app_version: str = "") -> tuple[dict, str]:
+def register(name: str = "", platform: str = "other", app_version: str = "",
+             capabilities=None) -> tuple[dict, str]:
     """Record a newly signed-in client and return it with its token, shown this once only."""
     global _next_id
     platform = str(platform or "other").strip().lower()
     if platform not in PLATFORMS:
         raise ClientError("unknown platform")
+    if capabilities is None:
+        capabilities = []
+    if not isinstance(capabilities, list) or any(
+            not isinstance(value, str) or value not in CAPABILITIES for value in capabilities):
+        raise ClientError("unknown capability")
     name = str(name or "").strip()[:NAME_MAX] or {"ios": "iPhone", "android": "Android"}.get(
         platform, "Client")
     token = TOKEN_PREFIX + secrets.token_urlsafe(32)
@@ -122,7 +132,7 @@ def register(name: str = "", platform: str = "other", app_version: str = "") -> 
         record = {"id": _next_id, "name": name, "platform": platform,
                   "app_version": str(app_version or "").strip()[:VERSION_MAX],
                   "token_hash": _digest(token), "created_at": now, "last_seen": now,
-                  "expires_at": now + TOKEN_TTL}
+                  "expires_at": now + TOKEN_TTL, "capabilities": sorted(set(capabilities))}
         _clients[record["id"]] = record
         _by_digest[record["token_hash"]] = record["id"]
         _next_id += 1
@@ -156,6 +166,8 @@ def _forget(client_id: int) -> dict | None:
     record = _clients.pop(int(client_id), None)
     if record is not None:
         _by_digest.pop(record["token_hash"], None)
+        from . import mobile_pairing
+        mobile_pairing.remove_client(int(client_id))
     return record
 
 
@@ -198,6 +210,12 @@ def list_clients() -> list[dict]:
         return [public(record) for record in sorted(_clients.values(), key=lambda r: r["id"])]
 
 
+def get_public(client_id: int | None) -> dict | None:
+    with _lock:
+        record = _clients.get(client_id) if client_id is not None else None
+        return public(record) if record else None
+
+
 def revoke(client_id: int) -> bool:
     """Sign one client out. Its token stops working on the next request."""
     with _lock:
@@ -214,6 +232,8 @@ def revoke_all() -> int:
         if removed:
             _clients.clear()
             _by_digest.clear()
+            from . import mobile_pairing
+            mobile_pairing.remove_all_clients()
             _save()
         return removed
 

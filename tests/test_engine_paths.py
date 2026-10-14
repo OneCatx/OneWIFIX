@@ -107,6 +107,73 @@ class EnginePathTests(unittest.TestCase):
         written = write.call_args.args[0]
         self.assertEqual(written["epdg"], "198.51.100.10")
 
+    def test_proxy_epdg_resolution_uses_the_profiled_ecs_hint(self):
+        engine = self.engine_module()
+        from unittest.mock import Mock
+        client = Mock()
+        client.images.get.return_value = SimpleNamespace(
+            id="sha256:verified", attrs={"Config": {"Labels": {engine.ENGINE_LABEL: "socks5"}}})
+        client.containers.get.side_effect = engine.docker.errors.NotFound("sim1")
+        client.containers.run.return_value = SimpleNamespace(id="new", name="engine")
+        with tempfile.TemporaryDirectory() as temp, \
+                patch.object(engine, "_client", return_value=client), \
+                patch.object(engine, "ENGINE_NETWORK", "mdd-control"), \
+                patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
+                patch.object(engine, "_clear_runtime_state"), \
+                patch.object(engine.egress, "resolve_ipv4_via_socks",
+                             return_value="198.51.100.10") as resolve, \
+                patch.object(engine.egress, "ensure_line", return_value={
+                    "transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}), \
+                patch.object(engine.cfg, "write_instance_json"):
+            engine.start({"id": "sim1", "mcc": "262", "mnc": "02"}, {})
+        self.assertEqual(resolve.call_args.args[:2],
+                         ("socks5://mdd-egress:22157",
+                          "epdg.epc.mnc002.mcc262.pub.3gppnetwork.org"))
+        self.assertEqual(resolve.call_args.kwargs["client_subnet"], "109.192.0.0/24")
+
+    def test_proxy_explicit_unprofiled_epdg_withholds_ecs(self):
+        engine = self.engine_module()
+        from unittest.mock import Mock
+        client = Mock()
+        client.images.get.return_value = SimpleNamespace(
+            id="sha256:verified", attrs={"Config": {"Labels": {engine.ENGINE_LABEL: "socks5"}}})
+        client.containers.get.side_effect = engine.docker.errors.NotFound("sim1")
+        client.containers.run.return_value = SimpleNamespace(id="new", name="engine")
+        with tempfile.TemporaryDirectory() as temp, \
+                patch.object(engine, "_client", return_value=client), \
+                patch.object(engine, "ENGINE_NETWORK", "mdd-control"), \
+                patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
+                patch.object(engine, "_clear_runtime_state"), \
+                patch.object(engine.egress, "resolve_ipv4_via_socks",
+                             return_value="198.51.100.10") as resolve, \
+                patch.object(engine.egress, "ensure_line", return_value={
+                    "transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}), \
+                patch.object(engine.cfg, "write_instance_json"):
+            engine.start({"id": "sim1", "mcc": "262", "mnc": "02",
+                          "epdg": "custom.example.net"}, {})
+        self.assertEqual(resolve.call_args.kwargs["client_subnet"], "")
+
+    def test_proxy_blocked_profile_withholds_ecs(self):
+        engine = self.engine_module()
+        from unittest.mock import Mock
+        client = Mock()
+        client.images.get.return_value = SimpleNamespace(
+            id="sha256:verified", attrs={"Config": {"Labels": {engine.ENGINE_LABEL: "socks5"}}})
+        client.containers.get.side_effect = engine.docker.errors.NotFound("sim1")
+        client.containers.run.return_value = SimpleNamespace(id="new", name="engine")
+        with tempfile.TemporaryDirectory() as temp, \
+                patch.object(engine, "_client", return_value=client), \
+                patch.object(engine, "ENGINE_NETWORK", "mdd-control"), \
+                patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
+                patch.object(engine, "_clear_runtime_state"), \
+                patch.object(engine.egress, "resolve_ipv4_via_socks",
+                             return_value="198.51.100.10") as resolve, \
+                patch.object(engine.egress, "ensure_line", return_value={
+                    "transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}), \
+                patch.object(engine.cfg, "write_instance_json"):
+            engine.start({"id": "sim1", "mcc": "310", "mnc": "280"}, {})
+        self.assertEqual(resolve.call_args.kwargs["client_subnet"], "")
+
     def test_named_network_and_host_pcsc_directory_reach_docker(self):
         engine = self.engine_module()
         from unittest.mock import Mock

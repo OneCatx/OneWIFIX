@@ -1,0 +1,546 @@
+{
+  "generated_local": "2026-10-14T14:20:11.318619+08:00",
+  "verifier": {
+    "command": [
+      "C:\\Python314\\python.exe",
+      "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\verify-final-evidence.py"
+    ],
+    "cwd": "E:\\GQ\\Ultra\\mdd-sim-gateway",
+    "exit_code": 1,
+    "stdout": "[\n  {\n    \"receipt\": \"backend-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"exit_code\": 0,\n        \"test_results\": {\n          \"run\": 2097,\n          \"success\": 2096,\n          \"failure\": 0,\n          \"error\": 0,\n          \"skipped\": 1\n        },\n        \"done\": [\n          {\n            \"success\": true,\n            \"type\": \"done\",\n            \"time\": 325482\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"receipt\": \"oneboard-final-evidence.json\",\n    \"identity_valid\": false,\n    \"errors\": [\n      \"input drift: package.json\",\n      \"current input inventory differs from receipt\"\n    ],\n    \"commands\": [\n      {\n        \"label\": \"node-tests\",\n        \"exit_code\": 0\n      },\n      {\n        \"label\": \"vite-build\",\n        \"exit_code\": 0\n      }\n    ]\n  },\n  {\n    \"receipt\": \"ios-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"label\": \"flutter-test\",\n        \"exit_code\": 0,\n        \"test_results\": {\n          \"success\": 1086,\n          \"failure\": 0,\n          \"error\": 0\n        },\n        \"done\": [\n          {\n            \"success\": true,\n            \"type\": \"done\",\n            \"time\": 67476\n          }\n        ]\n      },\n      {\n        \"label\": \"flutter-analyze\",\n        \"exit_code\": 0\n      }\n    ]\n  },\n  {\n    \"receipt\": \"android-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"label\": \"flutter-test\",\n        \"exit_code\": 0,\n        \"test_results\": {\n          \"success\": 892,\n          \"failure\": 0,\n          \"error\": 0\n        },\n        \"done\": [\n          {\n            \"success\": true,\n            \"type\": \"done\",\n            \"time\": 54752\n          }\n        ]\n      },\n      {\n        \"label\": \"flutter-analyze\",\n        \"exit_code\": 0\n      }\n    ]\n  },\n  {\n    \"receipt\": \"android-kotlin-final-evidence.json\",\n    \"identity_valid\": true,\n    \"errors\": [],\n    \"commands\": [\n      {\n        \"exit_code\": 0\n      }\n    ]\n  }\n]\n",
+    "stderr": ""
+  },
+  "verifier_rows": [
+    {
+      "receipt": "backend-final-evidence.json",
+      "identity_valid": true,
+      "errors": [],
+      "commands": [
+        {
+          "exit_code": 0,
+          "test_results": {
+            "run": 2097,
+            "success": 2096,
+            "failure": 0,
+            "error": 0,
+            "skipped": 1
+          },
+          "done": [
+            {
+              "success": true,
+              "type": "done",
+              "time": 325482
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "receipt": "oneboard-final-evidence.json",
+      "identity_valid": false,
+      "errors": [
+        "input drift: package.json",
+        "current input inventory differs from receipt"
+      ],
+      "commands": [
+        {
+          "label": "node-tests",
+          "exit_code": 0
+        },
+        {
+          "label": "vite-build",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "receipt": "ios-final-evidence.json",
+      "identity_valid": true,
+      "errors": [],
+      "commands": [
+        {
+          "label": "flutter-test",
+          "exit_code": 0,
+          "test_results": {
+            "success": 1086,
+            "failure": 0,
+            "error": 0
+          },
+          "done": [
+            {
+              "success": true,
+              "type": "done",
+              "time": 67476
+            }
+          ]
+        },
+        {
+          "label": "flutter-analyze",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "receipt": "android-final-evidence.json",
+      "identity_valid": true,
+      "errors": [],
+      "commands": [
+        {
+          "label": "flutter-test",
+          "exit_code": 0,
+          "test_results": {
+            "success": 892,
+            "failure": 0,
+            "error": 0
+          },
+          "done": [
+            {
+              "success": true,
+              "type": "done",
+              "time": 54752
+            }
+          ]
+        },
+        {
+          "label": "flutter-analyze",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "receipt": "android-kotlin-final-evidence.json",
+      "identity_valid": true,
+      "errors": [],
+      "commands": [
+        {
+          "exit_code": 0
+        }
+      ]
+    }
+  ],
+  "receipts": {
+    "backend-final-evidence.json": {
+      "path": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\backend-final-evidence.json",
+      "sha256": "1c3bbcd9c6684fea5aa811bff6323a66e1f6b112c28919e98c69bf53d2f47c16",
+      "recorded": "2026-10-14T06:17:32.870060+00:00",
+      "source_unchanged": true,
+      "exit_code": 0,
+      "commands": [
+        {
+          "label": "command",
+          "exit_code": 0,
+          "test_results": {
+            "run": 2097,
+            "success": 2096,
+            "failure": 0,
+            "error": 0,
+            "skipped": 1
+          },
+          "done": [
+            {
+              "success": true,
+              "type": "done",
+              "time": 325482
+            }
+          ],
+          "log": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\backend-final-regression.log",
+          "log_sha256": "b6033acf2c4e69caaf6ab5c8b67377fae5fb602341cc13220b5196577998063b"
+        }
+      ],
+      "boundary": "WSL software regression only for the 1.14.0 source tree. Direct WSL invocation was used because the PowerShell wrapper refused a non-empty linux-tmp mount target. No installed engine, SIM, IMS, mobile or provider proof."
+    },
+    "oneboard-final-evidence.json": {
+      "path": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\oneboard-final-evidence.json",
+      "sha256": "be88c44453cc8e1ca3b343ccd89ddcad85898c887521292d31899b743c161135",
+      "recorded": "2026-10-13T12:01:03.960962+00:00",
+      "source_unchanged": true,
+      "exit_code": null,
+      "commands": [
+        {
+          "label": "node-tests",
+          "exit_code": 0,
+          "test_results": null,
+          "done": null,
+          "log": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\oneboard-final-node-tests.log",
+          "log_sha256": "bd87c22e2f62b6b3e6a0ecdd1bcb8a36c5df33c9daad1ce1bb1c245b6e4e7dcc"
+        },
+        {
+          "label": "vite-build",
+          "exit_code": 0,
+          "test_results": null,
+          "done": null,
+          "log": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\oneboard-final-vite-build.log",
+          "log_sha256": "10825f1609ebb5056eced82e5077feed4941a638171b3b0a198f47880df0b782"
+        }
+      ],
+      "boundary": "Source tests and build only, no live MDD authentication/provider or installed runtime proof"
+    },
+    "ios-final-evidence.json": {
+      "path": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\ios-final-evidence.json",
+      "sha256": "20c79006744304f3a5d301b26e36b7d0f84ae85703668dc158c910a87ffddc44",
+      "recorded": "2026-10-14T05:24:31.332407+00:00",
+      "source_unchanged": true,
+      "exit_code": null,
+      "commands": [
+        {
+          "label": "flutter-test",
+          "exit_code": 0,
+          "test_results": {
+            "success": 1086,
+            "failure": 0,
+            "error": 0
+          },
+          "done": [
+            {
+              "success": true,
+              "type": "done",
+              "time": 67476
+            }
+          ],
+          "log": "E:\\GQ\\Ultra\\ONEWIFI\\IOS\\artifacts\\ios-final-flutter-test.jsonl",
+          "log_sha256": "142c88c20a9f6ff179f1ac57d1ed388ca212461e02335f6723f1884a44227faf"
+        },
+        {
+          "label": "flutter-analyze",
+          "exit_code": 0,
+          "test_results": null,
+          "done": null,
+          "log": "E:\\GQ\\Ultra\\ONEWIFI\\IOS\\artifacts\\ios-final-flutter-analyze.log",
+          "log_sha256": "687ec766334cbefb8e2179676ab2c0f4d0b6455a7f33eabdf8076358e1a8ac03"
+        }
+      ],
+      "boundary": "Flutter software validation only; no Swift/Xcode build, APK/device, native OS callback, MDD login, IMS or call proof. Analyzer nonzero exits are preserved, including baseline lint infos."
+    },
+    "android-final-evidence.json": {
+      "path": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\android-final-evidence.json",
+      "sha256": "d3cd50055fc16d13fb983bb224fa8432d689c862ca5ccd5950785a8b85708273",
+      "recorded": "2026-10-14T05:41:33.689870+00:00",
+      "source_unchanged": true,
+      "exit_code": null,
+      "commands": [
+        {
+          "label": "flutter-test",
+          "exit_code": 0,
+          "test_results": {
+            "success": 892,
+            "failure": 0,
+            "error": 0
+          },
+          "done": [
+            {
+              "success": true,
+              "type": "done",
+              "time": 54752
+            }
+          ],
+          "log": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\mdd-jdk-diag\\android-final-flutter-test.jsonl",
+          "log_sha256": "96aa01d5a6352bcb968e3550a103d3f0a164b709eaa9e2e74234dcb41f37e83c"
+        },
+        {
+          "label": "flutter-analyze",
+          "exit_code": 0,
+          "test_results": null,
+          "done": null,
+          "log": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\mdd-jdk-diag\\android-final-flutter-analyze.log",
+          "log_sha256": "385d47b73f50b5de6e2e3c3718719a8bec0441d2060f5ada4f1a99848d06119c"
+        }
+      ],
+      "boundary": "Flutter software validation only; no Swift/Xcode build, APK/device, native OS callback, MDD login, IMS or call proof. Analyzer nonzero exits are preserved, including baseline lint infos."
+    },
+    "android-kotlin-final-evidence.json": {
+      "path": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\android-kotlin-final-evidence.json",
+      "sha256": "475948da038175295895e8940adb6ed9d8b77974a6a4edf03e982491b96db21f",
+      "recorded": "2026-10-14T05:39:49.775973+00:00",
+      "source_unchanged": true,
+      "exit_code": 0,
+      "commands": [
+        {
+          "label": "command",
+          "exit_code": 0,
+          "test_results": null,
+          "done": null,
+          "log": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\mdd-jdk-diag\\kotlin-final-compile.log",
+          "log_sha256": "619569fa00137dd31bedb7c69369fc5bbe82e91d52416ff184dd59adb6d81c8e"
+        }
+      ],
+      "boundary": "Kotlin compile only; no JVM unit test/APK/device or native call proof. Original missing gateway_selfsigned blocks resources."
+    }
+  },
+  "android_jvm_apk": {
+    "path": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\android-jvm-apk-evidence.json",
+    "sha256": "cc8de1e7f3c23b7e3a5ad69e64509dfd0525ec072b9c7a5128dbd811eed75f38",
+    "jvm_tests": {
+      "tests": 109,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": [
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.activation.ActivationBase64CompatibilityTest.xml",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.activation.ActivationPayloadTest.xml",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.activation.ActivationPreflightTest.xml",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.activation.ActivationReplyMapsTest.xml",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.activation.CodeValidatorTest.xml",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallCoordinatorTest.xml",
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallEventMonitorTest.xml",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallEventReaderTest.xml",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallEventSnapshotTest.xml",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallReadinessTest.xml",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallSessionConfigTest.xml",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallSessionRuntimeTest.xml",
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallTransportTest.xml",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.NativeCallFlowTest.xml",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.ResidentCallSourceTest.xml",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.SipCallSourceTest.xml",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.NativeCompatibilityTest.xml",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.OtpNotificationCoordinatorTest.xml",
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.UpdateApkDownloadTest.xml",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.UpdateDownloadPolicyTest.xml",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "log": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\mdd-jdk-diag\\android-jvm-final.log",
+      "log_sha256": "108125c3cae2d73b60bb822b60b169dc3dc8f2618ea8468071e3b355931f5166"
+    },
+    "apk": {
+      "path": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\outputs\\apk\\debug\\app-debug.apk",
+      "bytes": 103706946,
+      "sha256": "e210cbd3b4a0f335b8ef1a8d0d81b07a494d13cba96ddb6b5b610a20e1003098"
+    },
+    "certificate": {
+      "path": "E:\\GQ\\Ultra\\ONEWIFI\\android\\android\\app\\src\\main\\res\\raw\\gateway_selfsigned",
+      "pem_sha256": "de7b31e8ce61d520841ff3e3c7c91599421885ad818deb498b334d84a5da6d1d",
+      "der_sha256": "f87cd8d79fddf38c4be74a368005baad455bb17c6693f3cf867c25d50b5d6f5c",
+      "matches_remote_live_443_leaf": true
+    }
+  },
+  "source_drift": {
+    "mdd": {
+      "checkpoint_recorded": "2026-10-14T05:48:13.658754+00:00",
+      "files": 57,
+      "drift": []
+    },
+    "ios": {
+      "checkpoint_recorded": "2026-10-14T05:48:13.658754+00:00",
+      "files": 111,
+      "drift": []
+    },
+    "android": {
+      "checkpoint_recorded": "2026-10-14T05:48:13.658754+00:00",
+      "files": 113,
+      "drift": []
+    },
+    "shared_dart_equal": true,
+    "fixture_count": 11,
+    "fixtures_equal": true
+  },
+  "backend_log": {
+    "path": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\backend-final-regression.log",
+    "sha256": "b6033acf2c4e69caaf6ab5c8b67377fae5fb602341cc13220b5196577998063b",
+    "has_2097_ok": true,
+    "has_mount_guard_failure": false,
+    "tail": "test_other_authentication_failures_are_left_to_the_exit_policy) ... ok\ntest_pin_keeper_refusal_is_reported_verbatim (test_wrong_card_attribution.LocalCardFaultTests.test_pin_keeper_refusal_is_reported_verbatim) ... ok\ntest_search_specs_name_a_search_not_a_slot_so_they_are_not_compared (test_wrong_card_attribution.LocalCardFaultTests.test_search_specs_name_a_search_not_a_slot_so_they_are_not_compared) ... ok\ntest_sw_9862_on_a_single_sim_host_points_at_the_carrier (test_wrong_card_attribution.LocalCardFaultTests.test_sw_9862_on_a_single_sim_host_points_at_the_carrier) ... ok\ntest_sw_9862_with_several_sims_present_points_at_the_reader (test_wrong_card_attribution.LocalCardFaultTests.test_sw_9862_with_several_sims_present_points_at_the_reader) ... ok\ntest_the_name_still_speaks_when_the_card_would_not (test_wrong_card_attribution.LocalCardFaultTests.test_the_name_still_speaks_when_the_card_would_not) ... ok\ntest_tunnel_refusal_falls_back_to_the_iccid_it_recorded (test_wrong_card_attribution.LocalCardFaultTests.test_tunnel_refusal_falls_back_to_the_iccid_it_recorded) ... ok\n\n----------------------------------------------------------------------\nRan 2097 tests in 325.482s\n\nOK (skipped=1)\n"
+  },
+  "runtime_checks": {
+    "adb_devices": {
+      "command": [
+        "adb",
+        "devices",
+        "-l"
+      ],
+      "cwd": null,
+      "exit_code": 0,
+      "stdout": "List of devices attached\n\n",
+      "stderr": ""
+    },
+    "docker_version": {
+      "command": [
+        "docker",
+        "--version"
+      ],
+      "cwd": null,
+      "exit_code": null,
+      "stdout": "",
+      "stderr": "[WinError 2] 系统找不到指定的文件。"
+    },
+    "xcodebuild_version": {
+      "command": [
+        "xcodebuild",
+        "-version"
+      ],
+      "cwd": null,
+      "exit_code": null,
+      "stdout": "",
+      "stderr": "[WinError 2] 系统找不到指定的文件。"
+    },
+    "git_diff_check_mdd": {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "E:\\GQ\\Ultra\\mdd-sim-gateway",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "git_diff_check_ios": {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "E:\\GQ\\Ultra\\ONEWIFI\\IOS",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: in the working copy of 'ios/Runner/APNsBridge.swift', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'ios/Runner/Calls/CallPushRegistry.swift', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/core/config/gateway_client.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/calls/data/call_push_registrar.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/calls/presentation/call_dialpad.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/calls/presentation/call_glass.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/calls/presentation/call_history.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/calls/presentation/call_settings.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/devices/presentation/device_detail_view.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/settings/data/settings_dto.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/settings/presentation/settings_notify_sheet.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/settings/presentation/widgets/settings_notify_grid.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/sms/data/ios_push_endpoint_client.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/sms/data/remote_otp_pairing_store.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/sms/data/remote_otp_stream_client.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/sms/domain/remote_otp_pairing.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/sms/presentation/widgets/remote_otp_pairing_tile.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/sms/presentation/widgets/sms_composer.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/sms/state/remote_otp_controller.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'test/features/auth/presentation/login_screen_test.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'test/features/calls/data/call_push_registrar_test.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'test/features/settings/data/settings_api_test.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'test/features/settings/presentation/settings_async_regression_test.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'test/features/settings/presentation/settings_notify_sheet_test.dart', CRLF will be replaced by LF the next time Git touches it\n"
+    },
+    "git_diff_check_android": {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "E:\\GQ\\Ultra\\ONEWIFI\\android",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "warning: in the working copy of 'android/app/src/main/kotlin/com/oneims/onewifi/RemoteOtpService.kt', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/core/config/gateway_auth.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/core/config/gateway_client.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/devices/presentation/device_detail_view.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/proxy/data/wifi_pin_store.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/settings/data/settings_dto.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/settings/presentation/settings_notify_sheet.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/settings/presentation/widgets/settings_notify_grid.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/features/sms/presentation/widgets/sms_composer.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'lib/main.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'test/features/logs/data/logs_api_test.dart', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'test/features/settings/state/settings_controller_test.dart', CRLF will be replaced by LF the next time Git touches it\n"
+    },
+    "gateway_certificate": {
+      "path": "E:\\GQ\\Ultra\\ONEWIFI\\android\\android\\app\\src\\main\\res\\raw\\gateway_selfsigned",
+      "exists": true,
+      "sha256": "de7b31e8ce61d520841ff3e3c7c91599421885ad818deb498b334d84a5da6d1d"
+    },
+    "debug_apk": {
+      "path": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\outputs\\apk\\debug\\app-debug.apk",
+      "exists": true,
+      "bytes": 103706946,
+      "sha256": "e210cbd3b4a0f335b8ef1a8d0d81b07a494d13cba96ddb6b5b610a20e1003098"
+    },
+    "tool_presence": {
+      "adb": "C:\\ProgramData\\chocolatey\\bin\\adb.EXE",
+      "docker": null,
+      "xcodebuild": null,
+      "gcc": null,
+      "clang": null
+    }
+  },
+  "runtime_boundary": "No install, MDD login, reader/SIM, IMS, real SIP call, SMS, APNs, eSIM mutation, or device evidence was observed by this audit."
+}

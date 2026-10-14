@@ -404,6 +404,8 @@ class SourceTableTests(unittest.TestCase):
         "session": http("/api/instances"),
         "bearer": http("/api/instances", cookie=None,
                        headers=[("authorization", "Bearer mdd_c1_x")]),
+        "mobile pairing": http("/api/mobile/v1/onetools/ios/push-endpoint", "PUT", cookie=None,
+                               headers=[("authorization", "Bearer mdd_pair1_x")]),
         "bearer socket": websocket(cookie=None, headers=[("authorization", "Bearer mdd_c1_x")]),
         "socket": websocket(),
     }

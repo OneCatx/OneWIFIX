@@ -20,6 +20,8 @@ from copy import deepcopy
 
 import yaml
 
+from . import carrier_profiles
+
 DATA_DIR = os.environ.get("MDD_DATA", os.path.join(os.getcwd(), "data"))
 CONFIG_PATH = os.path.join(DATA_DIR, "config.yaml")
 _lock = threading.RLock()
@@ -179,6 +181,24 @@ DEFAULTS = {
                        "missed_call": True, "voicemail_received": True,
                        "keepalive_result": True, "balance_low": True,
                        "software_update": True},
+        },
+        "wecom": {
+            "enabled": False, "urls": [], "payload_template": "",
+            "events": {"incoming_sms": True, "incoming_call": True,
+                       "missed_call": True, "voicemail_received": True},
+        },
+        "bark": {
+            "enabled": False, "urls": [], "group": "", "icon": "", "level": "active",
+            "events": {"incoming_sms": True, "incoming_call": True,
+                       "missed_call": True, "voicemail_received": True},
+        },
+        "apns": {
+            "enabled": False, "environment": "production", "bundle_id": "",
+            "team_id": "", "key_id": "", "auth_key_path": "",
+        },
+        "apns_voip": {
+            "enabled": False, "environment": "production", "bundle_id": "",
+            "team_id": "", "key_id": "", "auth_key_path": "",
         },
         "feishu": {
             "enabled": False,
@@ -368,14 +388,15 @@ def load() -> dict:
                                     **(data.get("settings", {}).get("debug", {}))}
         # notification channels: merge one level deep (like tls/retry) so a saved config that
         # predates these keys — or omits the nested `events` map — still gets full defaults.
-        for key in ("webhook", "telegram", "pushplus", "feishu"):
+        for key in ("webhook", "telegram", "pushplus", "feishu", "wecom", "bark",
+                    "apns", "apns_voip"):
             saved = data.get("settings", {}).get(key, {}) or {}
             merged = {**DEFAULTS["settings"][key], **saved}
-            merged["events"] = {**DEFAULTS["settings"][key]["events"],
-                                **(saved.get("events", {}) or {})}
-            # Number keeping superseded the old manually-entered activation countdown. Do not
-            # preserve its hidden checkbox forever when loading a pre-keepalive config.
-            merged["events"].pop("activation_reminder", None)
+            if "events" in DEFAULTS["settings"][key]:
+                merged["events"] = {**DEFAULTS["settings"][key]["events"],
+                                    **(saved.get("events", {}) or {})}
+                # Number keeping superseded the old manually-entered activation countdown.
+                merged["events"].pop("activation_reminder", None)
             out["settings"][key] = merged
         # Feishu originally stored one bot directly under ``settings.feishu``. Preserve that
         # shape on disk for rollback compatibility, while exposing it as a synthetic channel
@@ -1209,9 +1230,36 @@ def render_instance_json(inst: dict, settings: dict) -> dict:
 
 def _render_instance_json(inst: dict, settings: dict) -> dict:
     ports = inst.get("ports", _alloc_ports(inst.get("index", 0)))
+    raw_identity = carrier_profiles.identity_from_instance(inst)
+    carrier = carrier_profiles.resolve(raw_identity)
+    operational_carrier = (carrier if carrier["operational_status"] != "blocked"
+                           else {"id": "standard-3gpp"})
+    subscriber_imsi, route_mcc, route_mnc = carrier_profiles.presented_subscriber(
+        {**raw_identity, "configured_imsi": inst.get("configured_imsi", "")}, operational_carrier)
+    carrier_ims = operational_carrier.get("ims", {})
+    carrier_epdg = operational_carrier.get("epdg", {})
     sip = merge_carrier_sip_defaults(
         inst.get("mcc", ""), inst.get("mnc", ""),
         inst.get("iccid") or inst.get("imsi") or inst.get("imei"), inst.get("sip"))
+    # Persisted operator values win, including explicit False. Blank presentation text
+    # means automatic, just like the existing carrier SIP defaults.
+    explicit_sip = inst.get("sip") or {}
+    profile_sip = {
+        "user_eq_phone": carrier_ims.get("user_eq_phone"),
+        "pani_enabled": carrier_ims.get("pani_enabled"),
+        "transport": carrier_ims.get("transport"),
+        "ipsec_encryption": carrier_ims.get("ipsec_encryption"),
+        "register_expires": carrier_ims.get("register_expires"),
+        "volte_o2_register": carrier["id"] == "o2-germany",
+        "volte_ultra_contact": carrier["id"] == "ultra-mobile-us",
+    }
+    for key, value in profile_sip.items():
+        if value is not None and value != "" and explicit_sip.get(key) in (None, ""):
+            sip[key] = value
+    if (sip.get("user_eq_phone") and
+            explicit_sip.get("invite_uri_params_enable") is not False):
+        sip.setdefault("invite_uri_params_enable", True)
+        sip.setdefault("invite_uri_params", "user=phone")
     webrtc = sip.get("webrtc", {}) or {}
     ami_secret = str(inst.get("ami_secret") or "")
     webrtc_password = str(webrtc.get("password") or "")
@@ -1222,8 +1270,26 @@ def _render_instance_json(inst: dict, settings: dict) -> dict:
     return {
         "id": str(inst["id"]),
         "imsi": inst["imsi"],
-        "mcc": inst["mcc"],
-        "mnc": inst["mnc"],
+        # Raw SIM identity remains available for reader/card ownership and diagnostics.
+        # Only the presented EAP/IMS identity and route are transformed.
+        "subscriber_imsi": subscriber_imsi,
+        "mcc": route_mcc,
+        "mnc": route_mnc,
+        "raw_mcc": inst["mcc"],
+        "raw_mnc": inst["mnc"],
+        "carrier_profile": carrier["id"],
+        "carrier_match_source": carrier["match_source"],
+        "carrier_operational_status": carrier["operational_status"],
+        "carrier_unsupported_fields": carrier["unsupported_fields"],
+        # Non-secret operator/UI contract: a matched but unsupported carrier is explicit in the
+        # rendered document. The engine still receives the standard fallback profile, while the
+        # caller can fail closed or explain why automatic carrier defaults were withheld.
+        "carrier_block": carrier_profiles.blocked_contract(carrier),
+        "carrier_ike": {**(operational_carrier.get("ike", {})
+                           if operational_carrier["id"] != "standard-3gpp" else {}),
+                        **(inst.get("carrier_ike") or {})},
+        "epdg_dns_client_subnet": carrier_profiles.dns_client_subnet(
+            operational_carrier, inst.get("epdg") or carrier_epdg.get("hostname", "")),
         "imei": inst.get("imei", ""),
         # IMEISV (16 digits) for the ePDG DEVICE_IDENTITY response. Explicit stored value wins;
         # otherwise auto-derive from the IMEI (14-digit base + '00' SVN). Empty stays empty
@@ -1251,12 +1317,12 @@ def _render_instance_json(inst: dict, settings: dict) -> dict:
         "reader_port": inst.get("reader_port", ""),
         "iccid": inst.get("iccid", ""),
         "msisdn": inst.get("msisdn", ""),
-        "smsc": inst.get("smsc", ""),
+        "smsc": inst.get("smsc") or carrier_ims.get("sms_center", ""),
         "pcscf": inst.get("pcscf", ""),
         # Usually blank so the Engine derives the carrier ePDG hostname.  In an
         # isolated country-egress run Control resolves that hostname first and
         # writes the one-run IPv4 peer here because the Engine has no public DNS.
-        "epdg": inst.get("epdg", ""),
+        "epdg": inst.get("epdg") or carrier_epdg.get("hostname", ""),
         "ami_user": inst.get("ami_user", "vowifi"),
         "ami_secret": ami_secret,
         "manager_url": _engine_manager_url(settings),
@@ -1289,10 +1355,19 @@ def _render_instance_json(inst: dict, settings: dict) -> dict:
             # gate IMS registration on a User-Agent whitelist reject the default with 403, and
             # the operator running that SIM is the one who can tell. Blank = default.
             "user_agent": sanitize_user_agent(sip.get("user_agent")) or DEFAULT_USER_AGENT,
+            "carrier_user_agent": (carrier_ims.get("register_options", {}).get("user_agent", "")
+                                   if not explicit_sip.get("user_agent") else ""),
             # Some IMS cores require telephone-number request URIs to carry ;user=phone before
             # they will route an originating voice INVITE. Keep this carrier-configurable because
             # other networks reject SMS MESSAGE request URIs when the parameter is present.
             "user_eq_phone": bool(sip.get("user_eq_phone", False)),
+            "transport": sip.get("transport") or "tcp",
+            "security": sip.get("security") or "required",
+            "ipsec_encryption": sip.get("ipsec_encryption") or "aes-cbc",
+            "register_expires": sip.get("register_expires") or 600000,
+            "volte_o2_register": bool(sip.get("volte_o2_register", False)),
+            "volte_ultra_contact": bool(sip.get("volte_ultra_contact", False)),
+            "pani_enabled": sip.get("pani_enabled", True),
             # URI parameters added to the request URI of an outgoing call only (INVITE, not
             # SMS), for carriers that route a call only with them (T-Mobile US: user=phone).
             "invite_uri_params": (sanitize_uri_params(sip.get("invite_uri_params"))
@@ -1336,7 +1411,7 @@ def _render_instance_json(inst: dict, settings: dict) -> dict:
         # cp_mode_order gives the engine the discovery ladder (carrier-DB preference first).
         # See swu_ike.py (SWU_CP_MODE / SWU_CP_MODE_ORDER).
         "cp_mode": normalize_cp_mode(inst.get("cp_mode", "")),
-        "cp_mode_order": cp_mode_order_for(inst["mcc"], inst["mnc"]),
+        "cp_mode_order": cp_mode_order_for(route_mcc, route_mnc),
     }
 
 

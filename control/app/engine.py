@@ -24,7 +24,7 @@ import time
 
 import docker
 
-from . import config as cfg, egress, media, rtp_forward, sysinfo
+from . import carrier_profiles, config as cfg, egress, media, rtp_forward, sysinfo
 from .egress_contract import ENGINE_LABEL
 
 log = logging.getLogger("mdd.engine")
@@ -481,7 +481,12 @@ def start(inst: dict, settings: dict, dev_mounts: bool = False, reason: str = "r
             ipaddress.IPv4Address(epdg)
             epdg_ip = epdg
         except ValueError:
-            epdg_ip = egress.resolve_ipv4_via_socks(selected_exit["proxy_url"], epdg)
+            profile = carrier_profiles.resolve(carrier_profiles.identity_from_instance(inst))
+            client_subnet = ""
+            if profile.get("operational_status") != "blocked":
+                client_subnet = carrier_profiles.dns_client_subnet(profile, epdg)
+            epdg_ip = egress.resolve_ipv4_via_socks(
+                selected_exit["proxy_url"], epdg, client_subnet=client_subnet)
         # The Engine network is internal and deliberately cannot query public DNS.
         # Render a one-run copy with the resolved peer; the saved line keeps its hostname.
         rendered_inst = {**inst, "epdg": epdg_ip}

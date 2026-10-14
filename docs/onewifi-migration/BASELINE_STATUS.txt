@@ -1,0 +1,30 @@
+ROOT E:\GQ\Ultra\NEWONE
+6056f50 feat: push-to-start Live Activities for inbound SMS verification codes
+pre-MDD OneWIFI, last version before fusion/onefwifi-mdd-20261012
+
+ROOT E:\GQ\Ultra\mdd-sim-gateway
+fa812bf691f3c2458c2ec236d3d591f1ac9f3415
+fa812bf Merge pull request #243 from MddIdd/chore/promote-auto-update-v1.13.2
+86f519d fix(webui): update source-map-js to pass security audit
+eef940f chore(update): promote v1.13.2 channels
+6e9e65b Merge pull request #238 from MddIdd/release/v1.13.2
+53598ca chore(release): include latest develop in v1.13.2
+ROOT E:\GQ\Ultra\ONEWIFI\IOS
+1194ec755cd99319ae29c44130c37d111f8f56ac
+ M ios/Runner/APNsBridge.swift
+ M lib/features/sms/data/ios_push_endpoint_client.dart
+ M lib/features/sms/presentation/widgets/remote_otp_pairing_tile.dart
+ M lib/features/sms/state/remote_otp_controller.dart
+1194ec7 mobile: MDD calls API, auth helper, gateway mode switch
+0e113a4 mobile: MDD gateway API client for calls/auth
+4899cc3 ios: open ATS like Android and bump 0.1.49 (62)
+cfeefbf fix: route call glass through the design facade to satisfy the boundary ratchet
+7a34914 Merge remote-tracking branch 'origin/codex/ui-glass-polish' into ios-main
+ROOT E:\GQ\Ultra\ONEWIFI\android
+7c87fb1d6959c9060db1e1814dc32890c5267d42
+ M android/app/src/main/res/xml/network_security_config.xml
+7c87fb1 mobile: MDD calls API, auth helper, gateway mode switch
+0248458 mobile: MDD gateway API client for calls/auth
+16f733b chore: bump OneWIFI to 0.1.42
+de2cf64 feat: add OneTools notify channel and keep remote OTP pairing visible
+7f9df7c fix: report cellular no-carrier failures for 0.1.41

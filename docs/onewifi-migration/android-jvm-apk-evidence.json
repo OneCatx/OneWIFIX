@@ -1,0 +1,170 @@
+{
+  "recorded_local": "2026-10-14T13:30:00+08:00",
+  "scope": "Android JVM unit tests and debug APK packaging",
+  "commands": [
+    ".\\gradlew.bat :app:testDebugUnitTest --offline --no-daemon --console=plain",
+    ".\\gradlew.bat :app:assembleDebug --offline --no-daemon --console=plain"
+  ],
+  "jvm_tests": {
+    "tests": 109,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.activation.ActivationBase64CompatibilityTest.xml",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.activation.ActivationPayloadTest.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.activation.ActivationPreflightTest.xml",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.activation.ActivationReplyMapsTest.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.activation.CodeValidatorTest.xml",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallCoordinatorTest.xml",
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallEventMonitorTest.xml",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallEventReaderTest.xml",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallEventSnapshotTest.xml",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallReadinessTest.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallSessionConfigTest.xml",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallSessionRuntimeTest.xml",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.CallTransportTest.xml",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.NativeCallFlowTest.xml",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.ResidentCallSourceTest.xml",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.calls.SipCallSourceTest.xml",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.NativeCompatibilityTest.xml",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.OtpNotificationCoordinatorTest.xml",
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.UpdateApkDownloadTest.xml",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "file": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\test-results\\testDebugUnitTest\\TEST-com.oneims.onewifi.UpdateDownloadPolicyTest.xml",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "log": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\mdd-jdk-diag\\android-jvm-final.log",
+    "log_sha256": "108125c3cae2d73b60bb822b60b169dc3dc8f2618ea8468071e3b355931f5166"
+  },
+  "apk": {
+    "path": "E:\\GQ\\Ultra\\ONEWIFI\\android\\build\\app\\outputs\\apk\\debug\\app-debug.apk",
+    "bytes": 103706946,
+    "sha256": "e210cbd3b4a0f335b8ef1a8d0d81b07a494d13cba96ddb6b5b610a20e1003098"
+  },
+  "gateway_certificate": {
+    "path": "E:\\GQ\\Ultra\\ONEWIFI\\android\\android\\app\\src\\main\\res\\raw\\gateway_selfsigned",
+    "pem_sha256": "de7b31e8ce61d520841ff3e3c7c91599421885ad818deb498b334d84a5da6d1d",
+    "der_sha256": "f87cd8d79fddf38c4be74a368005baad455bb17c6693f3cf867c25d50b5d6f5c",
+    "matches_remote_live_443_leaf": true
+  },
+  "runtime_boundary": "Software/build evidence only; no install/device/MDD/SIM/IMS/SIP/SMS/APNs/real call proof."
+}

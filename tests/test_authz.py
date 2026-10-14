@@ -8,6 +8,8 @@ from control.app import authz, gate, main
 
 ADMIN = gate.Principal("admin", csrf="c", credential="session:k")
 CLIENT = gate.Principal("client", client_id=3, credential="client:3")
+MANAGER = gate.Principal("client", client_id=4, credential="client:4",
+                         capabilities=frozenset({"manage_devices", "manage_esim", "manage_settings"}))
 
 
 def routes():
@@ -24,6 +26,25 @@ def routes():
 
 
 class AuthorizationTableTests(unittest.TestCase):
+    def test_capabilities_are_narrow_and_old_tokens_are_unprivileged(self):
+        for method, path, capability in (
+            ("GET", "/api/readers", "manage_devices"),
+            ("GET", "/api/devices", "manage_devices"),
+            ("GET", "/api/esim/profiles", "manage_esim"),
+            ("GET", "/api/mobile/v1/settings/notifications", "manage_settings"),
+            ("GET", "/api/mobile/v1/devices", "manage_devices"),
+            ("POST", "/api/mobile/v1/devices/a/esim/actions/switch", "manage_esim"),
+        ):
+            with self.subTest(path=path):
+                self.assertFalse(authz.allowed(CLIENT, method, path))
+                self.assertTrue(authz.allowed(MANAGER, method, path))
+                without = gate.Principal("client", capabilities=MANAGER.capabilities - {capability})
+                self.assertFalse(authz.allowed(without, method, path))
+        for method, path in (("POST", "/api/engine/event"),
+                             ("POST", "/api/auth/password"),
+                             ("GET", "/api/system/update/check"),
+                             ("GET", "/api/instances/x/messages/binary")):
+            self.assertFalse(authz.allowed(MANAGER, method, path))
     def test_the_administrator_may_do_anything(self):
         for method, path in routes():
             with self.subTest(method=method, path=path):
