@@ -17,7 +17,7 @@ async function j(method, path, body) {
   // notify the app once so it can stop all polling and return to the login screen.
   if (r.status === 401 && csrfToken) {
     csrfToken = ''
-    window.dispatchEvent(new CustomEvent('mdd-auth-expired'))
+    window.dispatchEvent(new CustomEvent('onewifi-auth-expired'))
   }
   // detail may be a structured dict (e.g. {code, message}); prefer its message so
   // alerts show readable text instead of "[object Object]".
@@ -37,7 +37,7 @@ async function form(method, path, formData) {
   try { data = text ? JSON.parse(text) : {} } catch { data = { raw: text } }
   if (r.status === 401 && csrfToken) {
     csrfToken = ''
-    window.dispatchEvent(new CustomEvent('mdd-auth-expired'))
+    window.dispatchEvent(new CustomEvent('onewifi-auth-expired'))
   }
   const detailMsg = data.detail && typeof data.detail === 'object' ? (data.detail.message || data.detail.code) : data.detail
   if (!r.ok) throw Object.assign(new Error(detailMsg || data.error || r.statusText), { status: r.status, data })

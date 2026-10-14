@@ -20,7 +20,7 @@ from copy import deepcopy
 
 import yaml
 
-from . import carrier_profiles
+from . import brand, carrier_profiles
 
 DATA_DIR = os.environ.get("MDD_DATA", os.path.join(os.getcwd(), "data"))
 CONFIG_PATH = os.path.join(DATA_DIR, "config.yaml")
@@ -50,7 +50,7 @@ RUNTIME_ONLY_INSTANCE_FIELDS = frozenset({
 # default; a line may override it because some carriers gate IMS registration on a User-Agent
 # whitelist and answer 403 to anything they do not recognise (issue #83). The cap keeps the
 # header inside what a P-CSCF will accept.
-DEFAULT_USER_AGENT = "MDD-Sim-Gateway"
+DEFAULT_USER_AGENT = brand.PRODUCT_USER_AGENT
 MAX_USER_AGENT_LEN = 64
 
 
@@ -844,7 +844,7 @@ def _upsert_instance_locked(inst: dict, unique_name: bool = False) -> dict:
     existing = data["instances"].get(iid, {})
     if not existing and len(data["instances"]) >= MAX_SIM_LINES:
         raise LineLimitError(
-            f"MDD Sim Gateway supports at most {MAX_SIM_LINES} SIM lines")
+            f"{brand.PRODUCT_NAME} supports at most {MAX_SIM_LINES} SIM lines")
     if "index" not in existing:
         inst["index"] = next_index(data)
     else:

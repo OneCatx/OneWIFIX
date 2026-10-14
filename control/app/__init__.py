@@ -1,1 +1,1 @@
-"""MDD Sim Gateway control-plane package."""
+"""OneWIFI control-plane package (legacy MDD runtime identifiers remain compatible)."""

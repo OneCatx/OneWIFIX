@@ -615,11 +615,11 @@ export default function Messages({ selected, subscribe, showToast, instances, ca
   }, [])
   useEffect(() => {
     if (!paneOpen || !window.matchMedia('(max-width: 760px)').matches) return undefined
-    window.history.pushState({ mddMessagesPane: true }, '')
+    window.history.pushState({ onewifiMessagesPane: true }, '')
     window.addEventListener('popstate', closePane)
     return () => {
       window.removeEventListener('popstate', closePane)
-      if (window.history.state?.mddMessagesPane) window.history.back()
+      if (window.history.state?.onewifiMessagesPane) window.history.back()
     }
   }, [paneOpen, closePane])
 

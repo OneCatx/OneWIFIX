@@ -958,7 +958,7 @@ const NOTIFICATION_TEMPLATE_EVENTS = [
 const TEMPLATE_SAMPLE = {
   event: 'incoming_sms', instance: '1', sim_name: 'UK SIM', iccid: '8900…',
   msisdn: '+441234567890', from: '+447000000000', text: 'Example notification text',
-  title: 'MDD · VoWiFi 短信 · UK SIM',
+  title: 'OneWIFI · VoWiFi 短信 · UK SIM',
   content: 'SIM: UK SIM\n本机号码: +441234567890\n来源号码: +447000000000\n\nExample notification text',
 }
 
@@ -980,7 +980,7 @@ function MessageTemplateEditor({ channel, config, onChange, onTest }) {
   const sample = {
     ...TEMPLATE_SAMPLE,
     event,
-    title: `MDD · ${t(eventLabel)} · ${TEMPLATE_SAMPLE.sim_name}`,
+    title: `OneWIFI · ${t(eventLabel)} · ${TEMPLATE_SAMPLE.sim_name}`,
     content: `${t(eventLabel)}\nSIM: ${TEMPLATE_SAMPLE.sim_name}\n${TEMPLATE_SAMPLE.text}`,
   }
   const render = value => String(value || '').replace(/\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g, (_all, key) => sample[key] ?? '')
@@ -1117,7 +1117,7 @@ export function SystemPage({ showToast, openUpdateDialog }) {
     } catch (e) { showToast(e.message) } finally { setMaintenanceBusy('') }
   }
   const pruneOldImages = async () => {
-    if (!window.confirm(t('Delete unused old and rollback MDD images? Current images and the trusted Engine base are kept, but one-click rollback will no longer be available.'))) return
+    if (!window.confirm(t('Delete unused old and rollback OneWIFI images? Current images and the trusted Engine base are kept, but one-click rollback will no longer be available.'))) return
     setMaintenanceBusy('prune_old_images')
     try {
       const result = await api.maintenance('prune_old_images')
@@ -1259,10 +1259,10 @@ function HostPanel({ host, alerts, loading, clearing, onClear, t }) {
       <Row label={t('Memory')}>{mem.total_mb ? t('{used}% of {total} MB used', { used: mem.used_percent, total: mem.total_mb }) : '—'}</Row>
       <Row label={t('Swap')}>{mem.swap_total_mb ? t('{used} MB of {total} MB ({percent}%)', { used: mem.swap_used_mb, total: mem.swap_total_mb, percent: mem.swap_used_percent }) : '—'}</Row>
       <Row label={t('Disk')}>{disk.total_bytes ? t('{percent}% used · {used} / {total} · {free} available', { percent: disk.used_percent, used: formatBytes(disk.used_bytes), total: formatBytes(disk.total_bytes), free: formatBytes(disk.free_bytes) }) : '—'}</Row>
-      <Row label={t(project.known_total_is_logical ? 'MDD reported usage (logical)' : 'MDD storage on disk')}>{project.known_total_bytes != null ? formatBytes(project.known_total_bytes) : '—'}</Row>
+      <Row label={t(project.known_total_is_logical ? 'OneWIFI reported usage (logical)' : 'OneWIFI storage on disk')}>{project.known_total_bytes != null ? formatBytes(project.known_total_bytes) : '—'}</Row>
       <Row label={t('Project files')}>{project.files_bytes != null ? formatBytes(project.files_bytes) : '—'}</Row>
-      {project.docker_images_bytes != null && <Row label={t('MDD image virtual sizes (shared layers counted repeatedly)')}>{formatBytes(project.docker_images_bytes)}</Row>}
-      {project.docker_image_layers_bytes != null && <Row label={t(project.docker_images_all_managed ? 'MDD Docker image layers on disk' : 'All Docker image layers on disk')}>{t('{total} · {reclaimable} reclaimable', { total: formatBytes(project.docker_image_layers_bytes), reclaimable: formatBytes(project.docker_image_reclaimable_bytes) })}</Row>}
+      {project.docker_images_bytes != null && <Row label={t('OneWIFI image virtual sizes (shared layers counted repeatedly)')}>{formatBytes(project.docker_images_bytes)}</Row>}
+      {project.docker_image_layers_bytes != null && <Row label={t(project.docker_images_all_managed ? 'OneWIFI Docker image layers on disk' : 'All Docker image layers on disk')}>{t('{total} · {reclaimable} reclaimable', { total: formatBytes(project.docker_image_layers_bytes), reclaimable: formatBytes(project.docker_image_reclaimable_bytes) })}</Row>}
       {!!project.container_writable_bytes && <Row label={t('Container writable layers')}>{formatBytes(project.container_writable_bytes)}</Row>}
       {project.build_cache_bytes != null && <Row label={t('Shared Docker build cache')}>{t('{total} · {reclaimable} reclaimable', { total: formatBytes(project.build_cache_bytes), reclaimable: formatBytes(project.build_cache_reclaimable_bytes) })}</Row>}
     </div>

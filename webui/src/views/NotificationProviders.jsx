@@ -48,7 +48,7 @@ function ApnsCard({ name, title, detail, config, setChannel, t, showToast }) {
     {field('bundle_id', 'Bundle ID', { autoComplete: 'off' })}
     <div className="u-form-grid">{field('team_id', 'Team ID', { maxLength: 10, autoComplete: 'off' })}{field('key_id', 'Key ID', { maxLength: 10, autoComplete: 'off' })}</div>
     {field('auth_key_path', 'Existing server-side .p8 key path', { type: 'password', autoComplete: 'off' })}
-    <p className="u-note">{t('The key must already exist on the MDD host as a readable P-256 .p8 file. Never paste or upload its contents. An unchanged masked path is kept.')}</p>
+    <p className="u-note">{t('The key must already exist on the OneWIFI host as a readable P-256 .p8 file. Never paste or upload its contents. An unchanged masked path is kept.')}</p>
     {name === 'apns' ? <button type="button" className="btn btn-ghost" disabled={testing || !config.enabled} onClick={test} title={t('Sends a real SMS test to registered endpoints after settings are saved.')}>{t(testing ? 'Testing…' : 'Send SMS APNs test')}</button> : <p className="u-note">{t('VoIP push has no synthetic test: it requires a real ringing call. SMS and VoIP credentials are configured separately.')}</p>}
   </div>
 }

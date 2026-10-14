@@ -201,7 +201,7 @@ def imeisv_from_imei(imei, imeisv="", svn="00"):
     return base14 + svn2
 
 
-DEFAULT_USER_AGENT = "MDD-Sim-Gateway"
+DEFAULT_USER_AGENT = "OneWIFI"
 MAX_USER_AGENT_LEN = 64
 
 

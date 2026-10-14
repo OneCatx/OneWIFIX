@@ -413,9 +413,9 @@ export default function SimConfig({ instances, selected, refresh, cards, setSele
           <Field label={t('Device User-Agent (how the line identifies to the carrier)')}>
             <input className="mono" maxLength={64} value={form.sip.user_agent || ''}
               onChange={(e) => updSip({ user_agent: e.target.value })}
-              placeholder="MDD-Sim-Gateway" />
+              placeholder="OneWIFI" />
             <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 2 }}>
-              {t('Leave empty to identify as MDD-Sim-Gateway. Set this only when the carrier rejects registration from an unrecognised terminal.')}
+              {t('Leave empty to identify as OneWIFI. Set this only when the carrier rejects registration from an unrecognised terminal.')}
             </div>
           </Field>
           {/* The endpoint-wide switch is superseded by the call-only parameters below. It stays

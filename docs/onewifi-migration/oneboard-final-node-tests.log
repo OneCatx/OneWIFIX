@@ -2,133 +2,133 @@ TAP version 13
 # Subtest: formatBytes shows KB with no decimals below 1 MB
 ok 1 - formatBytes shows KB with no decimals below 1 MB
   ---
-  duration_ms: 1.7404
+  duration_ms: 2.1034
   type: 'test'
   ...
 # Subtest: formatBytes shows MB with one decimal at or above 1 MB
 ok 2 - formatBytes shows MB with one decimal at or above 1 MB
   ---
-  duration_ms: 0.68
+  duration_ms: 0.2161
   type: 'test'
   ...
 # Subtest: formatBytes treats missing or invalid input as zero
 ok 3 - formatBytes treats missing or invalid input as zero
   ---
-  duration_ms: 0.4536
+  duration_ms: 0.1634
   type: 'test'
   ...
 # Subtest: attachableFormats uses the attachable flag when the table carries one
 ok 4 - attachableFormats uses the attachable flag when the table carries one
   ---
-  duration_ms: 3.9393
+  duration_ms: 2.8531
   type: 'test'
   ...
 # Subtest: attachableFormats falls back to policy === send for a table with no attachable field
 ok 5 - attachableFormats falls back to policy === send for a table with no attachable field
   ---
-  duration_ms: 0.2666
+  duration_ms: 0.175
   type: 'test'
   ...
 # Subtest: attachableFormats defaults to FALLBACK_FORMATS when called with no argument
 ok 6 - attachableFormats defaults to FALLBACK_FORMATS when called with no argument
   ---
-  duration_ms: 0.3323
+  duration_ms: 0.2467
   type: 'test'
   ...
 # Subtest: acceptAttribute lists every attachable content type, alias and extension
 ok 7 - acceptAttribute lists every attachable content type, alias and extension
   ---
-  duration_ms: 0.3318
+  duration_ms: 0.2562
   type: 'test'
   ...
 # Subtest: acceptAttribute on the fallback table includes MIME types and extension fallbacks
 ok 8 - acceptAttribute on the fallback table includes MIME types and extension fallbacks
   ---
-  duration_ms: 0.2493
+  duration_ms: 0.1965
   type: 'test'
   ...
 # Subtest: acceptAttribute offers a convert format only when the gateway marks it attachable
 ok 9 - acceptAttribute offers a convert format only when the gateway marks it attachable
   ---
-  duration_ms: 0.1976
+  duration_ms: 0.1618
   type: 'test'
   ...
 # Subtest: isAttachable matches by MIME type, case-insensitively and ignoring parameters
 ok 10 - isAttachable matches by MIME type, case-insensitively and ignoring parameters
   ---
-  duration_ms: 0.3384
+  duration_ms: 0.2922
   type: 'test'
   ...
 # Subtest: isAttachable matches an alias
 ok 11 - isAttachable matches an alias
   ---
-  duration_ms: 0.2061
+  duration_ms: 0.1551
   type: 'test'
   ...
 # Subtest: isAttachable falls back to file extension when type is empty or a generic placeholder
 ok 12 - isAttachable falls back to file extension when type is empty or a generic placeholder
   ---
-  duration_ms: 1.1202
+  duration_ms: 0.787
   type: 'test'
   ...
 # Subtest: isAttachable takes a convert format with an empty type by extension only when the gateway marks it attachable
 ok 13 - isAttachable takes a convert format with an empty type by extension only when the gateway marks it attachable
   ---
-  duration_ms: 0.7324
+  duration_ms: 0.4683
   type: 'test'
   ...
 # Subtest: isAttachable never uses extension as a fallback for a real, non-matching type
 ok 14 - isAttachable never uses extension as a fallback for a real, non-matching type
   ---
-  duration_ms: 0.3681
+  duration_ms: 0.203
   type: 'test'
   ...
 # Subtest: isAttachable honors a custom formats table rather than always using the fallback
 ok 15 - isAttachable honors a custom formats table rather than always using the fallback
   ---
-  duration_ms: 0.2655
+  duration_ms: 0.1547
   type: 'test'
   ...
 # Subtest: unchanged masked destinations and APNs key survive unrelated settings save
 ok 16 - unchanged masked destinations and APNs key survive unrelated settings save
   ---
-  duration_ms: 1.9303
+  duration_ms: 1.7377
   type: 'test'
   ...
 # Subtest: replacement supplies the complete explicit URL list, not partial masks
 ok 17 - replacement supplies the complete explicit URL list, not partial masks
   ---
-  duration_ms: 0.3278
+  duration_ms: 0.5274
   type: 'test'
   ...
 # Subtest: rejects mixed mask edits and an enabled channel with no destination
 ok 18 - rejects mixed mask edits and an enabled channel with no destination
   ---
-  duration_ms: 0.5837
+  duration_ms: 0.6313
   type: 'test'
   ...
 # Subtest: summary reveals count but never echoes saved destinations
 ok 19 - summary reveals count but never echoes saved destinations
   ---
-  duration_ms: 0.1596
+  duration_ms: 0.1655
   type: 'test'
   ...
 # Subtest: a previous line cannot overwrite the current line
 ok 20 - a previous line cannot overwrite the current line
   ---
-  duration_ms: 11.8976
+  duration_ms: 6.451
   type: 'test'
   ...
 # Subtest: overlapping refreshes accept only the newest response or error
 ok 21 - overlapping refreshes accept only the newest response or error
   ---
-  duration_ms: 2.4195
+  duration_ms: 2.0574
   type: 'test'
   ...
 # Subtest: changing lines clears old errors and unmount invalidates requests
 ok 22 - changing lines clears old errors and unmount invalidates requests
   ---
-  duration_ms: 1.4902
+  duration_ms: 1.5292
   type: 'test'
   ...
 1..22
@@ -139,4 +139,4 @@ ok 22 - changing lines clears old errors and unmount invalidates requests
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 435.5162
+# duration_ms 394.013

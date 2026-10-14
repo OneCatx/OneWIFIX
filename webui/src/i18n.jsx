@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
-const STORAGE_KEY = 'mdd-language'
+const STORAGE_KEY = 'onewifi-language'
 
 const zh = {
   'Gateway account': '网关账户', 'Main navigation': '主导航', 'Mobile navigation': '移动端导航',
@@ -22,7 +22,7 @@ const zh = {
   'Incoming-call VoIP push notifications.': '来电 VoIP 推送通知。',
   'APNs environment': 'APNs 环境', 'Bundle ID': 'Bundle ID', 'Team ID': 'Team ID', 'Key ID': 'Key ID',
   'Existing server-side .p8 key path': '服务器上现有 .p8 密钥路径',
-  'The key must already exist on the MDD host as a readable P-256 .p8 file. Never paste or upload its contents. An unchanged masked path is kept.': 'MDD 主机上必须已有可读取的 P-256 .p8 文件。不要粘贴或上传密钥内容；未修改的掩码路径会保留。',
+  'The key must already exist on the OneWIFI host as a readable P-256 .p8 file. Never paste or upload its contents. An unchanged masked path is kept.': 'OneWIFI 主机上必须已有可读取的 P-256 .p8 文件。不要粘贴或上传密钥内容；未修改的掩码路径会保留。',
   'Sends a real SMS test to registered endpoints after settings are saved.': '保存设置后会向已注册端点发送真实短信测试推送。',
   'Send SMS APNs test': '发送短信 APNs 测试',
   'APNs accepted {accepted}/{attempted} requests; delivery is not confirmed.': 'APNs 接受 {accepted}/{attempted} 个请求；不代表设备已收到。',
@@ -64,7 +64,7 @@ const zh = {
   'Clear build cache · {size} reclaimable': '清理构建缓存 · 可释放 {size}',
   'Clear old and rollback images': '清理旧版与回滚镜像', 'Cleaning old images…': '正在清理旧镜像…',
   'Clear old and rollback images · {size} reclaimable': '清理旧版与回滚镜像 · 可释放 {size}',
-  'Delete unused old and rollback MDD images? Current images and the trusted Engine base are kept, but one-click rollback will no longer be available.': '确定删除未使用的 MDD 旧版与回滚镜像吗？当前镜像和可信 Engine 基础镜像会保留，但之后将无法一键回滚。',
+  'Delete unused old and rollback OneWIFI images? Current images and the trusted Engine base are kept, but one-click rollback will no longer be available.': '确定删除未使用的 OneWIFI 旧版与回滚镜像吗？当前镜像和可信 Engine 基础镜像会保留，但之后将无法一键回滚。',
   'Old images cleaned · {count} removed · {size} reclaimed': '旧镜像已清理 · 删除 {count} 个 · 释放 {size}',
   'Old-image cleanup keeps the current images, trusted Engine base and every image used by a container, but removes rollback images. Build-cache cleanup removes only dangling builder records; containers and volumes are always kept.': '旧镜像清理会保留当前镜像、可信 Engine 基础镜像和所有正在被容器使用的镜像，但会删除回滚镜像；构建缓存清理只删除失去引用的构建记录。两项操作都不会删除容器或卷。',
   'Clear dangling Docker build cache? Images, containers and volumes are kept.': '确定清理 Docker 中已失去引用的构建缓存吗？镜像、容器和卷会保留。',
@@ -155,9 +155,9 @@ const zh = {
   Host: '主机', Machine: '机器', Uptime: '已运行',
   Temperature: '温度', 'CPU frequency': 'CPU 频率', 'Load (1m / per core)': '负载（1 分钟 / 每核）',
   cores: '核', 'Memory and storage': '内存与存储', Memory: '内存', Swap: '交换分区', Disk: '磁盘',
-  'MDD reported usage (logical)': 'MDD 统计占用（逻辑大小）', 'MDD storage on disk': 'MDD 实际磁盘占用', 'Project files': '项目文件',
-  'MDD image virtual sizes (shared layers counted repeatedly)': 'MDD 镜像虚拟大小合计（共享层会重复计算）',
-  'MDD Docker image layers on disk': 'MDD Docker 镜像实际占用', 'All Docker image layers on disk': '全部 Docker 镜像实际占用', 'Container writable layers': '容器可写层',
+  'OneWIFI reported usage (logical)': 'OneWIFI 统计占用（逻辑大小）', 'OneWIFI storage on disk': 'OneWIFI 实际磁盘占用', 'Project files': '项目文件',
+  'OneWIFI image virtual sizes (shared layers counted repeatedly)': 'OneWIFI 镜像虚拟大小合计（共享层会重复计算）',
+  'OneWIFI Docker image layers on disk': 'OneWIFI Docker 镜像实际占用', 'All Docker image layers on disk': '全部 Docker 镜像实际占用', 'Container writable layers': '容器可写层',
   'Shared Docker build cache': 'Docker 共享构建缓存',
   Addresses: '地址', 'Default route': '默认路由', 'Uplink attachment': '上行挂载方式',
   'Interface errors / dropped': '网卡错误 / 丢弃', 'Power and throttling': '供电与节流',
@@ -243,7 +243,7 @@ const zh = {
   'Two-letter ISO code. Leave blank to select the exit from the SIM MCC.': '两位 ISO 国家代码。留空时根据 SIM MCC 自动选择出口。',
   'IMEISV — optional': 'IMEISV（可选）', 'SMS centre (SMSC)': '短信中心（SMSC）', 'Auto (from SIM)': '自动（从 SIM 读取）', Manual: '手动',
   'Device User-Agent (how the line identifies to the carrier)': '设备 User-Agent（线路向运营商报告的设备身份）',
-  'Leave empty to identify as MDD-Sim-Gateway. Set this only when the carrier rejects registration from an unrecognised terminal.': '留空则以 MDD-Sim-Gateway 身份标识。仅当运营商拒绝未知终端注册时才需要填写。',
+  'Leave empty to identify as OneWIFI. Set this only when the carrier rejects registration from an unrecognised terminal.': '留空则以 OneWIFI 身份标识。仅当运营商拒绝未知终端注册时才需要填写。',
   'Advanced IMS identity': '高级 IMS 身份',
   'Carrier defaults are applied automatically. Change these fields only when required by the carrier.': '系统会自动应用运营商默认值；仅在运营商明确要求时修改这些字段。',
   'Automatic carrier default': '自动使用运营商默认值', 'IMS access type': 'IMS 接入类型',

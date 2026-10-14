@@ -1,5 +1,5 @@
 {
-  "recorded_utc": "2026-10-14T06:17:32.870060+00:00",
+  "recorded_utc": "2026-10-14T07:25:07.840691+00:00",
   "command": [
     "wsl",
     "--cd",
@@ -11,7 +11,7 @@
     "MDD_DATA=/tmp/mdd-full-final-1-14-0",
     "LD_LIBRARY_PATH=/mnt/e/GQ/Ultra/mdd-sim-gateway/docs/onewifi-migration/linux-pcsc/extracted/usr/lib/x86_64-linux-gnu",
     "/mnt/e/GQ/Ultra/mdd-sim-gateway/.venv-linux/bin/python",
-    "docs/onewifi-migration/run-current-regression.py"
+    "/mnt/e/GQ/Ultra/mdd-sim-gateway/docs/onewifi-migration/run-current-regression.py"
   ],
   "exit_code": 0,
   "source_unchanged": true,
@@ -47,7 +47,7 @@
     ".github/workflows/ci.yml": "19002ddca113c008071f65f3bec31f40745a6189036c4e07d34254053dba67a2",
     ".github/workflows/drivers.yml": "c6a595d48bb09d5593d4e30e29f43dcd965c6b48f1c2414f17963845c5bdf507",
     ".github/workflows/issue-triage.yml": "6717d57446fcaf79dc5159af5d532afbe69c715de5eba18a1773e62af7bc01a0",
-    ".github/workflows/release.yml": "d7262cf2233409b0933dbfff5bebef26544156e6a10fb661a13c3373b2a10edb",
+    ".github/workflows/release.yml": "cf42d9c42a703cec0ea86838eaee19cc8859f72f9f03a4b112ba3f10799a2fc6",
     "VERSION": "55b67c988a1290318c2f11bfb4f3eebca966a46c2628e9dee46114650a447887",
     "control/Dockerfile": "846ee0f022cd8001852c34c09669411074a0c9c715b1b9fe581b6c9492a6355b",
     "control/app/__init__.py": "7f327f8cda5cf03fce0a5605aff95e1a90a94e82e7d9d195d6bfe4e0ab3dadc9",
@@ -286,12 +286,12 @@
     "tests/test_vowifi_support.py": "9873f86e5d270eb6ee4090055b095849d6c8edd19305795766dfbdb36e7b4e4b",
     "tests/test_webui_caching.py": "396a4dd2b71399a312dd56bfa154d5584e7da4108104d6e6b745db489d13fe7c",
     "tests/test_wrong_card_attribution.py": "aa0d9e0d234a6f480bb118b5115714cf140bee9dac8f6998527a3c7fe6e5c98f",
-    "webui/src/App.jsx": "9741a16fbefa59de887b59f9258cf36cb550850c4ce9ea21e88ed28b63395809",
+    "webui/src/App.jsx": "c23611ac3382d7bd30bdfaa7e73770870a9367ba752454d7aea55053aa34fdf6",
     "webui/src/GlobalSoftphone.jsx": "cc93777f1c59a7225ff5815d2c474fabae6b376944d7a3665df5acf914c5ed4a",
-    "webui/src/api.js": "a5a25e9e0c9ffe25d746dd0821cf9f2b504675850fa54033db52d08dd9253840",
+    "webui/src/api.js": "d591850bfdb79250ce969ee4dbc4042e4154527690c0dc8b03b32aa530e9bf89",
     "webui/src/assets/fonts/Twemoji.Mozilla.ttf": "61db6397b8b32b72c585d538ef698a84cf78cf2558a14046b3fa0ec4cc362540",
     "webui/src/contactNames.js": "fa57d1c7382f2c8bca3c7355e3d797a6cd620d7abb6e76e53aebf96818121895",
-    "webui/src/i18n.jsx": "17e1474edb996fde35cf6345316f8d73c4ae47ac88becf1f07847ffd7c0f4359",
+    "webui/src/i18n.jsx": "f37a13e041f4e8f0c64df8f36114ab0fa39b965f6e3a7958b8afa864c9564079",
     "webui/src/index.css": "ab88774dc51afa6536629794858704026e471219264aac93ddb1a3e79233a055",
     "webui/src/main.jsx": "0c909b95c9915cb130c0fd43e855c603a1d044f0da0cabe20cd41379e54bc82a",
     "webui/src/mmsAttachments.js": "063dadb36a3855bb5ac00c257749c14c5da74be0cc37b6da1d552dd6a3f8076c",
@@ -304,13 +304,13 @@
     "webui/src/views/Esim.jsx": "34fffad24c539d371645fca8486286987ec93c946ef44c8c6ee61075d2a10cb9",
     "webui/src/views/Keepalive.jsx": "bc491248a8c6bb86ca46bdff3410a6da7844ce9e875217c3acdd81186a39f828",
     "webui/src/views/Logs.jsx": "5fba2f6bc31df00dee2f20efb4a30198a1b4633dec16dd913b941e56a8f59a1f",
-    "webui/src/views/Messages.jsx": "ec8e1aee2f56f1a5f0516fb7fce9833446801f6093517c1cc9f227fc269503e3",
+    "webui/src/views/Messages.jsx": "843e9961fee19235275b6e1b6e005b13be90d352dea46a5886b2ea22bde161f9",
     "webui/src/views/MmsSettings.jsx": "c6632d028dc2385f820d25580d8acf8c6f8ecadf2a4f1edb5f7439b9bfea9f6b",
-    "webui/src/views/NotificationProviders.jsx": "a3f28b29161f8b05cf849761a04cb0d09b8ef1251f00e77b8bc464b3cb367062",
-    "webui/src/views/SimConfig.jsx": "a47bc33f5f1cb3ccf99b19b5a504be05eeb1570da2808a68115ec9b74a6013ee",
+    "webui/src/views/NotificationProviders.jsx": "6561a084511d98607ba3901148cece1ae48b915bae665a92090091a1d0528a84",
+    "webui/src/views/SimConfig.jsx": "f04b105d1aff687b9726150b7bdce30f279e6a1b2fec8e67510458a3e729e0ae",
     "webui/src/views/SimSelector.jsx": "f403d21d2494e0846811b0850c61ff07465fd3a112c0eed59b2a02d4420794a7",
     "webui/src/views/Softphone.jsx": "a7f7b6ccfe3b5b61de1899b39a29a497e049c1395fe0008751f66c3956ab5806",
-    "webui/src/views/UnifiedPages.jsx": "389b1dcbd8d29c9ef719b735999fa961ccc460164e8cb80088e1ded721b0dbd4",
+    "webui/src/views/UnifiedPages.jsx": "148d4511f3f52724d618e0f9d3ce51aa960b85e96b7e6ef9214bfcaece4c0319",
     "webui/src/views/VowifiHistory.jsx": "f01d5f68ad337e33bba4534e9c4490cc9dc414c4b6a20737ea7b15245e773280",
     "webui/tests/mms-attachments.test.mjs": "7618ace63bfd99cf585429782dfc97d674617858439019008bac503c16408120",
     "webui/tests/mms-formats.test.mjs": "6c0fa5e85d370b7fe4dae26338510940ab5d09105f8bf68c8de45d5d77bae8a6",
@@ -320,20 +320,6 @@
   },
   "changed_during_run": [],
   "log": "E:\\GQ\\Ultra\\mdd-sim-gateway\\docs\\onewifi-migration\\backend-final-regression.log",
-  "log_sha256": "b6033acf2c4e69caaf6ab5c8b67377fae5fb602341cc13220b5196577998063b",
-  "test_results": {
-    "run": 2097,
-    "success": 2096,
-    "failure": 0,
-    "error": 0,
-    "skipped": 1
-  },
-  "done": [
-    {
-      "success": true,
-      "type": "done",
-      "time": 325482
-    }
-  ],
-  "boundary": "WSL software regression only for the 1.14.0 source tree. Direct WSL invocation was used because the PowerShell wrapper refused a non-empty linux-tmp mount target. No installed engine, SIM, IMS, mobile or provider proof."
+  "log_sha256": "cb27900553fdbeacadd1a0cb884bac5106c61aa951a520a27eff532429371433",
+  "boundary": "WSL software regression only. Direct WSL invocation used because the PowerShell wrapper refused a non-empty linux-tmp mount target. No installed engine, SIM, IMS, mobile or provider proof."
 }

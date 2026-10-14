@@ -2,8 +2,8 @@
 
 Updated: 2026-10-14 (Asia/Shanghai)
 
-This is the pre-deployment status for the current OneWIFI/MDD worktree. It deliberately excludes
-physical-device testing, local/mobile compilation, signing/install, and GitHub publication.
+This is the pre-deployment status for the current OneWIFI/MDD worktree. It excludes physical-device
+testing, signing/install, and GitHub publication; the WebUI build is run locally when possible.
 
 ## Current verdict
 
@@ -11,7 +11,7 @@ physical-device testing, local/mobile compilation, signing/install, and GitHub p
 artifact.** FNOS deployment should start after the source changes are frozen and one new versioned
 GitHub Release (or an explicitly authorized local image build) exists. Do not deploy the old
 `v1.13.2` Release as if it contained this worktree: the current candidate is `v1.14.0` and the
-worktree still has uncommitted backend, mobile-contract, and WebUI changes.
+worktree still has uncommitted release-evidence/readiness document changes.
 
 ## Gates already passed
 
@@ -26,12 +26,14 @@ worktree still has uncommitted backend, mobile-contract, and WebUI changes.
 
 ## Remaining non-mobile blockers
 
-1. **Release identity is selected but not published.** The candidate is now versioned `v1.14.0`; the
-   worktree still has uncommitted changes and no GitHub tag/release has been created.
+1. **Release identity is selected but not published.** The candidate is now versioned `v1.14.0`; the `onecatx` remote has the `v1.14.0` tag, but no GitHub Release or release assets have been published. The worktree still has uncommitted release-evidence/readiness document changes.
 2. **Release assets do not exist for this worktree.** FNOS needs the versioned Compose asset plus
    same-version Control, Hardware, Egress and Engine images and `SHA256SUMS`. The local Windows host
    has no Docker CLI, so I cannot build or inspect those images here.
-3. **FNOS deployment inputs are pending.** The read-only host preflight passed, but startup still
+3. **Release workflow decision is recorded.** Use the current `v1.14.0` tag and its tagged workflow
+   for this Release; the uncommitted QEMU/Buildx update in `.github/workflows/release.yml` remains
+   deferred to a later release.
+4. **FNOS deployment inputs are pending.** The read-only host preflight passed, but startup still
    needs a deployment source, persistent data directory, free HTTPS port, and explicit authorization.
    The remote host currently has no MDD images or containers.
 

@@ -38,7 +38,7 @@ def _self_signed(cert_path, key_path):
     from cryptography.x509.oid import NameOID
 
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, u"mdd-sim-gateway")])
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, u"OneWIFI")])
     san = [x509.DNSName(u"localhost")]
     try:
         host_ip = socket.gethostbyname(socket.gethostname())
