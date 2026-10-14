@@ -118,7 +118,7 @@ class TempStore(unittest.TestCase):
         self.addCleanup(self._temp.cleanup)
         root = Path(self._temp.name)
         patcher = patch.multiple(store, DATA_DIR=str(root),
-                                 DB_PATH=str(root / "mdd-sim-gateway.sqlite"),
+                                 DB_PATH=str(root / "onewifi.sqlite"),
                                  PREVIOUS_DB_PATH=str(root / "vowifi.sqlite"))
         patcher.start()
         self.addCleanup(patcher.stop)

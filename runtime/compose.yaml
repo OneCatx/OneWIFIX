@@ -1,9 +1,9 @@
-name: mdd-sim-gateway
+name: onewifi
 
 services:
   control:
-    image: ghcr.io/mddidd/mdd-sim-gateway-control:${MDD_IMAGE_TAG:?set a release tag such as v1.12.0}
-    container_name: mdd-sim-gateway-control
+    image: ghcr.io/onecatx/onewifi-control:${ONEWIFI_IMAGE_TAG:?set a release tag such as v1.12.0}
+    container_name: onewifi-control
     restart: unless-stopped
     read_only: true
     cap_drop: [ALL]
@@ -18,36 +18,36 @@ services:
     tmpfs:
       - /tmp:rw,nosuid,nodev,size=32m
     volumes:
-      - ${MDD_DATA_DIR:?set an absolute NAS data directory}:/data
+      - ${ONEWIFI_DATA_DIR:?set an absolute NAS data directory}:/data
       - /var/run/docker.sock:/var/run/docker.sock
       - pcscd:/run/pcscd
       - hardware-dbus:/run/dbus:ro
     ports:
-      - ${MDD_HTTP_PORT:-10443}:8443
+      - ${ONEWIFI_HTTP_PORT:-10443}:8443
     environment:
-      MDD_DATA: /data
-      MDD_HOST_DATA: ${MDD_DATA_DIR:?set an absolute NAS data directory}
-      MDD_PCSCD_VOLUME: mdd-sim-gateway-pcscd
-      MDD_ENGINE_NETWORK: mdd-sim-gateway-engine
-      MDD_ENGINE_DIRECT_NETWORK: mdd-sim-gateway-uplink
-      MDD_ENGINE_IMAGE: ghcr.io/mddidd/mdd-sim-gateway-engine:${MDD_IMAGE_TAG:?set a release tag such as v1.12.0}
-      MDD_EGRESS_TRANSPORT: socks5
-      MDD_MANAGER_URL: https://mdd-control:8443
-      MDD_ADVERTISE_ADDR: ${MDD_ADVERTISE_ADDR:?set the NAS LAN address}
-      MDD_HTTP_PORT: 8443
-      MDD_RTP_BASE: ${MDD_RTP_BASE:-30000}
+      ONEWIFI_DATA: /data
+      ONEWIFI_HOST_DATA: ${ONEWIFI_DATA_DIR:?set an absolute NAS data directory}
+      ONEWIFI_PCSCD_VOLUME: onewifi-pcscd
+      ONEWIFI_ENGINE_NETWORK: onewifi-engine
+      ONEWIFI_ENGINE_DIRECT_NETWORK: onewifi-uplink
+      ONEWIFI_ENGINE_IMAGE: ghcr.io/onecatx/onewifi-engine:${ONEWIFI_IMAGE_TAG:?set a release tag such as v1.12.0}
+      ONEWIFI_EGRESS_TRANSPORT: socks5
+      ONEWIFI_MANAGER_URL: https://onewifi-control:8443
+      ONEWIFI_ADVERTISE_ADDR: ${ONEWIFI_ADVERTISE_ADDR:?set the NAS LAN address}
+      ONEWIFI_HTTP_PORT: 8443
+      ONEWIFI_RTP_BASE: ${ONEWIFI_RTP_BASE:-30000}
       # MMS picture conversion: how many pictures at once (default: the CPUs) and how much
       # memory, in MB, it may use (default: worked out from mem_limit). Empty means default.
-      MDD_MMS_CONVERT_WORKERS: ${MDD_MMS_CONVERT_WORKERS:-}
-      MDD_MMS_CONVERT_MEMORY: ${MDD_MMS_CONVERT_MEMORY:-}
-      MDD_CONTAINER_STACK: "1"
-      MDD_CONTROL_CONTAINER: mdd-sim-gateway-control
-      MDD_HARDWARE_CONTAINER: mdd-sim-gateway-hardware
-      MDD_EGRESS_CONTAINER: mdd-sim-gateway-egress
+      ONEWIFI_MMS_CONVERT_WORKERS: ${ONEWIFI_MMS_CONVERT_WORKERS:-}
+      ONEWIFI_MMS_CONVERT_MEMORY: ${ONEWIFI_MMS_CONVERT_MEMORY:-}
+      ONEWIFI_CONTAINER_STACK: "1"
+      ONEWIFI_CONTROL_CONTAINER: onewifi-control
+      ONEWIFI_HARDWARE_CONTAINER: onewifi-hardware
+      ONEWIFI_EGRESS_CONTAINER: onewifi-egress
       PYTHONDONTWRITEBYTECODE: "1"
     networks:
       engine:
-        aliases: [mdd-control]
+        aliases: [onewifi-control]
       management: {}
     depends_on:
       hardware:
@@ -56,15 +56,15 @@ services:
         condition: service_healthy
     labels:
       com.centurylinklabs.watchtower.enable: "false"
-      io.mdd-sim-gateway.managed: "true"
-      io.mdd-sim-gateway.component: control
+      io.onewifi.managed: "true"
+      io.onewifi.component: control
     logging:
       driver: json-file
       options: {max-size: 10m, max-file: "3"}
 
   hardware:
-    image: ghcr.io/mddidd/mdd-sim-gateway-hardware:${MDD_IMAGE_TAG:?set a release tag such as v1.12.0}
-    container_name: mdd-sim-gateway-hardware
+    image: ghcr.io/onecatx/onewifi-hardware:${ONEWIFI_IMAGE_TAG:?set a release tag such as v1.12.0}
+    container_name: onewifi-hardware
     restart: unless-stopped
     network_mode: host
     read_only: true
@@ -75,7 +75,7 @@ services:
     mem_limit: 256m
     volumes:
       - /dev:/dev
-      - ${MDD_DATA_DIR:?set an absolute NAS data directory}:/data
+      - ${ONEWIFI_DATA_DIR:?set an absolute NAS data directory}:/data
       - pcscd:/run/pcscd
       - hardware-dbus:/run/dbus
       - networkmanager-state:/var/lib/NetworkManager
@@ -96,15 +96,15 @@ services:
       - /etc/reader.conf.d:rw,nosuid,nodev,size=1m
     labels:
       com.centurylinklabs.watchtower.enable: "false"
-      io.mdd-sim-gateway.managed: "true"
-      io.mdd-sim-gateway.component: hardware
+      io.onewifi.managed: "true"
+      io.onewifi.component: hardware
     logging:
       driver: json-file
       options: {max-size: 5m, max-file: "2"}
 
   egress:
-    image: ghcr.io/mddidd/mdd-sim-gateway-egress:${MDD_IMAGE_TAG:?set a release tag such as v1.12.0}
-    container_name: mdd-sim-gateway-egress
+    image: ghcr.io/onecatx/onewifi-egress:${ONEWIFI_IMAGE_TAG:?set a release tag such as v1.12.0}
+    container_name: onewifi-egress
     restart: unless-stopped
     read_only: true
     cap_drop: [ALL]
@@ -117,41 +117,41 @@ services:
     tmpfs:
       - /tmp:rw,nosuid,nodev,size=16m
     volumes:
-      - ${MDD_DATA_DIR:?set an absolute NAS data directory}:/data
+      - ${ONEWIFI_DATA_DIR:?set an absolute NAS data directory}:/data
     environment:
-      MDD_EGRESS_HOST: mdd-egress
+      ONEWIFI_EGRESS_HOST: onewifi-egress
       PYTHONDONTWRITEBYTECODE: "1"
     extra_hosts:
       # A subscription may be served by this NAS under its public DNS name.
       # Keep the original URL/Host header while avoiding public hairpin routing.
-      - ${MDD_NAS_HOSTNAME:-host.docker.internal}:host-gateway
+      - ${ONEWIFI_NAS_HOSTNAME:-host.docker.internal}:host-gateway
     networks:
       engine:
-        aliases: [mdd-egress]
+        aliases: [onewifi-egress]
       uplink: {}
     labels:
       com.centurylinklabs.watchtower.enable: "false"
-      io.mdd-sim-gateway.managed: "true"
-      io.mdd-sim-gateway.component: egress
+      io.onewifi.managed: "true"
+      io.onewifi.component: egress
     logging:
       driver: json-file
       options: {max-size: 10m, max-file: "3"}
 
 volumes:
   pcscd:
-    name: mdd-sim-gateway-pcscd
+    name: onewifi-pcscd
   hardware-dbus:
-    name: mdd-sim-gateway-hardware-dbus
+    name: onewifi-hardware-dbus
   networkmanager-state:
-    name: mdd-sim-gateway-networkmanager-state
+    name: onewifi-networkmanager-state
   networkmanager-connections:
-    name: mdd-sim-gateway-networkmanager-connections
+    name: onewifi-networkmanager-connections
 
 networks:
   engine:
-    name: mdd-sim-gateway-engine
+    name: onewifi-engine
     internal: true
   management:
-    name: mdd-sim-gateway-management
+    name: onewifi-management
   uplink:
-    name: mdd-sim-gateway-uplink
+    name: onewifi-uplink

@@ -21,15 +21,15 @@ class OperationsTests(unittest.TestCase):
         def image(image_id, tags, managed=True):
             value = Mock(id=image_id, tags=tags)
             value.attrs = {"Config": {"Labels": {
-                "io.mdd-sim-gateway.managed": "true" if managed else "false"}}}
+                "io.onewifi.managed": "true" if managed else "false"}}}
             return value
 
-        current = image("current", ["mdd-sim-gateway/engine:latest",
-                                     "mdd-sim-gateway/engine:previous"])
-        base = image("base", ["mdd-sim-gateway/engine-base:trusted"])
-        live_old = image("live-old", ["mdd-sim-gateway/engine:emergency"])
-        rollback = image("rollback", ["mdd-sim-gateway/engine:previous",
-                                       "mdd-sim-gateway/engine:old-test"])
+        current = image("current", ["onewifi/engine:latest",
+                                     "onewifi/engine:previous"])
+        base = image("base", ["onewifi/engine-base:trusted"])
+        live_old = image("live-old", ["onewifi/engine:emergency"])
+        rollback = image("rollback", ["onewifi/engine:previous",
+                                       "onewifi/engine:old-test"])
         unrelated = image("other", ["other/app:latest"], managed=False)
         client = Mock()
         client.df.side_effect = [
@@ -371,7 +371,7 @@ class OperationsTests(unittest.TestCase):
                                   "command": ["python", "bridge", "--modem", "/dev/ttyUSB2"],
                                   "log_tail": ["[bridge] allocated logical channels [1, 2, 3]"]}},
                 "vpcd_ports_listening": {"a": {"15360": True, "15361": True, "15362": False}},
-                "reader_definitions": ["libccidtwin", "mdd-sim-gateway-modems"],
+                "reader_definitions": ["libccidtwin", "onewifi-modems"],
             }))
 
             content = operations.support_bundle({})
@@ -383,7 +383,7 @@ class OperationsTests(unittest.TestCase):
             self.assertIn("allocated logical channels",
                           host["bridges"]["a"]["log_tail"][0])
             self.assertFalse(host["vpcd_ports_listening"]["a"]["15362"])
-            self.assertIn("mdd-sim-gateway-modems", host["reader_definitions"])
+            self.assertIn("onewifi-modems", host["reader_definitions"])
 
     def test_support_bundle_reports_a_missing_host_view_instead_of_omitting_it(self):
         with tempfile.TemporaryDirectory() as temp, patch.object(config, "DATA_DIR", temp):
@@ -752,7 +752,7 @@ class ServiceRestartTests(unittest.TestCase):
         self.assertEqual(status["error_code"], "restart.error.failed")
 
     def test_container_mode_rejects_host_reboot_without_publishing_a_request(self):
-        with patch.dict(os.environ, {"MDD_CONTAINER_STACK": "1"}):
+        with patch.dict(os.environ, {"ONEWIFI_CONTAINER_STACK": "1"}):
             result = operations.request_service_restart("host")
         self.assertFalse(result["ok"])
         self.assertEqual(result["error_code"], "restart.error.host_unavailable")
@@ -764,8 +764,8 @@ class ServiceRestartTests(unittest.TestCase):
         class Container:
             def __init__(self, component):
                 self.attrs = {"Config": {"Labels": {
-                    "io.mdd-sim-gateway.managed": "true",
-                    "io.mdd-sim-gateway.component": component}}}
+                    "io.onewifi.managed": "true",
+                    "io.onewifi.component": component}}}
                 self.component = component
                 self.image = Mock(id=f"sha256:{component}")
             def restart(self, timeout):
@@ -773,12 +773,12 @@ class ServiceRestartTests(unittest.TestCase):
                 restarted.append(self.component)
 
         containers = {name: Container(component) for component, name in {
-            "control": "mdd-sim-gateway-control",
-            "hardware": "mdd-sim-gateway-hardware",
-            "egress": "mdd-sim-gateway-egress"}.items()}
+            "control": "onewifi-control",
+            "hardware": "onewifi-hardware",
+            "egress": "onewifi-egress"}.items()}
         client = Mock()
         client.containers.get.side_effect = containers.__getitem__
-        with patch.dict(os.environ, {"MDD_CONTAINER_STACK": "1"}):
+        with patch.dict(os.environ, {"ONEWIFI_CONTAINER_STACK": "1"}):
             operations.request_service_restart("services")
             result = operations.perform_container_service_restart("services", client)
 
@@ -790,7 +790,7 @@ class ServiceRestartTests(unittest.TestCase):
         self.assertEqual(helper.kwargs["network_mode"], "none")
         self.assertEqual(helper.kwargs["healthcheck"], {"test": ["NONE"]})
         self.assertEqual(len(helper.kwargs["command"]), 1)
-        self.assertIn("mdd-sim-gateway-control", helper.kwargs["command"][0])
+        self.assertIn("onewifi-control", helper.kwargs["command"][0])
         self.assertIn("target.restart(timeout=30)", helper.kwargs["command"][0])
         self.assertTrue((self.root / "pcsc-maintenance").is_file())
         self.assertFalse((self.root / "service-restart-request.json").exists())

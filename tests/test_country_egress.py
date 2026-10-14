@@ -1160,9 +1160,9 @@ class UdpProbeTargetTests(unittest.TestCase):
         self.assertEqual(egress.udp_probe_targets(), ["1.1.1.1", "8.8.8.8", "9.9.9.9"])
 
     def test_the_list_is_configurable_and_rejects_junk(self):
-        with patch.dict(os.environ, {"MDD_UDP_PROBE_TARGETS": "8.8.4.4, not-an-ip ,8.8.4.4,9.9.9.9"}):
+        with patch.dict(os.environ, {"ONEWIFI_UDP_PROBE_TARGETS": "8.8.4.4, not-an-ip ,8.8.4.4,9.9.9.9"}):
             self.assertEqual(egress.udp_probe_targets(), ["8.8.4.4", "9.9.9.9"])
-        with patch.dict(os.environ, {"MDD_UDP_PROBE_TARGETS": "garbage"}):
+        with patch.dict(os.environ, {"ONEWIFI_UDP_PROBE_TARGETS": "garbage"}):
             self.assertEqual(egress.udp_probe_targets(), ["1.1.1.1"])
 
     def test_a_blackholed_first_resolver_falls_back_instead_of_failing(self):
@@ -1182,7 +1182,7 @@ class UdpProbeTargetTests(unittest.TestCase):
     def test_epdg_resolution_uses_the_selected_socks_udp_path(self):
         with patch.object(egress, "_udp_probe_once", return_value="198.51.100.25") as probe:
             address = egress.resolve_ipv4_via_socks(
-                "socks5://mdd-egress:22157", "epdg.example.net",
+                "socks5://onewifi-egress:22157", "epdg.example.net",
                 client_subnet="109.192.0.0/24")
         self.assertEqual(address, "198.51.100.25")
         self.assertEqual(probe.call_args.args[2],
@@ -1193,7 +1193,7 @@ class UdpProbeTargetTests(unittest.TestCase):
         with patch.object(egress, "_udp_probe_once") as probe:
             with self.assertRaisesRegex(egress.EgressError, "invalid ePDG ECS"):
                 egress.resolve_ipv4_via_socks(
-                    "socks5://mdd-egress:22157", "epdg.example.net",
+                    "socks5://onewifi-egress:22157", "epdg.example.net",
                     client_subnet="not-a-network")
         probe.assert_not_called()
 
@@ -1314,7 +1314,7 @@ class UdpProbeTargetTests(unittest.TestCase):
         self.assertIn("stun", kinds[:2])
 
     def test_stun_targets_are_configurable_and_reject_junk(self):
-        with patch.dict(os.environ, {"MDD_UDP_STUN_TARGETS":
+        with patch.dict(os.environ, {"ONEWIFI_UDP_STUN_TARGETS":
                                      "a.example:3478, nonsense ,b.example:0,c.example:19302"}):
             self.assertEqual(egress.stun_probe_targets(),
                              [("a.example", 3478), ("c.example", 19302)])

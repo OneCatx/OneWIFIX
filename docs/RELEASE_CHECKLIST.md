@@ -26,7 +26,7 @@
 - Release 工作流必须分别在原生 `ubuntu-24.04-arm` 与 `ubuntu-latest` runner 无缓存构建
   Engine，通过架构、各自的精确模块数（ARM64、amd64 均为 126）、Python 依赖和 Asterisk
   版本检查，并把架构标签合成为
-  `ghcr.io/mddidd/mdd-sim-gateway-engine:vX.Y.Z` 多架构清单；package job 必须等待四种组件的
+  `ghcr.io/onecatx/onewifi-engine:vX.Y.Z` 多架构清单；package job 必须等待四种组件的
   两种架构资产均成功，并为 Control、Hardware、Egress、Engine 分别生成多架构清单。
 - 依赖版本、源码提交与二进制 SHA-256 已复核；不得临时改成浮动分支或 `latest`。
 

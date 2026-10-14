@@ -6,8 +6,8 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 export PATH
 
 here=$(cd "$(dirname "$0")" && pwd)
-module_dir=/usr/local/lib/mdd-sim-gateway-modules
-boot_hook=/usr/local/etc/rc.d/mdd-sim-gateway-modules.sh
+module_dir=/usr/local/lib/onewifi-modules
+boot_hook=/usr/local/etc/rc.d/onewifi-modules.sh
 
 [ "$(id -u)" = 0 ] || { echo "Run as root: sudo sh install.sh" >&2; exit 1; }
 
@@ -15,13 +15,13 @@ boot_hook=/usr/local/etc/rc.d/mdd-sim-gateway-modules.sh
 # same checks the boot hook repeats on every start are made here first.
 . "$here/compatibility.env"
 fail() { echo "Not installed: $1" >&2; exit 1; }
-[ "$(uname -m)" = "$MDD_ARCH" ] || fail "this pack is for $MDD_ARCH, the host is $(uname -m)"
-[ "$(uname -r)" = "$MDD_KERNEL" ] || fail "this pack is for kernel $MDD_KERNEL, the host runs $(uname -r)"
+[ "$(uname -m)" = "$ONEWIFI_ARCH" ] || fail "this pack is for $ONEWIFI_ARCH, the host is $(uname -m)"
+[ "$(uname -r)" = "$ONEWIFI_KERNEL" ] || fail "this pack is for kernel $ONEWIFI_KERNEL, the host runs $(uname -r)"
 [ -r /etc.defaults/VERSION ] || fail "this is not Synology DSM"
 product=$(sed -n 's/^productversion="\(.*\)"/\1/p' /etc.defaults/VERSION)
 build=$(sed -n 's/^buildnumber="\(.*\)"/\1/p' /etc.defaults/VERSION)
-[ "$product-$build" = "$MDD_DSM" ] || fail "this pack is for DSM $MDD_DSM, the host runs $product-$build"
-uname -a | grep -q "$MDD_PLATFORM_MARKER" || fail "this pack is for $MDD_PLATFORM_MARKER"
+[ "$product-$build" = "$ONEWIFI_DSM" ] || fail "this pack is for DSM $ONEWIFI_DSM, the host runs $product-$build"
+uname -a | grep -q "$ONEWIFI_PLATFORM_MARKER" || fail "this pack is for $ONEWIFI_PLATFORM_MARKER"
 (cd "$here" && sha256sum -c SHA256SUMS >/dev/null) || fail "a module does not match SHA256SUMS"
 
 install -d -m 755 "$module_dir"

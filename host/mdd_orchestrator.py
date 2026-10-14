@@ -71,7 +71,7 @@ VPCD_CHANNEL_CAPACITY = 3
 DISTRO_VPCD_READER = "vpcd"
 DISTRO_VPCD_READER_DISABLED = ".vpcd.mdd-disabled"
 MANAGED_ROUTE_PROTO = "186"
-CLASH_API = os.environ.get("MDD_CLASH_API", "127.0.0.1:19090")
+CLASH_API = os.environ.get("ONEWIFI_CLASH_API", "127.0.0.1:19090")
 
 
 def read_json(path: Path) -> dict:
@@ -302,21 +302,21 @@ UDP_PROXY_TYPES = {"ss", "shadowsocks", "trojan", "vless", "vmess", "hysteria2",
 # pulls the route out from under a tunnel that is still talking to the previous address, which
 # drops that traffic onto the host default route — the wrong country, and the carrier drops the
 # IKE SA. Addresses are therefore retained well beyond one DNS answer.
-EPDG_ADDRESS_TTL = float(os.environ.get("MDD_EPDG_ADDRESS_TTL", "21600"))
-EPDG_ADDRESS_MAX = int(os.environ.get("MDD_EPDG_ADDRESS_MAX", "64"))
+EPDG_ADDRESS_TTL = float(os.environ.get("ONEWIFI_EPDG_ADDRESS_TTL", "21600"))
+EPDG_ADDRESS_MAX = int(os.environ.get("ONEWIFI_EPDG_ADDRESS_MAX", "64"))
 # How long a node that just failed a line is kept out of the candidate pool.
-EXIT_RESELECT_COOLDOWN = float(os.environ.get("MDD_EXIT_RESELECT_COOLDOWN", "900"))
-EXIT_RESELECT_MAX_AGE = float(os.environ.get("MDD_EXIT_RESELECT_MAX_AGE", "600"))
-EXIT_RESELECT_RETRY_SECONDS = float(os.environ.get("MDD_EXIT_RESELECT_RETRY", "60"))
-EXIT_RESELECT_MAX_ATTEMPTS = int(os.environ.get("MDD_EXIT_RESELECT_ATTEMPTS", "3"))
-EXIT_PROBE_URL = os.environ.get("MDD_EXIT_PROBE_URL", "https://www.gstatic.com/generate_204")
-EXIT_PROBE_TIMEOUT_MS = int(os.environ.get("MDD_EXIT_PROBE_TIMEOUT_MS", "3000"))
+EXIT_RESELECT_COOLDOWN = float(os.environ.get("ONEWIFI_EXIT_RESELECT_COOLDOWN", "900"))
+EXIT_RESELECT_MAX_AGE = float(os.environ.get("ONEWIFI_EXIT_RESELECT_MAX_AGE", "600"))
+EXIT_RESELECT_RETRY_SECONDS = float(os.environ.get("ONEWIFI_EXIT_RESELECT_RETRY", "60"))
+EXIT_RESELECT_MAX_ATTEMPTS = int(os.environ.get("ONEWIFI_EXIT_RESELECT_ATTEMPTS", "3"))
+EXIT_PROBE_URL = os.environ.get("ONEWIFI_EXIT_PROBE_URL", "https://www.gstatic.com/generate_204")
+EXIT_PROBE_TIMEOUT_MS = int(os.environ.get("ONEWIFI_EXIT_PROBE_TIMEOUT_MS", "3000"))
 # Probes of a pinned node before giving up on it, so one spike cannot void the preference.
-EXIT_PREFERRED_PROBE_ATTEMPTS = int(os.environ.get("MDD_EXIT_PREFERRED_PROBE_ATTEMPTS", "2"))
+EXIT_PREFERRED_PROBE_ATTEMPTS = int(os.environ.get("ONEWIFI_EXIT_PREFERRED_PROBE_ATTEMPTS", "2"))
 # Ranking a sing-box that has only just started measures its cold start rather than the nodes:
 # a QUIC outbound must complete a fresh handshake and loses to TCP candidates that are slower
 # in steady state. Wait for the process to settle before believing any measurement.
-EXIT_RANK_WARMUP_SECONDS = float(os.environ.get("MDD_EXIT_RANK_WARMUP", "25"))
+EXIT_RANK_WARMUP_SECONDS = float(os.environ.get("ONEWIFI_EXIT_RANK_WARMUP", "25"))
 # A full reconcile shells out to mmcli and ip about fifteen times. At the base interval that
 # was the largest source of process creation on the box, and almost all of it re-derived a
 # state that had not changed. When a cycle finds nothing to do the loop backs off, while still
@@ -325,17 +325,17 @@ EXIT_RANK_WARMUP_SECONDS = float(os.environ.get("MDD_EXIT_RANK_WARMUP", "25"))
 # sing-tun makes every tun it creates the host's catch-all resolver whenever resolvectl is
 # present (see release_tun_dns). It does so once, shortly after start; this bounds how long
 # the orchestrator keeps looking for that registration after sing-box (re)starts.
-TUN_DNS_WATCH_SECONDS = float(os.environ.get("MDD_TUN_DNS_WATCH", "60"))
-IDLE_INTERVAL_SECONDS = float(os.environ.get("MDD_IDLE_INTERVAL", "15"))
+TUN_DNS_WATCH_SECONDS = float(os.environ.get("ONEWIFI_TUN_DNS_WATCH", "60"))
+IDLE_INTERVAL_SECONDS = float(os.environ.get("ONEWIFI_IDLE_INTERVAL", "15"))
 # A modem is plugged in so its SIM can be read; cellular data is a per-device capability, not
 # the box's route to the internet. Set this when the modem genuinely IS the only uplink.
 MODEM_MAY_PROVIDE_DEFAULT_ROUTE = os.environ.get(
-    "MDD_MODEM_ALLOW_DEFAULT_ROUTE", "").strip().lower() in {"1", "true", "yes", "on"}
+    "ONEWIFI_MODEM_ALLOW_DEFAULT_ROUTE", "").strip().lower() in {"1", "true", "yes", "on"}
 # How long a tty may stay unclaimed before the bridge stops waiting for ModemManager and talks
 # to the serial port itself. ModemManager needs on the order of ten to thirty seconds to probe
 # an EC25-class module, so this is set far beyond any healthy first pass: reaching it means
 # ModemManager has decided not to manage this hardware, not that it is still working on it.
-MM_CLAIM_GRACE_SECONDS = float(os.environ.get("MDD_MM_CLAIM_GRACE", "180"))
+MM_CLAIM_GRACE_SECONDS = float(os.environ.get("ONEWIFI_MM_CLAIM_GRACE", "180"))
 # A bridge that exits is respawned, but blindly and instantly respawning turned one broken
 # serial port into a fifteen-second crash loop that device status reported as a running
 # bridge. Retries double from base to ceiling; a bridge that survives the stable window has
@@ -360,10 +360,10 @@ MM_RESET_ATTEMPTS = 3
 # Grace between publishing "launching" and expecting systemd to report the updater unit as
 # active, so a loop pass that races a launch cannot retire the run it just started.
 UPDATE_LAUNCH_GRACE_SECONDS = 90.0
-COUNTRY_PROXY_LISTEN = os.environ.get("MDD_COUNTRY_PROXY_LISTEN", "172.17.0.1")
+COUNTRY_PROXY_LISTEN = os.environ.get("ONEWIFI_COUNTRY_PROXY_LISTEN", "172.17.0.1")
 # The control plane's container in docker installs; install.sh owns the same name.
-CONTROL_CONTAINER = "mdd-sim-gateway-control"
-COUNTRY_PROXY_PORT_BASE = int(os.environ.get("MDD_COUNTRY_PROXY_PORT_BASE", "22000"))
+CONTROL_CONTAINER = "onewifi-control"
+COUNTRY_PROXY_PORT_BASE = int(os.environ.get("ONEWIFI_COUNTRY_PROXY_PORT_BASE", "22000"))
 
 
 def country_proxy_port(country: str) -> int:
@@ -655,7 +655,7 @@ class Orchestrator:
         self.applied_timezone = ""
         self.obsolete_services_retired = False
         self.reader_config_path = Path(os.environ.get(
-            "MDD_VPCD_READER_CONFIG", "/etc/reader.conf.d/mdd-sim-gateway-modems"))
+            "ONEWIFI_VPCD_READER_CONFIG", "/etc/reader.conf.d/onewifi-modems"))
         try: self.last_reader_config = self.reader_config_path.read_text(encoding="utf-8")
         except OSError: self.last_reader_config = ""
         self.stop = False
@@ -922,7 +922,7 @@ class Orchestrator:
         if self.dry_run:
             fail("dry-run orchestrator does not apply updates")
             return
-        if self.service_active("mdd-sim-gateway-update.service"):
+        if self.service_active("onewifi-update.service"):
             return  # an update is already running; drop the duplicate request
         runner = self.data / "update" / "runner.py"
         try:
@@ -939,11 +939,11 @@ class Orchestrator:
         except OSError as exc:
             fail(f"could not stage the updater: {exc}")
             return
-        run(["systemctl", "reset-failed", "mdd-sim-gateway-update.service"])
+        run(["systemctl", "reset-failed", "onewifi-update.service"])
         atomic_json(status_path, {"state": "running", "phase": "launching", "target": version,
                                   "updated_at": int(time.time())})
-        result = run(["systemd-run", "--unit", "mdd-sim-gateway-update", "--collect",
-                      "--description", "MDD Sim Gateway self-update",
+        result = run(["systemd-run", "--unit", "onewifi-update", "--collect",
+                      "--description", "OneWIFI self-update",
                       sys.executable, str(runner), "--repo", str(self.repo),
                       "--data", str(self.data), "--version", version,
                       "--repository", repository, "--network-config", str(network_path)])
@@ -986,7 +986,7 @@ class Orchestrator:
             mode = (self.data / "install-mode").read_text(encoding="utf-8").strip().lower() \
                 if (self.data / "install-mode").is_file() else "local"
             command = ["docker", "restart", CONTROL_CONTAINER] if mode == "docker" \
-                else ["systemctl", "restart", "mdd-sim-gateway-control"]
+                else ["systemctl", "restart", "onewifi-control"]
             result = run(command)
             if result.returncode:
                 publish("failed", error_code="restart.error.failed",
@@ -1002,9 +1002,9 @@ class Orchestrator:
                 publish("failed", error_code="restart.error.failed",
                         error=(result.stderr or result.stdout or "").strip()[:400])
             return
-        run(["systemctl", "reset-failed", "mdd-sim-gateway-restart.service"])
-        result = run(["systemd-run", "--unit", "mdd-sim-gateway-restart", "--collect",
-                      "--description", "MDD Sim Gateway service restart",
+        run(["systemctl", "reset-failed", "onewifi-restart.service"])
+        result = run(["systemd-run", "--unit", "onewifi-restart", "--collect",
+                      "--description", "OneWIFI service restart",
                       "sh", str(self.repo / "install.sh"), "restart"])
         if result.returncode:
             publish("failed", error_code="restart.error.launch",
@@ -1044,7 +1044,7 @@ class Orchestrator:
             return  # queued for process_update_request(); no unit is expected yet
         if time.time() - int(status.get("updated_at") or 0) < UPDATE_LAUNCH_GRACE_SECONDS:
             return
-        if self.service_active("mdd-sim-gateway-update.service"):
+        if self.service_active("onewifi-update.service"):
             return
         # Only the code is published: the WebUI renders it in the operator's language, and an
         # `error` string beside it would just repeat the same sentence in English.
@@ -1686,7 +1686,7 @@ class Orchestrator:
 
         Autoconnect stays off unconditionally: the orchestrator owns the desired state and
         brings the profile up itself, so NetworkManager acting on its own can only contradict
-        the operator. The default-route guard is what MDD_MODEM_ALLOW_DEFAULT_ROUTE releases,
+        the operator. The default-route guard is what ONEWIFI_MODEM_ALLOW_DEFAULT_ROUTE releases,
         for a deployment whose only uplink really is the modem.
         """
         policy = ["connection.autoconnect", "no"]
@@ -2077,7 +2077,7 @@ class Orchestrator:
         stale = not cache.exists() or time.time() - cache.stat().st_mtime > max(1, refresh_minutes) * 60
         if stale:
             try:
-                req = urllib.request.Request(url, headers={"User-Agent": "mdd-sim-gateway/1"})
+                req = urllib.request.Request(url, headers={"User-Agent": "onewifi/1"})
                 with urllib.request.urlopen(req, timeout=20) as response:
                     body = response.read(8 * 1024 * 1024)
                 cache.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -2655,7 +2655,7 @@ class Orchestrator:
             self.last_proxy_fingerprint = fingerprint
             self.last_proxy_config = deepcopy(config)
             return
-        binary = shutil.which(os.environ.get("MDD_SINGBOX_BIN", "sing-box"))
+        binary = shutil.which(os.environ.get("ONEWIFI_SINGBOX_BIN", "sing-box"))
         if not binary:
             raise RuntimeError("sing-box executable not found")
         candidate = self.generated.with_name("sing-box.candidate.json")
@@ -2735,7 +2735,7 @@ class Orchestrator:
             atomic_json(self.xray_generated, config)
             self.last_xray_fingerprint = fingerprint
             return
-        binary = shutil.which(os.environ.get("MDD_XRAY_BIN", "xray"))
+        binary = shutil.which(os.environ.get("ONEWIFI_XRAY_BIN", "xray"))
         if not binary:
             raise RuntimeError(
                 "Xray-core executable not found; REALITY and XHTTP nodes are carried by it "
@@ -3005,10 +3005,10 @@ class Orchestrator:
     def vpcd_library(self) -> Path:
         """Return the installed upstream VPCD IFD handler.
 
-        ``MDD_VPCD_LIBRARY`` is primarily a relocatable-install/test hook.  Instance copies
+        ``ONEWIFI_VPCD_LIBRARY`` is primarily a relocatable-install/test hook.  Instance copies
         are deliberately excluded from discovery by looking for the exact upstream basename.
         """
-        configured = os.environ.get("MDD_VPCD_LIBRARY", "").strip()
+        configured = os.environ.get("ONEWIFI_VPCD_LIBRARY", "").strip()
         if configured:
             return Path(configured)
         candidates = list(Path("/usr/local/lib").glob("**/libifdvpcd.so"))
@@ -3028,7 +3028,7 @@ class Orchestrator:
         """
         source = self.vpcd_library()
         directory = Path(os.environ.get(
-            "MDD_VPCD_DRIVER_INSTANCE_DIR",
+            "ONEWIFI_VPCD_DRIVER_INSTANCE_DIR",
             str(config_path.parent / ".mdd-vpcd-drivers"),
         ))
         target = directory / f"libifdvpcd-mdd-{int(base):04x}.so"
@@ -3148,7 +3148,7 @@ class Orchestrator:
         # Resolved per cycle, not cached: the path is an environment override and tests (and
         # a relocated install) expect a change to take effect without a restart.
         config_path = Path(os.environ.get(
-            "MDD_VPCD_READER_CONFIG", "/etc/reader.conf.d/mdd-sim-gateway-modems"))
+            "ONEWIFI_VPCD_READER_CONFIG", "/etc/reader.conf.d/onewifi-modems"))
         self.reader_config_path = config_path
         # Keep reader definitions stable for every detected modem. A capability toggle only
         # starts/stops that modem's bridge; it must not restart pcscd and disturb other lines.

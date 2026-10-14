@@ -592,7 +592,7 @@ class HardwareSupervisor:
         if fingerprint != self.pcsc_fingerprint:
             self.stop_pcsc()
             config = self.render_reader_config(modems)
-            config_path = Path("/etc/reader.conf.d/mdd-sim-gateway-modems")
+            config_path = Path("/etc/reader.conf.d/onewifi-modems")
             config_path.parent.mkdir(parents=True, exist_ok=True)
             config_path.write_text(config, encoding="utf-8")
             Path("/run/pcscd").mkdir(parents=True, exist_ok=True)
@@ -1236,7 +1236,7 @@ class HardwareSupervisor:
             "reader_definitions": reader_definitions,
             "country_egress_required": any(
                 state.get("vowifi_enabled") for state in self.desired_devices(discovered).values()),
-            "reader_config": {"path": "/etc/reader.conf.d/mdd-sim-gateway-modems",
+            "reader_config": {"path": "/etc/reader.conf.d/onewifi-modems",
                               "stanzas": len(discovered)},
             "recent_log": list(self.log_ring),
         })

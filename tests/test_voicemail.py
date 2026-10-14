@@ -139,7 +139,7 @@ class VoicemailStoreTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         root = Path(self.temp.name)
         self.store_patch = patch.multiple(
-            store, DATA_DIR=str(root), DB_PATH=str(root / "mdd-sim-gateway.sqlite"),
+            store, DATA_DIR=str(root), DB_PATH=str(root / "onewifi.sqlite"),
             PREVIOUS_DB_PATH=str(root / "vowifi.sqlite"))
         self.store_patch.start()
         store.init()
@@ -191,7 +191,7 @@ class VoicemailIngestTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         self.store_patch = patch.multiple(
-            store, DATA_DIR=str(self.root), DB_PATH=str(self.root / "mdd-sim-gateway.sqlite"),
+            store, DATA_DIR=str(self.root), DB_PATH=str(self.root / "onewifi.sqlite"),
             PREVIOUS_DB_PATH=str(self.root / "vowifi.sqlite"))
         self.store_patch.start()
         store.init()

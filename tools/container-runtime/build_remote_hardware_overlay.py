@@ -17,7 +17,7 @@ def main():
     parser.add_argument("--port", type=int, default=22)
     parser.add_argument("--identity", required=True)
     parser.add_argument("--base-image", required=True)
-    parser.add_argument("--tag", default="mdd-sim-gateway/hardware:dev")
+    parser.add_argument("--tag", default="onewifi/hardware:dev")
     parser.add_argument("--version", default="dev")
     parser.add_argument("--debian-mirror", default="")
     parser.add_argument("--debian-security-mirror", default="")
@@ -37,7 +37,7 @@ def main():
             archive.add(ROOT / name, arcname=name)
     build = ["sudo", "-n", "/usr/local/bin/docker", "build", "--network", "bridge",
              "--build-arg", "BASE_IMAGE=" + base,
-             "--build-arg", "MDD_VERSION=" + args.version]
+             "--build-arg", "ONEWIFI_VERSION=" + args.version]
     if args.debian_mirror:
         build += ["--build-arg", "DEBIAN_MIRROR=" + args.debian_mirror]
     if args.debian_security_mirror:

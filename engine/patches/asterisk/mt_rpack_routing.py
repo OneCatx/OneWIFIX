@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
-# LICENSE EXCEPTION TO THE REPOSITORY DEFAULT. MDD Sim Gateway as a whole is GPL-3.0-only,
+# LICENSE EXCEPTION TO THE REPOSITORY DEFAULT. OneWIFI as a whole is GPL-3.0-only,
 # but FIXED_FN below is a modified copy of Asterisk's chan_pjsip/res_pjsip_messaging
 # send_rpack(), and Asterisk is GPL-2.0-only. A derivative of GPL-2.0-only code cannot be
 # relicensed to GPL-3.0, so this file — and the modified Asterisk source it produces at

@@ -46,7 +46,7 @@ class SocksEgress(Orchestrator):
         for state in states.values():
             state.pop("interface", None)
             if state.get("mode") != "direct":
-                state["proxy_host"] = os.environ.get("MDD_EGRESS_HOST", "mdd-egress")
+                state["proxy_host"] = os.environ.get("ONEWIFI_EGRESS_HOST", "onewifi-egress")
         return config, states
 
     def listen_address(self):
@@ -58,13 +58,13 @@ class SocksEgress(Orchestrator):
         """
         if self._listen_address:
             return self._listen_address
-        configured = os.environ.get("MDD_EGRESS_LISTEN", "").strip()
+        configured = os.environ.get("ONEWIFI_EGRESS_LISTEN", "").strip()
         if configured:
             self._listen_address = configured
             return configured
         # The service has an uplink and an internal Engine interface. Resolve the Compose
         # alias which exists only on the internal network so SOCKS is not exposed on uplink.
-        host = os.environ.get("MDD_EGRESS_HOST", "mdd-egress")
+        host = os.environ.get("ONEWIFI_EGRESS_HOST", "onewifi-egress")
         answers = socket.getaddrinfo(host, 0, socket.AF_INET, socket.SOCK_STREAM)
         addresses = {item[4][0] for item in answers}
         if len(addresses) != 1:

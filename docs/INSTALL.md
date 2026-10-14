@@ -20,7 +20,7 @@
   以多架构清单发布到 GHCR，供手工安装与独立核验。
 - 手工执行全新 Engine 构建时，固定 commit 从项目维护的 GitHub sysmocom 镜像获取；
   镜像只保存构建所需的上游分支，原始项目与许可归属不变。离线迁移仍可使用已经审核的
-  `MDD_ENGINE_BASE_IMAGE`，不得关闭 TLS 验证或改用未审核源码。
+  `ONEWIFI_ENGINE_BASE_IMAGE`，不得关闭 TLS 验证或改用未审核源码。
 
 ## 安装
 
@@ -31,14 +31,14 @@ sudo ./install.sh install --mode docker   # 控制面也运行在 Docker
 
 从 GitHub Release 下载的正式源码包包含 CI 生成的镜像校验清单，安装程序会默认取得本机架构
 的预构建资产。开发 checkout 没有该清单，仍从源码构建；正式源码包也可显式设置
-`MDD_BUILD_IMAGES=1` 进行审核用源码构建。Release 资产下载或身份校验失败时安装会停止，不会
+`ONEWIFI_BUILD_IMAGES=1` 进行审核用源码构建。Release 资产下载或身份校验失败时安装会停止，不会
 悄悄退回一次耗时且占用大量临时空间的编译。
 
-可用环境变量：`MDD_PORT`、`MDD_DATA_DIR`、`MDD_BIND`、`MDD_ADVERTISE_ADDR`、`MDD_SINGBOX_VERSION`、`MDD_XRAY_VERSION`、`MDD_LPAC_VERSION`。安装程序会校验 sing-box 与 Xray-core 归档的 SHA-256；Xray-core 仅用于 Reality/XHTTP 节点的本机回环兼容层。更换固定依赖版本时必须同步审核并更新 SHA-256。离线迁移或显式执行源码构建时，可设置 `MDD_ENGINE_BASE_IMAGE`，从本机已审核的兼容引擎镜像创建只覆盖 MDD 运行脚本与模板的镜像；已经在可信构建机完成 `npm ci && npm run build` 时，也可设置 `MDD_REUSE_WEBUI=1` 复用随源码传入的 `webui/dist`。正式源码包的全新在线安装不需要设置这两项，安装程序会默认使用经校验的预构建镜像。必须执行全量 Engine 构建、但安装网络无法访问默认 GitHub mirror 时，可将 `PJPROJECT_REPOSITORY` 和 `ASTERISK_REPOSITORY` 显式指向另一条经过审核且包含相同固定 commit 的 HTTPS Git 仓库；未设置时继续使用 Dockerfile 中的项目 mirror。不得关闭 TLS 验证或改用未经审核的源码。
+可用环境变量：`ONEWIFI_PORT`、`ONEWIFI_DATA_DIR`、`ONEWIFI_BIND`、`ONEWIFI_ADVERTISE_ADDR`、`ONEWIFI_SINGBOX_VERSION`、`ONEWIFI_XRAY_VERSION`、`ONEWIFI_LPAC_VERSION`。安装程序会校验 sing-box 与 Xray-core 归档的 SHA-256；Xray-core 仅用于 Reality/XHTTP 节点的本机回环兼容层。更换固定依赖版本时必须同步审核并更新 SHA-256。离线迁移或显式执行源码构建时，可设置 `ONEWIFI_ENGINE_BASE_IMAGE`，从本机已审核的兼容引擎镜像创建只覆盖 MDD 运行脚本与模板的镜像；已经在可信构建机完成 `npm ci && npm run build` 时，也可设置 `ONEWIFI_REUSE_WEBUI=1` 复用随源码传入的 `webui/dist`。正式源码包的全新在线安装不需要设置这两项，安装程序会默认使用经校验的预构建镜像。必须执行全量 Engine 构建、但安装网络无法访问默认 GitHub mirror 时，可将 `PJPROJECT_REPOSITORY` 和 `ASTERISK_REPOSITORY` 显式指向另一条经过审核且包含相同固定 commit 的 HTTPS Git 仓库；未设置时继续使用 Dockerfile 中的项目 mirror。不得关闭 TLS 验证或改用未经审核的源码。
 
-4G 模块收到的短信写入数据库后，新安装默认从 Modem/SIM 存储中删除，以免存储写满后无法再收短信；从旧版本升级的安装首次启动时会在配置中写入 `cellular_sms_storage: keep`，不自动清空模块，需要时手动改为 `delete`。可在控制服务的环境中设置 `MDD_CELLULAR_SMS_STORAGE`：`delete`（默认，入库后删除）、`when_full`（保留在模块中，仅在存储将满时删除最早的已入库短信）或 `keep`（始终保留）。`when_full` 通过 `AT+CPMS?` 读取容量，需要 ModemManager 以 `--debug` 运行；否则按 `MDD_CELLULAR_SMS_STORAGE_LIMIT`（默认 20 条）计算。配置文件 `settings.cellular_sms_storage` 若已设置，则优先于环境变量。
+4G 模块收到的短信写入数据库后，新安装默认从 Modem/SIM 存储中删除，以免存储写满后无法再收短信；从旧版本升级的安装首次启动时会在配置中写入 `cellular_sms_storage: keep`，不自动清空模块，需要时手动改为 `delete`。可在控制服务的环境中设置 `ONEWIFI_CELLULAR_SMS_STORAGE`：`delete`（默认，入库后删除）、`when_full`（保留在模块中，仅在存储将满时删除最早的已入库短信）或 `keep`（始终保留）。`when_full` 通过 `AT+CPMS?` 读取容量，需要 ModemManager 以 `--debug` 运行；否则按 `ONEWIFI_CELLULAR_SMS_STORAGE_LIMIT`（默认 20 条）计算。配置文件 `settings.cellular_sms_storage` 若已设置，则优先于环境变量。
 
-`MDD_DATA_DIR` 在首次安装后会写入系统状态；后续执行 `status`、`reload` 和 `uninstall` 时不必再次填写，避免自定义数据目录被误判为新安装。
+`ONEWIFI_DATA_DIR` 在首次安装后会写入系统状态；后续执行 `status`、`reload` 和 `uninstall` 时不必再次填写，避免自定义数据目录被误判为新安装。
 
 如果系统 Docker 已经可以连接，安装脚本只复用它，不升级版本、不修改 daemon 配置，也不
 操作其他项目的容器、镜像或卷。MDD 容器带有归属标签；发现同名外部容器、8443 端口冲突或
@@ -81,13 +81,13 @@ sudo ./install.sh media relay [--port N] [--bind ADDR] \
                                [--public-host HOST] [--public-port N]   # 经内置 TURN 中继
 ```
 
-relay 模式下不再有任何引擎发布端口，改由一个 coturn 中继容器（`mdd-sim-gateway-relay`，未经修改的上游镜像 `coturn/coturn:4.17.2-alpine`，按摘要固定；正式发布包从 Release 附件导入，源码 checkout 或导入失败时依次从 ghcr 副本和 Docker Hub 拉取）发布单个端口（UDP+TCP，默认 8478），引擎只能通过内部媒体网络与它通信。启用前会先创建媒体网络、在临时引擎容器中确认内核支持所需的 nftables 规则，并等待中继应答 STUN 请求，任一步失败都会回滚且不修改当前模式，原因会打印出来。`--public-host`/`--public-port` 用于路由器/NAT 对外转发的主机名或端口与本机不同的情况；不指定时客户端使用访问 WebUI 时用的主机名和中继端口本身。
+relay 模式下不再有任何引擎发布端口，改由一个 coturn 中继容器（`onewifi-relay`，未经修改的上游镜像 `coturn/coturn:4.17.2-alpine`，按摘要固定；正式发布包从 Release 附件导入，源码 checkout 或导入失败时依次从 ghcr 副本和 Docker Hub 拉取）发布单个端口（UDP+TCP，默认 8478），引擎只能通过内部媒体网络与它通信。启用前会先创建媒体网络、在临时引擎容器中确认内核支持所需的 nftables 规则，并等待中继应答 STUN 请求，任一步失败都会回滚且不修改当前模式，原因会打印出来。`--public-host`/`--public-port` 用于路由器/NAT 对外转发的主机名或端口与本机不同的情况；不指定时客户端使用访问 WebUI 时用的主机名和中继端口本身。
 
 启用 relay 后，需要在路由器/防火墙放行该中继端口的 UDP 和 TCP；如果部署在反向代理之后，代理通常只转发 HTTP(S)，中继端口需要单独做 TCP/UDP 直通或端口转发，不能走 HTTP 反代规则。中继不可达或未就绪时线路仍可注册和收发短信，只有浏览器通话会被拒绝或中途结束；切回 direct 会恢复各线路原有的端口分配。已验证的环境：Debian 13（内核 6.12），local 与 docker 两种模式。引擎防火墙优先使用内核的 nf_tables 及其 socket 匹配；较旧的内核（例如 4.4）改用 iptables-legacy，只按 RTP 端口范围放行，区分不了浏览器和运营商两条腿（`sudo ./install.sh media` 会显示用的是哪一种）；两者都不可用时启用会被拒绝。手动降级到不支持 relay 的版本前，先执行 `sudo ./install.sh media direct`，否则中继容器会留在原处。
 
 ## 更新
 
-系统设置可在“自动更新”和“提示更新”中二选一，并分别选择全部版本或主版本。`update-policy.json` 为两类用户保存独立目标：`channels.all` 始终指向获准推送的最新正式 Release，`channels.main` 指向当前获准推送的主版本，即使其后已经发布补丁，落后的主版本设备仍能按 tag 找到并安装该版本。新安装默认自动更新主版本；每个通道仍须匹配目标版本并到达自己的 `not_before` 时间，单纯发布 Release 不会触发安装。提示模式默认提示全部版本，左下角版本号出现红点后，由管理员查看说明并确认“立即升级”。更新时控制面把请求写入编排器目录，主机上的 `mdd-sim-gateway-orchestrator` 以独立的临时 systemd 单元（`mdd-sim-gateway-update`）运行 `host/mdd_update.py` —— 下载对应 `vX.Y.Z` Release 资产、校验 SHA-256 和版本，并比较新源码与本机 Engine 指纹。Engine 输入发生变化时，更新器通过同一条直连或代理回退线路下载该版本与主机架构匹配的 Engine 资产，校验后导入 Docker，再核对架构、版本和两类指纹；输入未变化时不会重复下载。备份与覆盖源码后，安装器保存旧 Engine 的 `:previous` 回滚标签，启用新镜像并只重建旧镜像上的线路，控制面重新扫描在位 SIM 使线路自愈。Docker 控制面模式还会取得同架构、已校验的 Control 镜像并执行 `docker load`。`data/`、`.env`、`.git` 和虚拟环境均保留。日志见 `journalctl -u mdd-sim-gateway-update`、数据目录下 `update/reload.log` 与 `update/engine-image.log`。
+系统设置可在“自动更新”和“提示更新”中二选一，并分别选择全部版本或主版本。`update-policy.json` 为两类用户保存独立目标：`channels.all` 始终指向获准推送的最新正式 Release，`channels.main` 指向当前获准推送的主版本，即使其后已经发布补丁，落后的主版本设备仍能按 tag 找到并安装该版本。新安装默认自动更新主版本；每个通道仍须匹配目标版本并到达自己的 `not_before` 时间，单纯发布 Release 不会触发安装。提示模式默认提示全部版本，左下角版本号出现红点后，由管理员查看说明并确认“立即升级”。更新时控制面把请求写入编排器目录，主机上的 `onewifi-orchestrator` 以独立的临时 systemd 单元（`onewifi-update`）运行 `host/mdd_update.py` —— 下载对应 `vX.Y.Z` Release 资产、校验 SHA-256 和版本，并比较新源码与本机 Engine 指纹。Engine 输入发生变化时，更新器通过同一条直连或代理回退线路下载该版本与主机架构匹配的 Engine 资产，校验后导入 Docker，再核对架构、版本和两类指纹；输入未变化时不会重复下载。备份与覆盖源码后，安装器保存旧 Engine 的 `:previous` 回滚标签，启用新镜像并只重建旧镜像上的线路，控制面重新扫描在位 SIM 使线路自愈。Docker 控制面模式还会取得同架构、已校验的 Control 镜像并执行 `docker load`。`data/`、`.env`、`.git` 和虚拟环境均保留。日志见 `journalctl -u onewifi-update`、数据目录下 `update/reload.log` 与 `update/engine-image.log`。
 
 “系统设置 → 备份与更新”默认使用“自动”联网：先直连 GitHub，连接失败、超时或被限流时，再按代理库顺序尝试可用条目；检查成功的线路会继续用于更新下载。也可选择“仅直连”或指定一个代理库条目。SOCKS5 条目可直接使用；订阅、具体节点和导入的 outbound 需已分配给一个已启用且就绪的国家出口。代理凭据只保存一份，并只通过主机权限为 `0600` 的配置/临时文件传递，不写入 systemd 命令行或升级状态。
 控制面不依赖浏览器登录，每 6 小时检查一次 Release。提示更新模式会通过已启用的 Webhook、Telegram 或 PushPlus 通道发送一次去重通知；“全部版本”检查 GitHub 最新 Release，“仅主版本”检查策略中独立配置的主版本 tag，不从版本号位数推断。
@@ -105,16 +105,16 @@ Engine。为允许用户直接跨级，正式源码包额外携带镜像校验�
 前需执行一次以下引导，让旧升级器跳过这一步；这不会停止或迁移当前 Docker 控制面：
 
 ```bash
-MDD_DATA_DIR=$(sudo sed -n '1p' /etc/mdd-sim-gateway/data-dir)
-test -n "$MDD_DATA_DIR" && test -d "$MDD_DATA_DIR"
-sudo cp -p "$MDD_DATA_DIR/install-mode" "$MDD_DATA_DIR/install-mode.pre-v1.5.3"
-printf 'local\n' | sudo tee "$MDD_DATA_DIR/install-mode" >/dev/null
+ONEWIFI_DATA_DIR=$(sudo sed -n '1p' /etc/onewifi/data-dir)
+test -n "$ONEWIFI_DATA_DIR" && test -d "$ONEWIFI_DATA_DIR"
+sudo cp -p "$ONEWIFI_DATA_DIR/install-mode" "$ONEWIFI_DATA_DIR/install-mode.pre-v1.5.3"
+printf 'local\n' | sudo tee "$ONEWIFI_DATA_DIR/install-mode" >/dev/null
 ```
 
 随后从 WebUI 正常执行更新。v1.5.3 安装器会从仍在运行的 Control 容器识别真实 Docker 模式，
 下载 amd64 Engine 与 Control，并在服务成功恢复后把 `install-mode` 自动写回 `docker`。若更新
 在新源码接管前失败，可用
-`sudo cp "$MDD_DATA_DIR/install-mode.pre-v1.5.3" "$MDD_DATA_DIR/install-mode"` 恢复标记后排查。
+`sudo cp "$ONEWIFI_DATA_DIR/install-mode.pre-v1.5.3" "$ONEWIFI_DATA_DIR/install-mode"` 恢复标记后排查。
 ARM64 Docker、原生控制面以及已进入 v1.5.x 的安装不需要这一步，也不需要先安装其他桥接版本。
 
 也可以随时在主机上手动更新：备份并用受信任来源更新源码后执行：

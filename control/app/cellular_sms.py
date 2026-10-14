@@ -35,8 +35,8 @@ _local_sms_lock = threading.RLock()
 #              is nearly full.
 #   keep       never delete; the operator manages modem storage.
 STORAGE_POLICIES = ("delete", "when_full", "keep")
-STORAGE_POLICY_ENV = "MDD_CELLULAR_SMS_STORAGE"
-STORAGE_LIMIT_ENV = "MDD_CELLULAR_SMS_STORAGE_LIMIT"
+STORAGE_POLICY_ENV = "ONEWIFI_CELLULAR_SMS_STORAGE"
+STORAGE_LIMIT_ENV = "ONEWIFI_CELLULAR_SMS_STORAGE_LIMIT"
 # Slots kept free under when_full, so the parts of a long text still have room to arrive.
 _STORAGE_HEADROOM = 3
 # Assumed capacity when the modem does not answer AT+CPMS? (ModemManager without --debug).

@@ -156,16 +156,16 @@ class CollectionTests(unittest.TestCase):
     def test_docker_usage_counts_unique_mdd_images_and_marks_unused_cache(self):
         report = {
             "Images": [
-                {"Id": "mdd", "RepoTags": ["mdd-sim-gateway/engine:latest"],
+                {"Id": "mdd", "RepoTags": ["onewifi/engine:latest"],
                  "Labels": {}, "Size": 100},
-                {"Id": "mdd", "RepoTags": ["mdd-sim-gateway/engine:previous"],
+                {"Id": "mdd", "RepoTags": ["onewifi/engine:previous"],
                  "Labels": {}, "Size": 100},
                 {"Id": "other", "RepoTags": ["other/app:latest"],
                  "Labels": {}, "Size": 900},
             ],
             "Containers": [
                 {"Id": "line", "Image": "sha256:mdd",
-                 "Labels": {"io.mdd-sim-gateway.managed": "true"}, "SizeRw": 20},
+                 "Labels": {"io.onewifi.managed": "true"}, "SizeRw": 20},
             ],
             "BuildCache": [
                 {"Size": 70, "InUse": False, "Shared": True},
@@ -194,9 +194,9 @@ class CollectionTests(unittest.TestCase):
     def test_all_mdd_unused_images_publish_exact_manual_cleanup_amount(self):
         report = {
             "Images": [
-                {"Id": "current", "RepoTags": ["mdd-sim-gateway/engine:latest"],
+                {"Id": "current", "RepoTags": ["onewifi/engine:latest"],
                  "Labels": {}, "Size": 100, "Containers": 2},
-                {"Id": "rollback", "RepoTags": ["mdd-sim-gateway/engine:previous"],
+                {"Id": "rollback", "RepoTags": ["onewifi/engine:previous"],
                  "Labels": {}, "Size": 90, "Containers": 0},
             ],
             "Containers": [],

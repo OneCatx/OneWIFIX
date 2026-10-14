@@ -257,7 +257,7 @@ COPY outer_transport.py /usr/local/bin/outer_transport.py
 COPY log_capture.py  /usr/local/bin/log_capture.py
 COPY render.py       /usr/local/bin/render.py
 COPY notify.py       /usr/local/bin/notify.py
-COPY templates/      /opt/mdd-sim-gateway/templates/
+COPY templates/      /opt/onewifi/templates/
 COPY entrypoint.sh   /entrypoint.sh
 RUN chmod +x /usr/local/bin/*.py /entrypoint.sh
 
@@ -266,12 +266,12 @@ RUN chmod +x /usr/local/bin/*.py /entrypoint.sh
 # rebuilding from source (see ensure_engine_image in install.sh).
 ARG RUNTIME_FP=""
 ARG BASE_FP=""
-ARG MDD_VERSION=""
-LABEL io.mdd-sim-gateway.managed="true" \
-      io.mdd-sim-gateway.egress-transports="socks5" \
-      io.mdd-sim-gateway.runtime-fp="${RUNTIME_FP}" \
-      io.mdd-sim-gateway.base-fp="${BASE_FP}" \
-      org.opencontainers.image.version="${MDD_VERSION}" \
-      org.opencontainers.image.source="https://github.com/MddIdd/mdd-sim-gateway" \
+ARG ONEWIFI_VERSION=""
+LABEL io.onewifi.managed="true" \
+      io.onewifi.egress-transports="socks5" \
+      io.onewifi.runtime-fp="${RUNTIME_FP}" \
+      io.onewifi.base-fp="${BASE_FP}" \
+      org.opencontainers.image.version="${ONEWIFI_VERSION}" \
+      org.opencontainers.image.source="https://github.com/OneCatx/OneWIFIX" \
       org.opencontainers.image.title="MDD Sim Gateway VoWiFi engine"
 ENTRYPOINT ["/entrypoint.sh"]

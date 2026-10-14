@@ -1,7 +1,7 @@
 """
 store.py - SQLite persistence for SMS threads/messages and the call log.
 
-One DB per manager at $MDD_DATA/mdd-sim-gateway.sqlite. Messages carry the instance id so a
+One DB per manager at $ONEWIFI_DATA/onewifi.sqlite. Messages carry the instance id so a
 multi-SIM setup keeps separate conversations. New rows are broadcast to the WebSocket
 layer by the caller (main.py).
 """
@@ -20,7 +20,7 @@ import time
 from . import contacts as contacts_format
 from . import mms_media, sms_pdu
 
-DATA_DIR = os.environ.get("MDD_DATA", os.path.join(os.getcwd(), "data"))
+DATA_DIR = os.environ.get("ONEWIFI_DATA", os.path.join(os.getcwd(), "data"))
 
 # Rows that belong to somebody rather than to the gateway -- the address book, and anything
 # else that is one person's view of shared data -- carry an owner. This gateway has a single
@@ -28,7 +28,7 @@ DATA_DIR = os.environ.get("MDD_DATA", os.path.join(os.getcwd(), "data"))
 # data, and in every query, keeps the ownership explicit rather than leaving it as an
 # assumption spread across the callers.
 ADMIN_OWNER = 1
-DB_PATH = os.path.join(DATA_DIR, "mdd-sim-gateway.sqlite")
+DB_PATH = os.path.join(DATA_DIR, "onewifi.sqlite")
 PREVIOUS_DB_PATH = os.path.join(DATA_DIR, "vowifi.sqlite")
 _lock = threading.RLock()
 
@@ -104,7 +104,7 @@ def _backup_before_migration() -> str | None:
                                      "AND name='messages'").fetchone() is not None
     if version >= len(_MIGRATIONS) or not has_history:
         return None
-    prefix = f"mdd-sim-gateway.v{version}-before-v{len(_MIGRATIONS)}."
+    prefix = f"onewifi.v{version}-before-v{len(_MIGRATIONS)}."
     existing = sorted(glob.glob(os.path.join(backup_dir(), f"{prefix}*.sqlite")))
     if existing:
         # A failed migration makes the service manager restart the control plane. Reuse the

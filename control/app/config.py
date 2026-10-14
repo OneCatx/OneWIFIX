@@ -1,7 +1,7 @@
 """
 config.py - Persistent manager state (global settings + per-SIM instances).
 
-Stored as YAML at $MDD_DATA/config.yaml. Threadsafe-ish via a module lock; the
+Stored as YAML at $ONEWIFI_DATA/config.yaml. Threadsafe-ish via a module lock; the
 manager is single-process. Instances describe SIMs; render_instance_json() converts an
 instance into the engine's /config/instance.json contract.
 """
@@ -22,7 +22,7 @@ import yaml
 
 from . import brand, carrier_profiles
 
-DATA_DIR = os.environ.get("MDD_DATA", os.path.join(os.getcwd(), "data"))
+DATA_DIR = os.environ.get("ONEWIFI_DATA", os.path.join(os.getcwd(), "data"))
 CONFIG_PATH = os.path.join(DATA_DIR, "config.yaml")
 _lock = threading.RLock()
 # libyaml parses config.yaml an order of magnitude faster than the pure-Python loader. Same
@@ -100,7 +100,7 @@ DEFAULTS = {
         "ring_timeout": 35,
         # What happens to an SMS object on the modem/SIM once its message is in the database:
         # "delete" (default), "when_full" or "keep". Deliberately absent from these defaults:
-        # an unset key defers to MDD_CELLULAR_SMS_STORAGE, so a deployment can choose the
+        # an unset key defers to ONEWIFI_CELLULAR_SMS_STORAGE, so a deployment can choose the
         # policy from its service environment; a value saved here takes precedence.
         # Voicemail defaults. Off unless asked for: recording a caller is the operator's
         # decision. Per-line overrides live in the line's sip.* block, like ring_timeout.
@@ -234,7 +234,7 @@ DEFAULTS = {
             "version_scope": "main",
         },
         # Local lpac (eSIM LPA) integration. Binary is built by `./install.sh build-lpac` into
-        # $MDD_DATA/lpac/ (STANDALONE layout). Empty lpac_bin → default path below.
+        # $ONEWIFI_DATA/lpac/ (STANDALONE layout). Empty lpac_bin → default path below.
         "esim": {
             "lpac_bin": "",
             "download_timeout": 300,
@@ -268,8 +268,8 @@ def internal_event_token() -> str:
 # engine through the control surface relay (softphone_ws), so the key is ignored. WebRTC
 # *media* (ICE, DTLS-SRTP) is unaffected and still uses the rtp_start..rtp_span range below.
 PORT_BASE = {"sip_udp": 5060, "sip_tls": 5061, "ami": 5038,
-             "rtp_start": int(os.environ.get("MDD_RTP_BASE", "10000")),
-             "rtp_end": int(os.environ.get("MDD_RTP_BASE", "10000")) + 1000}
+             "rtp_start": int(os.environ.get("ONEWIFI_RTP_BASE", "10000")),
+             "rtp_end": int(os.environ.get("ONEWIFI_RTP_BASE", "10000")) + 1000}
 PORT_STRIDE = {"sip_udp": 10, "sip_tls": 10, "ami": 10,
                "rtp_start": 2000, "rtp_end": 2000}
 
@@ -301,15 +301,15 @@ def ims_realm(mcc: str, mnc: str) -> str:
 
 def advertise_address(settings: dict) -> str:
     """The host-reachable address to advertise to local SIP clients. Precedence: explicit
-    TLS domain (already used as the TLS external address) > MDD_ADVERTISE_ADDR env >
+    TLS domain (already used as the TLS external address) > ONEWIFI_ADVERTISE_ADDR env >
     settings.advertise_address > auto-detected host LAN IPv4.
 
     The env override matters when the control plane itself runs in a (bridge-networked)
     container: _host_lan_ipv4() would then return the container's docker-bridge IP, not the
     host LAN IP a SIP/WebRTC client must reach. The installer passes the real host IP in
-    MDD_ADVERTISE_ADDR."""
+    ONEWIFI_ADVERTISE_ADDR."""
     tls_domain = (settings.get("tls", {}) or {}).get("domain", "")
-    return (tls_domain or os.environ.get("MDD_ADVERTISE_ADDR", "")
+    return (tls_domain or os.environ.get("ONEWIFI_ADVERTISE_ADDR", "")
             or settings.get("advertise_address", "") or _host_lan_ipv4())
 
 
@@ -322,7 +322,7 @@ def ice_advertise_address(settings: dict) -> str:
     leave a browser with only the unroutable Docker address.  Prefer the installer's explicit
     host address and ignore non-IP values before falling back to the detected LAN IPv4.
     """
-    for value in (os.environ.get("MDD_ADVERTISE_ADDR", ""),
+    for value in (os.environ.get("ONEWIFI_ADVERTISE_ADDR", ""),
                   settings.get("advertise_address", ""), _host_lan_ipv4()):
         candidate = str(value or "").strip().strip("[]")
         try:
@@ -708,7 +708,7 @@ def _block_free(block: dict, reserved: set[int]) -> bool:
         return False
     # Engine ports are published in the host namespace, which is not visible from Control's
     # bridge namespace. Docker remains authoritative when it creates the Engine container.
-    if os.environ.get("MDD_CONTAINER_STACK") == "1":
+    if os.environ.get("ONEWIFI_CONTAINER_STACK") == "1":
         return True
     # A compact block probes 16 ports and a legacy block 64. This runs only while
     # provisioning, and avoids discovering an RTP collision after Docker has already
@@ -1194,16 +1194,16 @@ def cp_mode_order_for(mcc: str, mnc: str) -> str:
 def _engine_manager_url(settings: dict) -> str:
     """Where engine notify.py POSTs events (SMS, calls, tunnel state).
 
-    Explicit setting wins; else MDD_MANAGER_URL env (the installer sets this to the PUBLISHED
+    Explicit setting wins; else ONEWIFI_MANAGER_URL env (the installer sets this to the PUBLISHED
     host port when the control plane runs in a bridge-networked container with a different
     host port); else the default assumes a 1:1 host.docker.internal:<http_port> mapping.
 
     In the container stack the Engine sits on an internal network with no route to the host,
-    so only the Control's own MDD_MANAGER_URL is reachable. A saved setting carried over from a
+    so only the Control's own ONEWIFI_MANAGER_URL is reachable. A saved setting carried over from a
     native install (host.docker.internal) would make every event time out while notify.py
     swallows the error: inbound SMS reached the Engine but never the web UI."""
-    env_url = os.environ.get("MDD_MANAGER_URL")
-    if os.environ.get("MDD_CONTAINER_STACK") == "1" and env_url:
+    env_url = os.environ.get("ONEWIFI_MANAGER_URL")
+    if os.environ.get("ONEWIFI_CONTAINER_STACK") == "1" and env_url:
         return env_url
     return (settings.get("manager_url")
             or env_url

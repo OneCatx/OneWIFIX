@@ -12,16 +12,16 @@ from host import mdd_image_cleanup
 class ImageCleanupTests(unittest.TestCase):
     def test_only_old_mdd_release_tags_are_removed_before_dangling_prune(self):
         listing = "\n".join([
-            "mdd-sim-gateway/control:latest",
-            "mdd-sim-gateway/control:previous",
-            "mdd-sim-gateway/control:v1.5.1",
-            "mdd-sim-gateway/control:v1.5.2",
-            "mdd-sim-gateway/control:v1.5.3",
-            "mdd-sim-gateway/engine:latest",
-            "mdd-sim-gateway/engine:previous",
-            "mdd-sim-gateway/engine-base:trusted",
-            "ghcr.io/mddidd/mdd-sim-gateway-engine:v1.5.2",
-            "ghcr.io/mddidd/mdd-sim-gateway-engine:v1.5.3",
+            "onewifi/control:latest",
+            "onewifi/control:previous",
+            "onewifi/control:v1.5.1",
+            "onewifi/control:v1.5.2",
+            "onewifi/control:v1.5.3",
+            "onewifi/engine:latest",
+            "onewifi/engine:previous",
+            "onewifi/engine-base:trusted",
+            "ghcr.io/onecatx/onewifi-engine:v1.5.2",
+            "ghcr.io/onecatx/onewifi-engine:v1.5.3",
             "example/control:v1.5.2",
             "node:<none>",
         ])
@@ -35,20 +35,20 @@ class ImageCleanupTests(unittest.TestCase):
         self.assertEqual(run.call_args_list, [
             call(["docker", "image", "ls", "--format", "{{.Repository}}:{{.Tag}}"],
                  text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL),
-            call(["docker", "image", "rm", "ghcr.io/mddidd/mdd-sim-gateway-engine:v1.5.2"],
+            call(["docker", "image", "rm", "ghcr.io/onecatx/onewifi-engine:v1.5.2"],
                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL),
-            call(["docker", "image", "rm", "mdd-sim-gateway/control:v1.5.1"],
+            call(["docker", "image", "rm", "onewifi/control:v1.5.1"],
                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL),
-            call(["docker", "image", "rm", "mdd-sim-gateway/control:v1.5.2"],
+            call(["docker", "image", "rm", "onewifi/control:v1.5.2"],
                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL),
             call(["docker", "image", "prune", "--force", "--filter",
-                  "label=io.mdd-sim-gateway.managed=true"],
+                  "label=io.onewifi.managed=true"],
                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL),
         ])
 
     def test_cleanup_is_best_effort_but_reports_any_failed_step(self):
         completed = [
-            SimpleNamespace(returncode=0, stdout="mdd-sim-gateway/control:v1.5.2\n"),
+            SimpleNamespace(returncode=0, stdout="onewifi/control:v1.5.2\n"),
             SimpleNamespace(returncode=1, stdout=""),
             SimpleNamespace(returncode=0, stdout=""),
         ]
@@ -57,7 +57,7 @@ class ImageCleanupTests(unittest.TestCase):
             self.assertFalse(mdd_image_cleanup.prune_superseded_images("1.5.3"))
         self.assertEqual(run.call_args_list[-1].args[0],
                          ["docker", "image", "prune", "--force", "--filter",
-                          "label=io.mdd-sim-gateway.managed=true"])
+                          "label=io.onewifi.managed=true"])
 
     def test_release_transition_prunes_only_default_dangling_build_cache(self):
         completed = [

@@ -149,7 +149,7 @@ class EntrypointSupervisionTests(unittest.TestCase):
         conf = (REPO / "engine" / "templates" / "asterisk.conf.j2").read_text()
         self.assertRegex(conf, r"astlogdir\s*=\s*/logs/asterisk")
         self.assertIn("mkdir -p", ENTRYPOINT.read_text())
-        self.assertIn("MDD_AST_LOGDIR", ENTRYPOINT.read_text())
+        self.assertIn("ONEWIFI_AST_LOGDIR", ENTRYPOINT.read_text())
 
 
 class PcscfApplyModeTests(unittest.TestCase):

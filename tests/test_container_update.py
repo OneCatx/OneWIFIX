@@ -12,18 +12,18 @@ from host import mdd_container_update
 
 class ContainerComposeRewriteTests(unittest.TestCase):
     def test_only_release_image_references_change(self):
-        source = """name: mdd-sim-gateway
+        source = """name: onewifi
 services:
   control:
-    image: ghcr.io/mddidd/mdd-sim-gateway-control:v1.0.0
+    image: ghcr.io/onecatx/onewifi-control:v1.0.0
     environment:
-      MDD_ENGINE_IMAGE: ghcr.io/mddidd/mdd-sim-gateway-engine:v1.0.0
+      ONEWIFI_ENGINE_IMAGE: ghcr.io/onecatx/onewifi-engine:v1.0.0
       KEEP_ME: ghcr.io/example/unrelated:v1
   hardware:
-    image: 'ghcr.io/mddidd/mdd-sim-gateway-hardware:v1.0.0' # keep this comment
+    image: 'ghcr.io/onecatx/onewifi-hardware:v1.0.0' # keep this comment
   egress:
-    image: ghcr.io/mddidd/mdd-sim-gateway-egress@sha256:""" + "a" * 64 + "\n"
-        images = mdd_container_update.canonical_images("MddIdd/mdd-sim-gateway", "2.0.0")
+    image: ghcr.io/onecatx/onewifi-egress@sha256:""" + "a" * 64 + "\n"
+        images = mdd_container_update.canonical_images("OneCatx/OneWIFIX", "2.0.0")
 
         updated = mdd_container_update.rewrite_compose(source, images)
 
@@ -31,12 +31,12 @@ services:
             self.assertIn(image, updated)
         self.assertIn("KEEP_ME: ghcr.io/example/unrelated:v1", updated)
         self.assertIn("' # keep this comment", updated)
-        self.assertNotIn("mdd-sim-gateway-control:v1.0.0", updated)
+        self.assertNotIn("onewifi-control:v1.0.0", updated)
 
     def test_incomplete_compose_is_rejected_before_mutation(self):
         with self.assertRaises(mdd_container_update.mdd_update.UpdateError):
             mdd_container_update.rewrite_compose(
-                "services:\n  control:\n    image: ghcr.io/x/mdd-sim-gateway-control:v1\n",
+                "services:\n  control:\n    image: ghcr.io/x/onewifi-control:v1\n",
                 mdd_container_update.canonical_images("x/y", "2.0.0"))
 
     def test_exactly_one_project_compose_file_is_required(self):
@@ -57,7 +57,7 @@ class ContainerDownloadRouteTests(unittest.TestCase):
                                        "hk": {"type": "socks5", "name": "HK",
                                               "server": "hk.example", "port": 1080}}}}
     ready = {"exits": {"us": {"ready": True, "transport": "socks5",
-                              "proxy_host": "mdd-egress", "proxy_port": 22538}}}
+                              "proxy_host": "onewifi-egress", "proxy_port": 22538}}}
 
     def resolve(self, selections, state=None, current=True):
         from control.app import egress, egress_contract
@@ -68,12 +68,12 @@ class ContainerDownloadRouteTests(unittest.TestCase):
 
     def test_a_country_exit_becomes_its_internal_socks_listener(self):
         self.assertEqual(self.resolve([{"proxy_mode": "country", "proxy_country": "us"}]), [
-            {"proxy_url": "socks5h://mdd-egress:22538", "route": "country",
+            {"proxy_url": "socks5h://onewifi-egress:22538", "route": "country",
              "route_name": "US"}])
 
     def test_a_subscription_profile_goes_through_the_exit_that_uses_it(self):
         routes = self.resolve([{"proxy_mode": "library", "proxy_profile_id": "sub"}])
-        self.assertEqual(routes[0]["proxy_url"], "socks5h://mdd-egress:22538")
+        self.assertEqual(routes[0]["proxy_url"], "socks5h://onewifi-egress:22538")
         self.assertEqual(routes[0]["route"], "library")
 
     def test_a_socks_profile_is_dialled_directly(self):
@@ -104,7 +104,7 @@ class ContainerComposeOrderTests(unittest.TestCase):
         commands = []
         with tempfile.TemporaryDirectory() as host:
             (Path(host) / "compose.yaml").write_text("services: {}\n")
-            with patch.dict(os.environ, {"MDD_HOST_DATA": host}), \
+            with patch.dict(os.environ, {"ONEWIFI_HOST_DATA": host}), \
                     patch.object(mdd_container_update, "run",
                                  side_effect=lambda command, **kwargs: commands.append(
                                      (command, kwargs["cwd"]))):
@@ -116,7 +116,7 @@ class ContainerComposeOrderTests(unittest.TestCase):
 
     def test_an_old_launcher_without_the_host_mount_still_works(self):
         commands = []
-        with patch.dict(os.environ, {"MDD_HOST_DATA": "/does/not/exist"}), \
+        with patch.dict(os.environ, {"ONEWIFI_HOST_DATA": "/does/not/exist"}), \
                 patch.object(mdd_container_update, "run",
                              side_effect=lambda command, **kwargs: commands.append(command)):
             mdd_container_update.compose_up(Path("/data/compose.yaml"), lambda _c: None)
@@ -159,7 +159,7 @@ class SettleServicesTests(unittest.TestCase):
         return item
 
     def test_a_slow_container_is_waited_for_instead_of_failing_the_update(self):
-        slow = self.container("mdd-sim-gateway-hardware", [True, True, False])
+        slow = self.container("onewifi-hardware", [True, True, False])
         slow.stop.side_effect = mdd_container_update.docker.errors.APIError(
             "tried to kill container, but did not receive an exit event")
         client = Mock()
@@ -168,12 +168,12 @@ class SettleServicesTests(unittest.TestCase):
             mdd_container_update.settle_services(client, ("hardware",))
         self.assertEqual(slow.reload.call_count, 3)
         client.containers.list.assert_called_once_with(all=True, filters={"label": [
-            "com.docker.compose.project=mdd-sim-gateway",
+            "com.docker.compose.project=onewifi",
             "com.docker.compose.service=hardware"]})
 
     def test_temporaries_left_by_a_failed_recreate_are_removed(self):
-        leftover = self.container("69e1b009d23a_mdd-sim-gateway-hardware", [])
-        current = self.container("mdd-sim-gateway-hardware", [False])
+        leftover = self.container("69e1b009d23a_onewifi-hardware", [])
+        current = self.container("onewifi-hardware", [False])
         client = Mock()
         client.containers.list.return_value = [leftover, current]
         mdd_container_update.settle_services(client, ("hardware",))
@@ -182,7 +182,7 @@ class SettleServicesTests(unittest.TestCase):
         current.remove.assert_not_called()
 
     def test_a_container_that_never_exits_fails_with_its_name(self):
-        stuck = self.container("mdd-sim-gateway-hardware", [True] * 1000)
+        stuck = self.container("onewifi-hardware", [True] * 1000)
         client = Mock()
         client.containers.list.return_value = [stuck]
         clock = iter(range(0, 10000, 10))
@@ -190,7 +190,7 @@ class SettleServicesTests(unittest.TestCase):
                 patch.object(mdd_container_update.time, "monotonic",
                              side_effect=lambda: next(clock)), \
                 self.assertRaisesRegex(mdd_container_update.mdd_update.UpdateError,
-                                       "mdd-sim-gateway-hardware did not exit"):
+                                       "onewifi-hardware did not exit"):
             mdd_container_update.settle_services(client, ("hardware",))
 
     def test_compose_up_settles_each_group_before_starting_it(self):
@@ -206,11 +206,11 @@ class SettleServicesTests(unittest.TestCase):
 
 class ComposeEnvironmentTests(unittest.TestCase):
     def test_the_control_image_environment_never_reaches_compose_interpolation(self):
-        """The Control image sets MDD_HTTP_PORT=8443 for its own listener; the Compose file
+        """The Control image sets ONEWIFI_HTTP_PORT=8443 for its own listener; the Compose file
         uses the same name for the host port. Inherited, it moved the published port."""
         envs = []
-        leaked = {"PATH": "/usr/bin", "MDD_HTTP_PORT": "8443", "MDD_RTP_BASE": "10000",
-                  "MDD_DATA": "/data"}
+        leaked = {"PATH": "/usr/bin", "ONEWIFI_HTTP_PORT": "8443", "ONEWIFI_RTP_BASE": "10000",
+                  "ONEWIFI_DATA": "/data"}
         with patch.dict(os.environ, leaked, clear=True), \
                 patch.object(mdd_container_update, "run",
                              side_effect=lambda command, **kwargs: envs.append(kwargs["env"])):
@@ -248,7 +248,7 @@ class ContainerUpdateLaunchTests(unittest.TestCase):
             orchestrator = root / "orchestrator"
             orchestrator.mkdir()
             (orchestrator / "update-request.json").write_text(json.dumps({
-                "version": "2.0.0", "repository": "MddIdd/mdd-sim-gateway",
+                "version": "2.0.0", "repository": "OneCatx/OneWIFIX",
                 "network": {"route": "direct", "proxy_url": ""},
                 "networks": [{"route": "direct", "proxy_url": ""}],
                 "asset_sizes": {"SHA256SUMS": 123},
@@ -256,16 +256,16 @@ class ContainerUpdateLaunchTests(unittest.TestCase):
             control = Mock()
             control.image.id = "sha256:control"
             control.attrs = {"Config": {"Labels": {
-                "io.mdd-sim-gateway.managed": "true",
-                "io.mdd-sim-gateway.component": "control"}}}
+                "io.onewifi.managed": "true",
+                "io.onewifi.component": "control"}}}
             helper = Mock()
             client = Mock()
             client.containers.get.return_value = control
             client.containers.create.return_value = helper
             network = Mock()
             client.networks.get.return_value = network
-            env = {"MDD_CONTAINER_STACK": "1", "MDD_HOST_DATA": "/volume1/docker/mdd",
-                   "MDD_ENGINE_NETWORK": "mdd-engine", "MDD_ENGINE_DIRECT_NETWORK": "mdd-uplink"}
+            env = {"ONEWIFI_CONTAINER_STACK": "1", "ONEWIFI_HOST_DATA": "/volume1/docker/mdd",
+                   "ONEWIFI_ENGINE_NETWORK": "onewifi-engine", "ONEWIFI_ENGINE_DIRECT_NETWORK": "onewifi-uplink"}
             with patch.object(config, "DATA_DIR", str(root)), patch.dict(os.environ, env), \
                     patch.object(operations.docker, "from_env", return_value=client):
                 result = operations.launch_container_update()
@@ -273,14 +273,14 @@ class ContainerUpdateLaunchTests(unittest.TestCase):
             self.assertTrue(result["ok"])
             create = client.containers.create.call_args
             self.assertEqual(create.args[0], "sha256:control")
-            self.assertEqual(create.kwargs["network"], "mdd-uplink")
+            self.assertEqual(create.kwargs["network"], "onewifi-uplink")
             volumes = create.kwargs["volumes"]
             self.assertIn("/volume1/docker/mdd:/data:rw", volumes)
             # Also at its host path, so Compose labels match Container Manager's.
             self.assertIn("/volume1/docker/mdd:/volume1/docker/mdd:rw", volumes)
-            self.assertEqual(create.kwargs["environment"]["MDD_HOST_DATA"], "/volume1/docker/mdd")
+            self.assertEqual(create.kwargs["environment"]["ONEWIFI_HOST_DATA"], "/volume1/docker/mdd")
             self.assertIn("/app/host/mdd_container_update.py", create.kwargs["command"])
-            client.networks.get.assert_called_once_with("mdd-engine")
+            client.networks.get.assert_called_once_with("onewifi-engine")
             network.connect.assert_called_once_with(helper)
             helper.start.assert_called_once_with()
             self.assertFalse((orchestrator / "update-request.json").exists())
@@ -292,9 +292,9 @@ class ContainerUpdateLaunchTests(unittest.TestCase):
             root = Path(tmp)
             (root / "orchestrator").mkdir()
             (root / "orchestrator/update-request.json").write_text(json.dumps({
-                "version": "2.0.0", "repository": "MddIdd/mdd-sim-gateway"}))
+                "version": "2.0.0", "repository": "OneCatx/OneWIFIX"}))
             with patch.object(config, "DATA_DIR", str(root)), patch.dict(
-                    os.environ, {"MDD_HOST_DATA": "relative/path"}, clear=False), \
+                    os.environ, {"ONEWIFI_HOST_DATA": "relative/path"}, clear=False), \
                     patch.object(operations.docker, "from_env") as docker_client:
                 result = operations.launch_container_update()
             self.assertFalse(result["ok"])
@@ -318,13 +318,13 @@ class ContainerUpdateRollbackTests(unittest.TestCase):
             (root / "update").mkdir()
             original = """services:
   control:
-    image: ghcr.io/mddidd/mdd-sim-gateway-control:v1.0.0
+    image: ghcr.io/onecatx/onewifi-control:v1.0.0
     environment:
-      MDD_ENGINE_IMAGE: ghcr.io/mddidd/mdd-sim-gateway-engine:v1.0.0
+      ONEWIFI_ENGINE_IMAGE: ghcr.io/onecatx/onewifi-engine:v1.0.0
   hardware:
-    image: ghcr.io/mddidd/mdd-sim-gateway-hardware:v1.0.0
+    image: ghcr.io/onecatx/onewifi-hardware:v1.0.0
   egress:
-    image: ghcr.io/mddidd/mdd-sim-gateway-egress:v1.0.0
+    image: ghcr.io/onecatx/onewifi-egress:v1.0.0
 """
             (root / "docker-compose.yml").write_text(original)
             network = root / "update/network.json"
@@ -334,7 +334,7 @@ class ContainerUpdateRollbackTests(unittest.TestCase):
                     for name in mdd_container_update.BASE_COMPONENTS}
             client = Mock()
             client.containers.get.side_effect = lambda name: base[name.removeprefix(
-                "mdd-sim-gateway-")]
+                "onewifi-")]
             client.containers.list.return_value = []
             status = mdd_container_update.mdd_update.Status(
                 root / "orchestrator/update-status.json", "2.0.0")
@@ -359,13 +359,13 @@ class ContainerUpdateRollbackTests(unittest.TestCase):
                     patch.object(mdd_container_update, "wait_container") as wait:
                 with self.assertRaises(mdd_container_update.mdd_update.UpdateError):
                     mdd_container_update.perform(
-                        root, "2.0.0", "MddIdd/mdd-sim-gateway", network, status)
+                        root, "2.0.0", "OneCatx/OneWIFIX", network, status)
 
             self.assertEqual((root / "docker-compose.yml").read_text(), original)
             self.assertEqual(compose_up.call_count, 2)
             self.assertEqual(wait.call_count, len(mdd_container_update.BASE_COMPONENTS))
             self.assertEqual([call.args[1] for call in wait.call_args_list],
-                             [f"mdd-sim-gateway-{c}" for c in ("hardware", "egress", "control")])
+                             [f"onewifi-{c}" for c in ("hardware", "egress", "control")])
             failed = json.loads((root / "orchestrator/update-status.json").read_text())
             self.assertEqual(failed["state"], "failed")
             self.assertTrue(failed["rollback_succeeded"])
@@ -377,13 +377,13 @@ class ContainerUpdateRollbackTests(unittest.TestCase):
             (root / "update/fail-after-switch").touch()
             original = """services:
   control:
-    image: ghcr.io/mddidd/mdd-sim-gateway-control:v1.0.0
+    image: ghcr.io/onecatx/onewifi-control:v1.0.0
     environment:
-      MDD_ENGINE_IMAGE: ghcr.io/mddidd/mdd-sim-gateway-engine:v1.0.0
+      ONEWIFI_ENGINE_IMAGE: ghcr.io/onecatx/onewifi-engine:v1.0.0
   hardware:
-    image: ghcr.io/mddidd/mdd-sim-gateway-hardware:v1.0.0
+    image: ghcr.io/onecatx/onewifi-hardware:v1.0.0
   egress:
-    image: ghcr.io/mddidd/mdd-sim-gateway-egress:v1.0.0
+    image: ghcr.io/onecatx/onewifi-egress:v1.0.0
 """
             (root / "docker-compose.yml").write_text(original)
             network = root / "update/network.json"
@@ -392,7 +392,7 @@ class ContainerUpdateRollbackTests(unittest.TestCase):
                     for name in mdd_container_update.BASE_COMPONENTS}
             client = Mock()
             client.containers.get.side_effect = lambda name: base[name.removeprefix(
-                "mdd-sim-gateway-")]
+                "onewifi-")]
             client.containers.list.return_value = []
             status = mdd_container_update.mdd_update.Status(
                 root / "orchestrator/update-status.json", "2.0.0")
@@ -421,7 +421,7 @@ class ContainerUpdateRollbackTests(unittest.TestCase):
                 with self.assertRaisesRegex(mdd_container_update.mdd_update.UpdateError,
                                             "rollback drill"):
                     mdd_container_update.perform(
-                        root, "2.0.0", "MddIdd/mdd-sim-gateway", network, status)
+                        root, "2.0.0", "OneCatx/OneWIFIX", network, status)
 
             rolled.assert_called_once()
             self.assertIn("control:v2.0.0", composes[0])     # the new release really ran
@@ -435,9 +435,9 @@ class ContainerUpdateRollbackTests(unittest.TestCase):
 
     def test_rollout_recreates_only_running_engines_explicitly(self):
         running = Mock(name="running")
-        running.name = "mdd-sim-gateway-engine-line-1"
+        running.name = "onewifi-engine-line-1"
         stopped = Mock(name="stopped")
-        stopped.name = "mdd-sim-gateway-engine-line-2"
+        stopped.name = "onewifi-engine-line-2"
         client = Mock()
         client.containers.list.return_value = [running]
         status = Mock()
@@ -447,8 +447,8 @@ class ContainerUpdateRollbackTests(unittest.TestCase):
             mdd_container_update.roll_engines(client, "sha256:new", status)
 
         client.containers.list.assert_called_once_with(filters={"label": [
-            "io.mdd-sim-gateway.managed=true",
-            "io.mdd-sim-gateway.component=engine"]})
+            "io.onewifi.managed=true",
+            "io.onewifi.component=engine"]})
         running.remove.assert_called_once_with(force=True)
         stopped.remove.assert_not_called()
         recreate.assert_called_once_with(client, running.name)
@@ -461,7 +461,7 @@ class ContainerUpdateRollbackTests(unittest.TestCase):
         client.containers.get.return_value = control
 
         mdd_container_update.recreate_engine(
-            client, "mdd-sim-gateway-engine-line_1")
+            client, "onewifi-engine-line_1")
 
         command = control.exec_run.call_args.args[0]
         self.assertEqual(command[:2], ["python", "-c"])
@@ -475,7 +475,7 @@ class ContainerUpdateRollbackTests(unittest.TestCase):
         client.containers.get.return_value = control
 
         mdd_container_update.recreate_engine(
-            client, "mdd-sim-gateway-engine-line.1")
+            client, "onewifi-engine-line.1")
 
         self.assertEqual(control.exec_run.call_args.args[0][-1], "line.1")
 

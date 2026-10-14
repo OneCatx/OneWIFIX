@@ -150,7 +150,7 @@ class MediaRenderTests(unittest.TestCase):
                         patch.object(module, "TPL_DIR", str(TEMPLATES)), \
                         patch.object(module, "media_interface",
                                      return_value=("eth1", "172.30.0.3")), \
-                        patch.dict(os.environ, {"MDD_ENV": str(env_path)}), \
+                        patch.dict(os.environ, {"ONEWIFI_ENV": str(env_path)}), \
                         patch.object(module.os, "makedirs", lambda *a, **k: None), \
                         patch("builtins.open", _redirect_open(outputs, tmp)):
                     Path(tmp, "run").mkdir()
@@ -162,8 +162,8 @@ class MediaRenderTests(unittest.TestCase):
                 if expected:
                     self.assertIn("-A INPUT -i eth1 -p udp -m udp --dport 10000:10199 -j ACCEPT",
                                   Path(tmp, "run", "media.iptables").read_text())
-                self.assertEqual("MDD_MEDIA_MODE=relay" in env_text, expected)
-                self.assertEqual("MDD_MEDIA_IF=eth1" in env_text, expected)
+                self.assertEqual("ONEWIFI_MEDIA_MODE=relay" in env_text, expected)
+                self.assertEqual("ONEWIFI_MEDIA_IF=eth1" in env_text, expected)
 
 
 def _redirect_open(outputs: Path, tmp: str):
@@ -201,8 +201,8 @@ class EntrypointMediaFirewallTests(unittest.TestCase):
                       + block.replace("/proc/net/if_inet6", str(inet6)))
             result = subprocess.run(
                 ["bash", "-c", script], capture_output=True, text=True,
-                env={"PATH": f"{tmp}:/usr/bin:/bin", "MDD_RUNDIR": tmp,
-                     "MDD_MEDIA_MODE": "relay", "MDD_MEDIA_IF": media_if})
+                env={"PATH": f"{tmp}:/usr/bin:/bin", "ONEWIFI_RUNDIR": tmp,
+                     "ONEWIFI_MEDIA_MODE": "relay", "ONEWIFI_MEDIA_IF": media_if})
             self.assertEqual(result.returncode, 0, result.stderr)
             ran = [line.split()[0] for line in calls.read_text().splitlines()] \
                 if calls.exists() else []
@@ -419,7 +419,7 @@ class MediaEngineContainerTests(unittest.TestCase):
 
     def test_container_stack_order_engine_network_media_then_uplink(self):
         """Full-container deployment (not run on a real stack): the Engine is created on
-        MDD_ENGINE_NETWORK, joins the media network before its first start, and is connected
+        ONEWIFI_ENGINE_NETWORK, joins the media network before its first start, and is connected
         to the direct uplink afterwards, as before relay mode existed."""
         engine = self.engine_module()
         order = []
@@ -443,11 +443,11 @@ class MediaEngineContainerTests(unittest.TestCase):
         engine_network = SimpleNamespace(attrs={"IPAM": {"Config": [
             {"Subnet": "fd00:21::/64"}, {"Subnet": "172.21.0.0/16"}]}})
         client = SimpleNamespace(containers=Containers(), networks=SimpleNamespace(
-            get=lambda name: engine_network if name == "mdd-sim-gateway-engine" else uplink))
+            get=lambda name: engine_network if name == "onewifi-engine" else uplink))
         with tempfile.TemporaryDirectory() as temp, \
                 patch.object(engine, "_client", lambda: client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-sim-gateway-engine"), \
-                patch.object(engine, "DIRECT_NETWORK", "mdd-sim-gateway-uplink"), \
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-engine"), \
+                patch.object(engine, "DIRECT_NETWORK", "onewifi-uplink"), \
                 patch.object(engine, "_instance_paths", lambda iid: (temp, temp)), \
                 patch.object(engine, "_clear_runtime_state", lambda base: None), \
                 patch.object(engine.egress, "ensure_line", lambda i, s: None), \
@@ -457,7 +457,7 @@ class MediaEngineContainerTests(unittest.TestCase):
             engine.start({"id": "sim1", "ports": {"rtp_start": 30000, "rtp_span": 12}}, {})
         self.assertEqual(order, ["create", "media", "start", "uplink"])
         self.assertEqual(write.call_args[0][0]["engine_subnet"], "172.21.0.0/16")
-        self.assertEqual(created["network"], "mdd-sim-gateway-engine")
+        self.assertEqual(created["network"], "onewifi-engine")
         self.assertEqual(created["ports"], {})
 
     def test_control_never_addresses_an_engine_by_its_media_address(self):

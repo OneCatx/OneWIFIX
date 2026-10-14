@@ -88,7 +88,7 @@ NET_RAW、host 网络或设备映射。Engine 内原有 IMS TUN 仍需保留。
 - `runtime/compose.egress-lab.yaml`：开发用出口骨架，三个基础服务中的一个，
   不是完整应用部署文件。
 - `engine/outer_transport.py`：显式 SOCKS5 UDP socket 工厂，无直连重试。
-- Control 增加 `MDD_ENGINE_NETWORK` 和 `MDD_HOST_PCSCD_DIR`，准备专用网络
+- Control 增加 `ONEWIFI_ENGINE_NETWORK` 和 `ONEWIFI_HOST_PCSCD_DIR`，准备专用网络
   与容器 PC/SC 挂载。AMI 按指定网络选择 Engine 地址，缺失时不猜其他网络。
 
 状态独立发布到 `socks-egress-status.json`，不覆盖旧 `proxy-status.json`。
@@ -133,7 +133,7 @@ NAS 只保留开发镜像及其构建缓存，未启动常驻开发服务。
 
 ## 第三阶段：Control 启动契约（2026-09-23）
 
-新增 `MDD_EGRESS_TRANSPORT=socks5`，默认仍走现有 host 协议。
+新增 `ONEWIFI_EGRESS_TRANSPORT=socks5`，默认仍走现有 host 协议。
 新状态包含版本号与代理配置 SHA256 指纹，Control 仅接受 15 秒内的状态，
 拒绝明显超前的时间戳、过期状态、旧配置、其他国家的 ready 和不合法 endpoint。
 指纹仅用于配置一致性判断，不是身份认证或凭据加密。
@@ -190,7 +190,7 @@ Control 客户端已通过设置等价搜索路径验证共享 PC/SC socket。
 SWu 在代理模式下分别为 IKE/500 与 NAT-T/4500 建立 SOCKS5 UDP association，
 完成 IKE AUTH 后强制使用 RFC 3948 UDP 封装，不创建 raw ESP socket。内层 MTU 同时扣除
 ESP 与 SOCKS5 IPv4 目标头开销。发行版 v1.11.0 amd64 Engine 作为受信基础层，当前运行文件
-以离线 overlay 构建为 `mdd-sim-gateway/engine:issue-108-dev`，镜像 ID 为
+以离线 overlay 构建为 `onewifi/engine:issue-108-dev`，镜像 ID 为
 `sha256:34dc6c4fca5c`（前缀）。
 
 NAS 隔离实验直接导入镜像中的 `swu_ike.py` 并调用实际 socket 方法。两条 association
@@ -229,7 +229,7 @@ Docker 按预期增加自身 bridge 路由，因此“全部路由表哈希不�
 Hardware 发布兼容的设备状态供 WebUI 使用，并声明 `cellular_supported=true`。Control
 通过只读共享的私有 D-Bus socket 使用既有蜂窝短信、USSD、通话和 MMS 路径。
 
-五个外部模块已安装到 `/usr/local/lib/mdd-sim-gateway-modules`，并安装 DSM rc.d 启动脚本。
+五个外部模块已安装到 `/usr/local/lib/onewifi-modules`，并安装 DSM rc.d 启动脚本。
 脚本在每次加载前核对 x86_64、4.4.302+、DSM 7.4.1-90080、v1000 平台标记和清单内全部
 SHA256，不匹配即停止；卸载入口只删除持久文件，不强拆正在使用的驱动。当前开机的状态检查
 通过，尚未为验证脚本而重启承载其他业务的 NAS。

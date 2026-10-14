@@ -21,14 +21,14 @@ class SynologyDriverPackTests(unittest.TestCase):
         for filename in MANIFEST["modules"]:
             self.assertIn(Path(filename).stem.replace("-", "_"), text)
         self.assertIn("sha256sum -c SHA256SUMS", text)
-        self.assertIn('"$(uname -r)" = "$MDD_KERNEL"', text)
+        self.assertIn('"$(uname -r)" = "$ONEWIFI_KERNEL"', text)
 
     def test_installer_refuses_before_it_touches_the_system(self):
         script = (PACK / "install.sh").read_text(encoding="utf-8")
         subprocess.run(["sh", "-n", str(PACK / "install.sh")], check=True)
         first_write = script.index("install -d")
-        for check in ('"$(uname -m)" = "$MDD_ARCH"', '"$(uname -r)" = "$MDD_KERNEL"',
-                      '"$product-$build" = "$MDD_DSM"', "$MDD_PLATFORM_MARKER",
+        for check in ('"$(uname -m)" = "$ONEWIFI_ARCH"', '"$(uname -r)" = "$ONEWIFI_KERNEL"',
+                      '"$product-$build" = "$ONEWIFI_DSM"', "$ONEWIFI_PLATFORM_MARKER",
                       "sha256sum -c SHA256SUMS"):
             self.assertLess(script.index(check), first_write, check)
 

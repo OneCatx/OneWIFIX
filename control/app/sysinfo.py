@@ -36,20 +36,20 @@ THROTTLED_STICKY = {
 }
 # Free space below this is a real risk on an SD card: a full root filesystem corrupts the
 # SQLite history and stops the engines from writing their runtime state.
-DISK_WARN_PERCENT = float(os.environ.get("MDD_DISK_WARN_PERCENT", "90"))
-DISK_CRITICAL_PERCENT = float(os.environ.get("MDD_DISK_CRITICAL_PERCENT", "96"))
+DISK_WARN_PERCENT = float(os.environ.get("ONEWIFI_DISK_WARN_PERCENT", "90"))
+DISK_CRITICAL_PERCENT = float(os.environ.get("ONEWIFI_DISK_CRITICAL_PERCENT", "96"))
 # Sustained paging to an SD card slows every operation enough to time out status reads. The
 # signal is the paging RATE, not how much swap is occupied: pages parked there since boot and
 # never touched again cost nothing, and alerting on occupancy fires on a perfectly healthy box.
-SWAP_PAGES_PER_SECOND = float(os.environ.get("MDD_SWAP_PAGES_PER_SECOND", "50"))
+SWAP_PAGES_PER_SECOND = float(os.environ.get("ONEWIFI_SWAP_PAGES_PER_SECOND", "50"))
 DOCKER_STORAGE_CACHE_SECONDS = float(
-    os.environ.get("MDD_DOCKER_STORAGE_CACHE_SECONDS", "21600"))
+    os.environ.get("ONEWIFI_DOCKER_STORAGE_CACHE_SECONDS", "21600"))
 _docker_storage_cache: dict = {}
 _docker_storage_cached_at = 0.0
 _docker_storage_lock = threading.Lock()
 # The Pi throttles at 80°C, and a loaded board sits in the seventies quite normally. A
 # threshold inside the ordinary operating range just flaps across it all day.
-TEMPERATURE_WARN_C = float(os.environ.get("MDD_TEMPERATURE_WARN_C", "80"))
+TEMPERATURE_WARN_C = float(os.environ.get("ONEWIFI_TEMPERATURE_WARN_C", "80"))
 
 
 def _read(path: str) -> str:
@@ -206,8 +206,8 @@ def _path_usage_bytes(path: str) -> int:
 
 def _project_paths(data_dir: str) -> list[str]:
     """Runtime data plus native-install source/venv paths, with nested paths counted once."""
-    candidates = [data_dir, os.environ.get("MDD_REPO_DIR", ""),
-                  os.environ.get("MDD_VENV_DIR", "")]
+    candidates = [data_dir, os.environ.get("ONEWIFI_REPO_DIR", ""),
+                  os.environ.get("ONEWIFI_VENV_DIR", "")]
     paths = []
     for candidate in sorted({os.path.realpath(item) for item in candidates if item}, key=len):
         if not os.path.exists(candidate):
@@ -257,14 +257,14 @@ def _docker_storage(*, refresh: bool = False) -> dict:
             except Exception:
                 pass
 
-    repositories = ("mdd-sim-gateway/", "ghcr.io/mddidd/mdd-sim-gateway-")
+    repositories = ("onewifi/", "ghcr.io/onecatx/onewifi-")
     image_bytes, image_ids = 0, set()
     for item in report.get("Images") or []:
         image_id = str(item.get("Id") or item.get("ID") or "")
         labels = item.get("Labels") or {}
         labels = labels if isinstance(labels, dict) else {}
         tags = [str(tag) for tag in (item.get("RepoTags") or []) if tag]
-        managed = labels.get("io.mdd-sim-gateway.managed") == "true" or any(
+        managed = labels.get("io.onewifi.managed") == "true" or any(
             tag.startswith(repositories) for tag in tags)
         if managed and image_id not in image_ids:
             image_ids.add(image_id)
@@ -276,7 +276,7 @@ def _docker_storage(*, refresh: bool = False) -> dict:
         labels = item.get("Labels") or {}
         labels = labels if isinstance(labels, dict) else {}
         image = str(item.get("Image") or "")
-        managed = labels.get("io.mdd-sim-gateway.managed") == "true" or image.startswith(
+        managed = labels.get("io.onewifi.managed") == "true" or image.startswith(
             repositories)
         if managed and container_id not in container_ids:
             container_ids.add(container_id)
@@ -287,9 +287,9 @@ def _docker_storage(*, refresh: bool = False) -> dict:
     all_image_ids = {str(item.get("Id") or item.get("ID") or "")
                      for item in image_items if item.get("Id") or item.get("ID")}
     all_images_are_mdd = bool(all_image_ids) and all_image_ids == image_ids
-    current_tags = {"mdd-sim-gateway/engine:latest",
-                    "mdd-sim-gateway/control:latest",
-                    "mdd-sim-gateway/engine-base:trusted"}
+    current_tags = {"onewifi/engine:latest",
+                    "onewifi/control:latest",
+                    "onewifi/engine-base:trusted"}
     old_image_count, protected_unused = 0, False
     for item in image_items:
         image_id = str(item.get("Id") or item.get("ID") or "")

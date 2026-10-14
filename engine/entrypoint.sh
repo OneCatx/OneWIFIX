@@ -14,13 +14,13 @@
 # pcscd (see Dockerfile PCSC_VERSION) so the client/server protocol always matches.
 set -u
 
-export MDD_RUNDIR="${MDD_RUNDIR:-/run/mdd-sim-gateway}"
+export ONEWIFI_RUNDIR="${ONEWIFI_RUNDIR:-/run/onewifi}"
 # /logs is bind-mounted from the host and survives both a container restart and a rebuild, so
 # Asterisk's own logs live there (astlogdir in asterisk.conf). Until this existed, every
 # investigation into "the engine restarted on its own" had to work from `docker logs` alone,
 # which loses everything the moment the manager recreates the container.
-export MDD_AST_LOGDIR="${MDD_AST_LOGDIR:-/logs/asterisk}"
-mkdir -p "$MDD_RUNDIR" /logs "$MDD_AST_LOGDIR" /etc/asterisk
+export ONEWIFI_AST_LOGDIR="${ONEWIFI_AST_LOGDIR:-/logs/asterisk}"
+mkdir -p "$ONEWIFI_RUNDIR" /logs "$ONEWIFI_AST_LOGDIR" /etc/asterisk
 
 log() { echo "[entrypoint] $*"; }
 
@@ -39,7 +39,7 @@ for pair in sys.argv[2:]:
         rec[key] = int(value)
     except ValueError:
         rec[key] = value
-path = os.path.join(os.environ.get("MDD_AST_LOGDIR", "/logs/asterisk"), "supervisor.jsonl")
+path = os.path.join(os.environ.get("ONEWIFI_AST_LOGDIR", "/logs/asterisk"), "supervisor.jsonl")
 try:
     # Bounded: this file must never be the reason a 15G SD card fills up.
     lines = []
@@ -59,12 +59,12 @@ PY
 # Keep the persisted Asterisk logs bounded. At the shipped verbosity these grow ~12 KB/day, so
 # the cap is never reached in practice; it exists so a debug session left switched on cannot
 # fill the card.
-AST_LOG_MAX_BYTES="${MDD_AST_LOG_MAX_BYTES:-8388608}"
-AST_LOG_KEEP="${MDD_AST_LOG_KEEP:-3}"
+AST_LOG_MAX_BYTES="${ONEWIFI_AST_LOG_MAX_BYTES:-8388608}"
+AST_LOG_KEEP="${ONEWIFI_AST_LOG_KEEP:-3}"
 
 rotate_asterisk_logs() {
     for name in full messages; do
-        path="$MDD_AST_LOGDIR/$name"
+        path="$ONEWIFI_AST_LOGDIR/$name"
         [ -f "$path" ] || continue
         size=$(stat -c %s "$path" 2>/dev/null || echo 0)
         [ "$size" -lt "$AST_LOG_MAX_BYTES" ] && continue
@@ -73,7 +73,7 @@ rotate_asterisk_logs() {
         asterisk -rx "logger reload" >/dev/null 2>&1 || true
     done
     # shellcheck disable=SC2012
-    ls -1t "$MDD_AST_LOGDIR"/full.* "$MDD_AST_LOGDIR"/messages.* 2>/dev/null \
+    ls -1t "$ONEWIFI_AST_LOGDIR"/full.* "$ONEWIFI_AST_LOGDIR"/messages.* 2>/dev/null \
         | tail -n +$((AST_LOG_KEEP * 2 + 1)) | while read -r old; do rm -f "$old"; done
 }
 
@@ -83,8 +83,8 @@ rotate_asterisk_logs
 log "rendering configs..."
 python3 /usr/local/bin/render.py || { log "render failed"; exit 1; }
 # shellcheck disable=SC1091
-set -a; . "$MDD_RUNDIR/engine.env"; set +a
-export USIM_PIN USIM_READER USIM_READER_INDEX USIM_READER_PORT USIM_IMSI MDD_ID MANAGER_URL MANAGER_EVENT_TOKEN MDD_RUNDIR
+set -a; . "$ONEWIFI_RUNDIR/engine.env"; set +a
+export USIM_PIN USIM_READER USIM_READER_INDEX USIM_READER_PORT USIM_IMSI ONEWIFI_ID MANAGER_URL MANAGER_EVENT_TOKEN ONEWIFI_RUNDIR
 export PIN_USIM_READER
 export SWU_SOURCE SWU_EPDG SWU_APN SWU_MCC SWU_MNC SWU_IMEI SWU_IMEISV SWU_CHILD_REKEY_MINUTES SWU_IDR_MODE SWU_CP_MODE SWU_CP_MODE_ORDER
 export SWU_ACCEPT_EPDG_ESP_REKEY
@@ -100,35 +100,35 @@ export SWU_ACCEPT_EPDG_ESP_REKEY
 # media_legacy_ruleset in render.py). IPv6 is filtered too unless the kernel has none at all.
 load_media_firewall() {
   media_filter=""
-  if nft -f "$MDD_RUNDIR/media.nft"; then
+  if nft -f "$ONEWIFI_RUNDIR/media.nft"; then
     media_filter=nft
     return 0
   fi
   log "relay media: nftables ruleset refused by this kernel, trying iptables-legacy"
-  if ! iptables-legacy-restore < "$MDD_RUNDIR/media.iptables"; then
+  if ! iptables-legacy-restore < "$ONEWIFI_RUNDIR/media.iptables"; then
     log "relay media: iptables-legacy (IPv4) failed too"
     return 1
   fi
-  if [ -e /proc/net/if_inet6 ] && ! ip6tables-legacy-restore < "$MDD_RUNDIR/media.iptables"; then
+  if [ -e /proc/net/if_inet6 ] && ! ip6tables-legacy-restore < "$ONEWIFI_RUNDIR/media.iptables"; then
     log "relay media: iptables-legacy (IPv6) failed"
     return 1
   fi
   media_filter=iptables-legacy
 }
 
-if [ "${MDD_MEDIA_MODE:-direct}" = relay ]; then
+if [ "${ONEWIFI_MEDIA_MODE:-direct}" = relay ]; then
   media_filter=""
-  if [ -z "${MDD_MEDIA_IF:-}" ]; then
+  if [ -z "${ONEWIFI_MEDIA_IF:-}" ]; then
     media_state=no_media_address
   elif load_media_firewall; then
     media_state=ready
   else
-    ip link set dev "$MDD_MEDIA_IF" down || true
+    ip link set dev "$ONEWIFI_MEDIA_IF" down || true
     media_state=firewall_failed
   fi
   log "relay media: $media_state${media_filter:+ ($media_filter)}"
   printf '{"mode": "relay", "state": "%s", "filter": "%s"}\n' "$media_state" "$media_filter" \
-    > "$MDD_RUNDIR/media.json"
+    > "$ONEWIFI_RUNDIR/media.json"
 fi
 
 # --- 2. Start PIN keeper and wait for the SIM to be usable ------------------------
@@ -140,7 +140,7 @@ KEEPER_PID=$!
 
 wait_pin() {
     for _ in $(seq 1 30); do
-        st=$(python3 -c "import json;print(json.load(open('$MDD_RUNDIR/pin_status.json'))['state'])" 2>/dev/null || echo "")
+        st=$(python3 -c "import json;print(json.load(open('$ONEWIFI_RUNDIR/pin_status.json'))['state'])" 2>/dev/null || echo "")
         case "$st" in
             VERIFIED|PIN_DISABLED) log "PIN state: $st"; return 0 ;;
             WRONG_PIN|PIN_BLOCKED) log "PIN problem: $st - continuing (manager will surface)"; return 1 ;;
@@ -154,7 +154,7 @@ wait_pin || true
 
 # --- 3. Bring up the SWu (python IKEv2/IPsec) tunnel, supervised ------------------
 log "starting SWu IKEv2 tunnel (epdg=$SWU_EPDG apn=$SWU_APN reader=$USIM_READER_INDEX port=${USIM_READER_PORT:-none})..."
-rm -f "$MDD_RUNDIR/swu.ctl" "$MDD_RUNDIR/swu_status.json"
+rm -f "$ONEWIFI_RUNDIR/swu.ctl" "$ONEWIFI_RUNDIR/swu_status.json"
 
 # swu_ike is very chatty (per-packet IKE decode dumps). Send ITS stdout+stderr ONLY to the IKE
 # log (run/charon.log) through log_capture.py, which timestamps every physical line and rotates
@@ -184,7 +184,7 @@ SWU_STABLE_SECONDS="${SWU_STABLE_SECONDS:-120}"
         -E "${SWU_IMEI:-}" \
         -V "${SWU_IMEISV:-}" 2>&1 | \
       python3 -u /usr/local/bin/log_capture.py \
-        --current "$MDD_RUNDIR/charon.log" \
+        --current "$ONEWIFI_RUNDIR/charon.log" \
         --archive-dir /logs/ike
     rc=${PIPESTATUS[0]}
     ran=$(( $(date +%s) - started ))
@@ -205,23 +205,23 @@ SWU_PID=$!
 # --- 4. Wait for the tunnel, then (re)render pjsip with the discovered P-CSCF ------
 log "waiting for SWu tunnel to establish..."
 for _ in $(seq 1 90); do
-  st=$(python3 -c "import json;print(json.load(open('$MDD_RUNDIR/swu_status.json'))['state'])" 2>/dev/null || echo "")
+  st=$(python3 -c "import json;print(json.load(open('$ONEWIFI_RUNDIR/swu_status.json'))['state'])" 2>/dev/null || echo "")
   [ "$st" = "CONNECTED" ] && { log "SWu tunnel CONNECTED"; break; }
   sleep 1
 done
 
 log "waiting for P-CSCF discovery..."
 for _ in $(seq 1 30); do
-  [ -s "$MDD_RUNDIR/pcscf" ] && break
+  [ -s "$ONEWIFI_RUNDIR/pcscf" ] && break
   sleep 1
 done
-addr=$(cat "$MDD_RUNDIR/pcscf" 2>/dev/null)
+addr=$(cat "$ONEWIFI_RUNDIR/pcscf" 2>/dev/null)
 if [ -n "$addr" ]; then
   log "discovered P-CSCF: $addr"
   python3 /usr/local/bin/render.py || true   # re-render pjsip.conf with pcscf
   # Seed the applied-marker so swu_ike's in-process P-CSCF watcher only re-renders + reloads
   # Asterisk on a LATER change (reconnect/reauth), not redundantly right after this render.
-  printf '%s' "$addr" > "$MDD_RUNDIR/pcscf.applied"
+  printf '%s' "$addr" > "$ONEWIFI_RUNDIR/pcscf.applied"
 else
   log "no P-CSCF discovered yet - continuing (manager will surface tunnel state)"
 fi
@@ -241,7 +241,7 @@ python3 -u /usr/local/bin/ami_usim.py /usr/local/etc/ami_usim.ini &
 # core ulimit for that to produce a file (the manager sets it). It costs nothing when, as the
 # evidence so far suggests, the process is leaving through a normal exit path.
 ASTERISK_ARGS="-f"
-[ "${MDD_ASTERISK_CORE_DUMP:-1}" = "1" ] && ASTERISK_ARGS="$ASTERISK_ARGS -g"
+[ "${ONEWIFI_ASTERISK_CORE_DUMP:-1}" = "1" ] && ASTERISK_ARGS="$ASTERISK_ARGS -g"
 
 log "starting Asterisk... (args: $ASTERISK_ARGS)"
 # shellcheck disable=SC2086

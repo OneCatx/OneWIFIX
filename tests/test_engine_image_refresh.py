@@ -42,7 +42,7 @@ class EngineImageRefreshTests(unittest.TestCase):
 
     def test_the_rescan_does_not_restart_the_orchestrator(self):
         restart = _body("restart_control_plane")
-        self.assertIn("systemctl restart mdd-sim-gateway-control", restart)
+        self.assertIn("systemctl restart onewifi-control", restart)
         self.assertIn('docker restart "$CONTROL_NAME"', restart)
         self.assertNotIn("orchestrator", restart)
 
@@ -55,7 +55,7 @@ class EngineImageRefreshTests(unittest.TestCase):
 
     def test_a_distributed_image_is_identity_checked_before_activation(self):
         ensure = _body("ensure_engine_image")
-        distributed = ensure.index('MDD_ENGINE_DISTRIBUTION_IMAGE')
+        distributed = ensure.index('ONEWIFI_ENGINE_DISTRIBUTION_IMAGE')
         activated = ensure.index('docker tag "$distributed" "$ENGINE_IMAGE"', distributed)
         identity = ensure.index('identity=$(docker image inspect "$distributed"', distributed)
         self.assertLess(identity, activated)
@@ -85,14 +85,14 @@ class EngineImageRefreshTests(unittest.TestCase):
         # environment variable; the ordinary path itself returns without changing the flag.
         prefix = ensure[:reuse]
         self.assertEqual(prefix.count("ENGINE_IMAGE_CHANGED=1"), 1)
-        self.assertIn('if [ -n "${MDD_ENGINE_DISTRIBUTION_IMAGE:-}" ]', prefix)
+        self.assertIn('if [ -n "${ONEWIFI_ENGINE_DISTRIBUTION_IMAGE:-}" ]', prefix)
 
     def test_no_engines_is_overridden_only_for_the_release_handoff(self):
         reload_body = _body("cmd_reload")
         self.assertIn('PRESERVE_ENGINES=1', reload_body)
         handoff_gate = reload_body.index(
             '[ "$PRESERVE_ENGINES" = 1 ] && [ -f "$ENGINE_HANDOFF_MANIFEST" ]')
-        self.assertIn('[ -f "$MDD_DATA_DIR/update/network.json" ]',
+        self.assertIn('[ -f "$ONEWIFI_DATA_DIR/update/network.json" ]',
                       reload_body[handoff_gate:])
         handoff = reload_body.index("handoff_release_images", handoff_gate)
         preserve = reload_body.index('if [ "$PRESERVE_ENGINES" = 1 ]; then', handoff)
@@ -102,13 +102,13 @@ class EngineImageRefreshTests(unittest.TestCase):
 
     def test_release_handoff_reuses_route_and_imports_images_for_actual_mode(self):
         handoff = _body("handoff_release_images")
-        self.assertIn('network_file="$MDD_DATA_DIR/update/network.json"', handoff)
+        self.assertIn('network_file="$ONEWIFI_DATA_DIR/update/network.json"', handoff)
         self.assertIn('--network-config "$network_file"', handoff)
         self.assertIn('--install-images --install-mode "$MODE"', handoff)
-        self.assertIn("MDD_ENGINE_DISTRIBUTION_IMAGE=$distributed", handoff)
+        self.assertIn("ONEWIFI_ENGINE_DISTRIBUTION_IMAGE=$distributed", handoff)
         self.assertIn('if [ "$MODE" = docker ]', handoff)
-        self.assertIn("MDD_REUSE_CONTROL_IMAGE=1", handoff)
-        self.assertIn("MDD_PRUNE_BUILD_CACHE=1", handoff)
+        self.assertIn("ONEWIFI_REUSE_CONTROL_IMAGE=1", handoff)
+        self.assertIn("ONEWIFI_PRUNE_BUILD_CACHE=1", handoff)
 
     def test_docker_handoff_requires_both_release_images_and_restores_mode(self):
         reload_body = _body("cmd_reload")
@@ -126,9 +126,9 @@ class EngineImageRefreshTests(unittest.TestCase):
         prepare = _body("prepare_release_images")
         self.assertIn('[ -f "$ENGINE_HANDOFF_MANIFEST" ] || return 0', prepare)
         self.assertIn('--install-images --install-mode "$MODE"', prepare)
-        self.assertIn("MDD_BUILD_IMAGES=1", prepare)
-        self.assertIn("MDD_REUSE_WEBUI=1", prepare)
-        self.assertIn("MDD_REUSE_CONTROL_IMAGE=1", prepare)
+        self.assertIn("ONEWIFI_BUILD_IMAGES=1", prepare)
+        self.assertIn("ONEWIFI_REUSE_WEBUI=1", prepare)
+        self.assertIn("ONEWIFI_REUSE_CONTROL_IMAGE=1", prepare)
         self.assertIn("engine_matches_checkout", prepare)
         self.assertIn("control_image_matches_checkout", prepare)
 

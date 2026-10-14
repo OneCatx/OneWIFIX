@@ -1,7 +1,7 @@
 """Canonical public product identity.
 
-Historical MDD environment variables, headers and resource names remain supported
-for deployment compatibility; public product text uses these constants.
+People see OneWIFI. Shell variables use the uppercase prefix ONEWIFI_.
+Image and container slugs use the lowercase slug onewifi.
 """
 
 PRODUCT_NAME = "OneWIFI"

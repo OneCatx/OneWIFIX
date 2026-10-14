@@ -4,7 +4,7 @@ set -eu
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 export PATH
 
-module_dir=/usr/local/lib/mdd-sim-gateway-modules
+module_dir=/usr/local/lib/onewifi-modules
 compat="$module_dir/compatibility.env"
 checksums="$module_dir/SHA256SUMS"
 
@@ -15,15 +15,15 @@ validate() {
     }
     # This file is generated from the repository manifest and installed root-owned.
     . "$compat"
-    [ "$(uname -m)" = "$MDD_ARCH" ] || {
+    [ "$(uname -m)" = "$ONEWIFI_ARCH" ] || {
         echo "MDD cellular modules: architecture mismatch" >&2; return 1; }
-    [ "$(uname -r)" = "$MDD_KERNEL" ] || {
+    [ "$(uname -r)" = "$ONEWIFI_KERNEL" ] || {
         echo "MDD cellular modules: kernel mismatch" >&2; return 1; }
     product=$(sed -n 's/^productversion="\(.*\)"/\1/p' /etc.defaults/VERSION)
     build=$(sed -n 's/^buildnumber="\(.*\)"/\1/p' /etc.defaults/VERSION)
-    [ "$product-$build" = "$MDD_DSM" ] || {
+    [ "$product-$build" = "$ONEWIFI_DSM" ] || {
         echo "MDD cellular modules: DSM version mismatch" >&2; return 1; }
-    uname -a | grep -q "$MDD_PLATFORM_MARKER" || {
+    uname -a | grep -q "$ONEWIFI_PLATFORM_MARKER" || {
         echo "MDD cellular modules: Synology platform mismatch" >&2; return 1; }
     (cd "$module_dir" && sha256sum -c SHA256SUMS >/dev/null)
 }

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo-lockup.svg" width="520" alt="MDD Sim Gateway">
+  <img src="assets/logo-lockup.svg" width="520" alt="OneWIFI">
 </p>
 
 <p align="center"><strong>Turn physical SIMs and eSIMs into a self-hosted gateway for VoWiFi, calls, SMS and isolated network egress.</strong></p>
@@ -10,10 +10,10 @@
   <a href="docs/ARCHITECTURE.md">Architecture</a> ·
   <a href="docs/INSTALL.md">Installation</a> ·
   <a href="docs/CONTAINER_DEPLOYMENT.en.md">Container deployment</a> ·
-  <a href="https://github.com/MddIdd/mdd-sim-gateway/discussions">Discussions</a>
+  <a href="https://github.com/OneCatx/OneWIFIX/discussions">Discussions</a>
 </p>
 
-MDD Sim Gateway is a self-hosted multi-SIM communications gateway. It installs directly on Debian, Ubuntu and Armbian ARM64 hosts, or runs entirely in containers on any Linux host with Docker Compose, including a Synology or other NAS. It brings cellular modems, USB smart-card readers, IMS, EAP-AKA, eSIM, ModemManager and sing-box into one bilingual Web console.
+OneWIFI is a self-hosted multi-SIM communications gateway. It installs directly on Debian, Ubuntu and Armbian ARM64 hosts, or runs entirely in containers on any Linux host with Docker Compose, including a Synology or other NAS. It brings cellular modems, USB smart-card readers, IMS, EAP-AKA, eSIM, ModemManager and sing-box into one bilingual Web console.
 
 | Real SIM authentication | Calls and SMS | Multi-modem control | Isolated country exits |
 |---|---|---|---|
@@ -21,7 +21,7 @@ MDD Sim Gateway is a self-hosted multi-SIM communications gateway. It installs d
 
 ## Interface tour
 
-![MDD Sim Gateway English interface tour (fictional demo data)](assets/product-tour.gif)
+![OneWIFI English interface tour (fictional demo data)](assets/product-tour.gif)
 
 <p align="center">Overview → device management → browser calling → messages → balance & keeping → system updates · All identities and content shown are fictional demo data</p>
 
@@ -54,8 +54,8 @@ path. Enlarging a VM's virtual disk alone is not enough: grow its root partition
 then use `df -h /` as the authoritative capacity.
 
 ```bash
-git clone https://github.com/MddIdd/mdd-sim-gateway.git
-cd mdd-sim-gateway
+git clone https://github.com/OneCatx/OneWIFIX.git
+cd onewifi
 sudo ./install.sh install
 ```
 
@@ -74,12 +74,12 @@ supported.
    Release — see the [compatibility and driver catalogue](drivers/README.en.md). If the host already runs
    ModemManager (enabled by default on Ubuntu and others), stop it first, or it will compete with
    the containers for the modem.
-2. **Download the Compose file.** Get `mdd-sim-gateway-compose-vX.Y.Z.yaml` from
-   [Releases](https://github.com/MddIdd/mdd-sim-gateway/releases); its four images are pinned to that
+2. **Download the Compose file.** Get `onewifi-compose-vX.Y.Z.yaml` from
+   [Releases](https://github.com/OneCatx/OneWIFIX/releases); its four images are pinned to that
    version.
-3. **Edit the two values marked at the top.** Set `MDD_ADVERTISE_ADDR` to the host's LAN address (the
+3. **Edit the two values marked at the top.** Set `ONEWIFI_ADVERTISE_ADDR` to the host's LAN address (the
    media address for browser calls), and set the data directory to your real path —
-   `/volume1/docker/mdd-sim-gateway` in the file is the Synology example. The console port defaults
+   `/volume1/docker/onewifi` in the file is the Synology example. The console port defaults
    to `10443`.
 4. **Start it.** On an ordinary Linux host, save the file as `docker-compose.yml` in the data
    directory and run `docker compose up -d` there; on Synology, create a project in Container Manager
@@ -97,24 +97,24 @@ it has been validated on a Synology DS1621+; results from other hosts are record
 
 ## Architecture
 
-![MDD Sim Gateway architecture](docs/architecture.svg)
+![OneWIFI architecture](docs/architecture.svg)
 
 ## Full screenshots
 
 <details>
 <summary>View the Overview, Devices, Calls, Messages, Balance & keeping, and System updates screens</summary>
 
-![MDD Sim Gateway English overview (fictional demo data)](screenshots/overview-redacted.en.png)
+![OneWIFI English overview (fictional demo data)](screenshots/overview-redacted.en.png)
 
-![MDD Sim Gateway English devices page (fictional demo data)](screenshots/devices-redacted.en.png)
+![OneWIFI English devices page (fictional demo data)](screenshots/devices-redacted.en.png)
 
-![MDD Sim Gateway English calls page (fictional demo data)](screenshots/calls-redacted.en.png)
+![OneWIFI English calls page (fictional demo data)](screenshots/calls-redacted.en.png)
 
-![MDD Sim Gateway English messages page (fictional demo data)](screenshots/messages-redacted.en.png)
+![OneWIFI English messages page (fictional demo data)](screenshots/messages-redacted.en.png)
 
-![MDD Sim Gateway English balance and number keeping page (fictional demo data)](screenshots/keepalive-redacted.en.png)
+![OneWIFI English balance and number keeping page (fictional demo data)](screenshots/keepalive-redacted.en.png)
 
-![MDD Sim Gateway English system updates page (fictional demo data)](screenshots/settings-redacted.en.png)
+![OneWIFI English system updates page (fictional demo data)](screenshots/settings-redacted.en.png)
 
 </details>
 
@@ -185,12 +185,12 @@ See [installation](docs/INSTALL.md), [architecture](docs/ARCHITECTURE.md),
 
 ## Responsible use
 
-> **Compliance warning:** This software is only for use by the verified subscriber of a number where the carrier expressly permits that use. Do not use it for fraud, bulk or nuisance calling, marketing, verification-code collection, renting numbers or lines, call forwarding for others, concealing the controller's location, or providing telecommunications services to third parties. Users must follow local law, subscriber identity rules, and carrier terms. This project grants no telecom licence or carrier authorisation. MDD Sim Gateway stores and runs at most **ten SIM lines** and provides neither standalone SIP accounts nor Telegram commands for calls, SMS, or hangup. Technical restrictions do not make any particular use lawful.
+> **Compliance warning:** This software is only for use by the verified subscriber of a number where the carrier expressly permits that use. Do not use it for fraud, bulk or nuisance calling, marketing, verification-code collection, renting numbers or lines, call forwarding for others, concealing the controller's location, or providing telecommunications services to third parties. Users must follow local law, subscriber identity rules, and carrier terms. This project grants no telecom licence or carrier authorisation. OneWIFI stores and runs at most **ten SIM lines** and provides neither standalone SIP accounts nor Telegram commands for calls, SMS, or hangup. Technical restrictions do not make any particular use lawful.
 
 ## Community and feedback
 
-- Installation, hardware and carrier compatibility: [GitHub Discussions](https://github.com/MddIdd/mdd-sim-gateway/discussions)
-- Reproducible defects and concrete feature requests: [GitHub Issues](https://github.com/MddIdd/mdd-sim-gateway/issues/new/choose)
+- Installation, hardware and carrier compatibility: [GitHub Discussions](https://github.com/OneCatx/OneWIFIX/discussions)
+- Reproducible defects and concrete feature requests: [GitHub Issues](https://github.com/OneCatx/OneWIFIX/issues/new/choose)
 - Code and documentation contributions: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 If the project is useful to you, save it on GitHub and share a redacted hardware or carrier compatibility result.
@@ -220,10 +220,10 @@ SOCKS5 details. A separate UDP probe is mandatory because IKEv2/ESP NAT traversa
 
 ## License and acknowledgements
 
-MDD Sim Gateway is released under **GPL-3.0-only**. Build-time derivative patches that must remain
+OneWIFI is released under **GPL-3.0-only**. Build-time derivative patches that must remain
 under an upstream license are identified separately. The project is a derivative of
 [pagecat/vowifi_gateway](https://github.com/pagecat/vowifi_gateway) (MIT), which contributes the
-VoWiFi engine and the overall control-plane/engine/WebUI architecture; MDD Sim Gateway adds 4G
+VoWiFi engine and the overall control-plane/engine/WebUI architecture; OneWIFI adds 4G
 cellular data and SMS, per-country network egress routing, unified device management and automatic
 provisioning, failover and a test suite. It further derives from or interoperates with SWu-IKEv2,
 sysmocom Asterisk and pjproject, phcoder/asterisk-docker, mitshell/card, sing-box, lpac, PCSC,

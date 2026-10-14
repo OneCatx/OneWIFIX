@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-# Derived from fasferraz/SWu-IKEv2 (GPL-3.0); modified for MDD Sim Gateway.
+# Derived from fasferraz/SWu-IKEv2 (GPL-3.0); modified for OneWIFI.
 import serial
 import struct
 import threading
@@ -150,7 +150,7 @@ if os.environ.get("SWU_APDU_DEBUG", "0") not in ("0", "", "no"):
 import json as _json
 import signal as _signal
 
-SWU_RUNDIR = os.environ.get("MDD_RUNDIR", "/run/mdd-sim-gateway")
+SWU_RUNDIR = os.environ.get("ONEWIFI_RUNDIR", "/run/onewifi")
 SWU_IFACE = os.environ.get("SWU_IFACE", "ipsec0")          # tun device name (pjsip binds this)
 SWU_NOTIFY = os.environ.get("SWU_NOTIFY", "/usr/local/bin/notify.py")
 SWU_ASSIGN_IPV6_GLOBAL = os.environ.get("SWU_ASSIGN_IPV6_GLOBAL", "1") not in ("0", "", "no")
@@ -6154,7 +6154,7 @@ def return_imsi(serial_interface_or_reader_index):
 def return_res_ck_ik(serial_interface_or_reader_index, rand, autn):
     """Run AKA only in the physical SIM/eSIM.
 
-    MDD Sim Gateway deliberately does not accept Ki/OP/OPc and never falls back to demo
+    OneWIFI deliberately does not accept Ki/OP/OPc and never falls back to demo
     vectors.  A card access failure must fail closed so operators see the real fault.
     """
     try:

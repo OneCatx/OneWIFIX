@@ -533,7 +533,7 @@ modem.3gpp.registration-state : unknown
                 "host.mdd_orchestrator.run",
                 return_value=SimpleNamespace(returncode=0, stdout="", stderr="")), patch(
                 "host.mdd_orchestrator.subprocess.Popen", side_effect=spawn), patch.dict(
-                "os.environ", {"MDD_VPCD_READER_CONFIG": str(config_path)}):
+                "os.environ", {"ONEWIFI_VPCD_READER_CONFIG": str(config_path)}):
             app.reconcile_hardware({"hardware": {"auto_detect": True, "vpcd_slots": 3}},
                                    desired_devices)
         return processes
@@ -650,7 +650,7 @@ modem.3gpp.registration-state : unknown
             root = Path(temp)
             app = Orchestrator(root / "data", root, dry_run=False)
             app.root.mkdir(parents=True)
-            config = root / "conf.d" / "mdd-sim-gateway-modems"
+            config = root / "conf.d" / "onewifi-modems"
             config.parent.mkdir(parents=True)
             packaged = config.with_name("vpcd")
             packaged.write_text('FRIENDLYNAME "Virtual PCD"\nCHANNELID 0x8C7B\n')
@@ -689,7 +689,7 @@ modem.3gpp.registration-state : unknown
                     patch.object(app, "usb_modems", return_value=modems), \
                     patch("host.mdd_orchestrator.subprocess.Popen",
                           side_effect=lambda command, **kwargs: self.Process(command)), \
-                    patch.dict("os.environ", {"MDD_VPCD_READER_CONFIG": str(config)}):
+                    patch.dict("os.environ", {"ONEWIFI_VPCD_READER_CONFIG": str(config)}):
                 app.reconcile_hardware({"hardware": {"auto_detect": True, "vpcd_slots": 3}},
                                        desired)
             self.assertEqual(config.stat().st_mode & 0o777, 0o644)
@@ -755,7 +755,7 @@ modem.3gpp.registration-state : unknown
 
             with patch.object(app, "usb_modems", return_value=modems), patch(
                     "host.mdd_orchestrator.run", side_effect=fake_run), patch.dict(
-                    "os.environ", {"MDD_VPCD_READER_CONFIG": str(root / "readers.conf")}):
+                    "os.environ", {"ONEWIFI_VPCD_READER_CONFIG": str(root / "readers.conf")}):
                 assignments = app.reconcile_hardware(
                     {"hardware": {"auto_detect": True}}, {"a": {"vowifi_enabled": True}},
                     through_modemmanager=True)
@@ -803,7 +803,7 @@ modem.3gpp.registration-state : unknown
             with patch.object(app, "usb_modems", return_value=modems), patch(
                     "host.mdd_orchestrator.run", side_effect=fake_run), patch(
                     "host.mdd_orchestrator.subprocess.Popen", side_effect=spawn), patch.dict(
-                    "os.environ", {"MDD_VPCD_READER_CONFIG": str(root / "readers.conf")}):
+                    "os.environ", {"ONEWIFI_VPCD_READER_CONFIG": str(root / "readers.conf")}):
                 desired = {"hardware": {"auto_detect": True}}
                 wanted = {"a": {"vowifi_enabled": True}}
                 app.reconcile_hardware(desired, wanted, through_modemmanager=True)
@@ -847,7 +847,7 @@ modem.3gpp.registration-state : unknown
                               return_value=SimpleNamespace(returncode=0, stdout="", stderr="")), \
                         patch("host.mdd_orchestrator.subprocess.Popen", side_effect=spawn), \
                         patch.dict("os.environ",
-                                   {"MDD_VPCD_READER_CONFIG": str(root / "readers.conf")}):
+                                   {"ONEWIFI_VPCD_READER_CONFIG": str(root / "readers.conf")}):
                     app.reconcile_hardware({"hardware": {"auto_detect": True, "vpcd_slots": 3}},
                                            {"a": {"vowifi_enabled": True}})
                 return commands[-1][commands[-1].index("--slots") + 1]
@@ -878,7 +878,7 @@ modem.3gpp.registration-state : unknown
                           side_effect=lambda command, **kwargs: commands.append(command) or
                           SimpleNamespace(poll=lambda: None, pid=9)), \
                     patch.dict("os.environ",
-                               {"MDD_VPCD_READER_CONFIG": str(root / "readers.conf")}):
+                               {"ONEWIFI_VPCD_READER_CONFIG": str(root / "readers.conf")}):
                 app.reconcile_hardware({"hardware": {"auto_detect": True, "vpcd_slots": 4}},
                                        {"a": {"vowifi_enabled": True}})
 
@@ -906,12 +906,12 @@ modem.3gpp.registration-state : unknown
             root = Path(temp)
             source = root / "libifdvpcd.so"
             source.write_bytes(b"test-vpcd-driver")
-            config_path = root / "reader.conf.d" / "mdd-sim-gateway-modems"
+            config_path = root / "reader.conf.d" / "onewifi-modems"
             app = Orchestrator(root / "data", root, dry_run=False)
 
             with patch.dict(os.environ, {
-                    "MDD_VPCD_LIBRARY": str(source),
-                    "MDD_VPCD_DRIVER_INSTANCE_DIR": str(root / "isolated"),
+                    "ONEWIFI_VPCD_LIBRARY": str(source),
+                    "ONEWIFI_VPCD_DRIVER_INSTANCE_DIR": str(root / "isolated"),
             }):
                 first = app.reader_stanza({"id": "modem-a"}, 0x3C00, config_path)
                 second = app.reader_stanza({"id": "modem-b"}, 0x3D00, config_path)
@@ -951,7 +951,7 @@ modem.3gpp.registration-state : unknown
                           side_effect=lambda command, **kwargs: commands.append(command) or
                           SimpleNamespace(poll=lambda: None, pid=9)), \
                     patch.dict("os.environ",
-                               {"MDD_VPCD_READER_CONFIG": str(root / "readers.conf")}):
+                               {"ONEWIFI_VPCD_READER_CONFIG": str(root / "readers.conf")}):
                 desired = {"hardware": {"auto_detect": True}}
                 wanted = {"a": {"vowifi_enabled": True}}
                 # First cycle: unclaimed, no evidence yet — waits, and captures the journal.
@@ -984,7 +984,7 @@ modem.3gpp.registration-state : unknown
                           return_value=SimpleNamespace(returncode=0, stdout="", stderr="")), \
                     patch("host.mdd_orchestrator.subprocess.Popen", side_effect=spawn), \
                     patch.dict("os.environ",
-                               {"MDD_VPCD_READER_CONFIG": str(root / "readers.conf")}):
+                               {"ONEWIFI_VPCD_READER_CONFIG": str(root / "readers.conf")}):
                 desired = {"hardware": {"auto_detect": True}}
                 wanted = {"a": {"vowifi_enabled": True}}
                 app.reconcile_hardware(desired, wanted)          # spawns, process is dead
@@ -1228,7 +1228,7 @@ modem.3gpp.registration-state : unknown
                     "host.mdd_orchestrator.run", side_effect=fake_run), patch(
                     "host.mdd_orchestrator.subprocess.Popen",
                     return_value=SimpleNamespace(poll=lambda: None, pid=1)), patch.dict(
-                    "os.environ", {"MDD_VPCD_READER_CONFIG": str(root / "readers.conf")}):
+                    "os.environ", {"ONEWIFI_VPCD_READER_CONFIG": str(root / "readers.conf")}):
                 app.reconcile_hardware(
                     {"hardware": {"auto_detect": True}}, {"a": {"vowifi_enabled": True}},
                     through_modemmanager=True)

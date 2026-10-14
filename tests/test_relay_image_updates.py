@@ -49,7 +49,7 @@ class ContainerUpdateRelayTests(unittest.TestCase):
     def test_the_verified_asset_is_loaded(self):
         active, fetch, verify, load = self.fetch()
         self.assertEqual(active, 2)
-        self.assertTrue(fetch.call_args[0][0].endswith("/mdd-sim-gateway-relay-v1.13.0-arm64.tar.gz"))
+        self.assertTrue(fetch.call_args[0][0].endswith("/onewifi-relay-v1.13.0-arm64.tar.gz"))
         verify.assert_called_once()
         load.assert_called_once()
 
@@ -66,8 +66,8 @@ class ContainerUpdateRelayTests(unittest.TestCase):
         load.assert_not_called()
 
     def test_a_rollback_removes_only_the_managed_relay(self):
-        relay = Mock(attrs={"Config": {"Labels": {"io.mdd-sim-gateway.managed": "true",
-                                                   "io.mdd-sim-gateway.component": "relay"}}})
+        relay = Mock(attrs={"Config": {"Labels": {"io.onewifi.managed": "true",
+                                                   "io.onewifi.component": "relay"}}})
         client = SimpleNamespace(containers=SimpleNamespace(get=lambda name: relay))
         mdd_container_update.remove_relay(client)
         relay.remove.assert_called_once_with(force=True, v=True)
@@ -109,8 +109,8 @@ class RelayAssetLoadTests(unittest.TestCase):
         with patch.object(mdd_update.subprocess, "run", side_effect=run), \
                 patch.object(mdd_update, "host_arch", return_value="amd64"):
             image = mdd_update.load_relay_image(Path("relay.tar.gz"), "1.13.0")
-        self.assertEqual(image, "mdd-sim-gateway/relay:v1.13.0")
-        self.assertIn("mdd-sim-gateway/relay:v1.13.0", calls[1])
+        self.assertEqual(image, "onewifi/relay:v1.13.0")
+        self.assertIn("onewifi/relay:v1.13.0", calls[1])
 
 
 if __name__ == "__main__":

@@ -408,7 +408,7 @@ class NotificationChannelTests(unittest.TestCase):
                 raise RuntimeError("contains a secret response")
             return {"ok": True, "status_code": 204}
         with tempfile.TemporaryDirectory() as temp, patch.dict(
-                "os.environ", {"MDD_DATA": temp}), patch(
+                "os.environ", {"ONEWIFI_DATA": temp}), patch(
                     "control.app.notify_push.time.sleep", return_value=None):
             _deliver_with_retry("webhook", sender, {}, {
                 "event": EV_INCOMING_SMS, "instance": "line", "text": "private text"})
@@ -449,7 +449,7 @@ class BrandPrefixTests(unittest.TestCase):
 
     def test_the_brand_is_not_repeated_when_the_text_already_carries_it(self):
         # The software-update wording names the product, so a blind prefix would read
-        # "MDD · MDD Sim Gateway 新版本".
+        # "OneWIFI · OneWIFI 新版本".
         title = notify_push.build_notification_message(
             self._payload("software_update"))["title"]
         self.assertEqual(title.count(notify_push.BRAND), 1, title)

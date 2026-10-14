@@ -42,7 +42,7 @@ class _Network:
                  managed=True, containers=None):
         self.attrs = {
             "Internal": internal,
-            "Labels": {"io.mdd-sim-gateway.managed": "true"} if managed else {},
+            "Labels": {"io.onewifi.managed": "true"} if managed else {},
             "IPAM": {"Config": [{"Subnet": subnet, "Gateway": gateway}]},
             "Containers": containers or {},
         }
@@ -61,8 +61,8 @@ class _Network:
 
 class _Container:
     def __init__(self, fingerprint="", status="running", exit_code=0):
-        self.attrs = {"Config": {"Labels": {"io.mdd-sim-gateway.managed": "true",
-                                            "io.mdd-sim-gateway.relay-config": fingerprint}}}
+        self.attrs = {"Config": {"Labels": {"io.onewifi.managed": "true",
+                                            "io.onewifi.relay-config": fingerprint}}}
         self.status = status
         self.exit_code = exit_code
         self.removed = False
@@ -205,10 +205,10 @@ class MediaRelayTests(unittest.TestCase):
         self.assertIn("/var/lib/coturn", kwargs["tmpfs"])
         self.assertEqual(kwargs["network"], "bridge")
         self.assertEqual(kwargs["ports"], {"3478/udp": 8478, "3478/tcp": 8478})
-        self.assertEqual(kwargs["environment"], {"MDD_MEDIA_SUBNET": "172.30.0.0/16"})
+        self.assertEqual(kwargs["environment"], {"ONEWIFI_MEDIA_SUBNET": "172.30.0.0/16"})
         # The TURN secret is in a read-only file, not in what `docker inspect` shows.
         self.assertEqual(kwargs["volumes"], {"/host/data/media/relay.conf": {
-            "bind": "/etc/mdd-relay/turnserver.conf", "mode": "ro"}})
+            "bind": "/etc/onewifi-relay/turnserver.conf", "mode": "ro"}})
         written = Path(self.tmp.name, "media", "relay.conf")
         self.assertIn("static-auth-secret=s3cret", written.read_text())
         self.assertEqual(os.stat(written).st_mode & 0o777, 0o644)
@@ -322,7 +322,7 @@ class MediaRelayTests(unittest.TestCase):
         self.assertEqual(again["secret"], state["secret"])
 
     def test_the_media_network_outlives_engines_still_attached(self):
-        network = _Network(containers={"abc": {"Name": "mdd-sim-gateway-engine-1"}})
+        network = _Network(containers={"abc": {"Name": "onewifi-engine-1"}})
         client = _Client(self.media, network=network)
         self.assertFalse(self.media.remove_network(client))
         self.assertFalse(network.removed)
@@ -422,7 +422,7 @@ class MediaRelayTests(unittest.TestCase):
     def test_direct_mode_keeps_checking_until_the_network_is_gone(self):
         self.media.save_state({"mode": "direct", "secret": "x"})
         self.media._direct_clean_mtime = None
-        network = _Network(containers={"e": {"Name": "mdd-sim-gateway-engine-1"}})
+        network = _Network(containers={"e": {"Name": "onewifi-engine-1"}})
         client = _Client(self.media, network=network)
         self.media.supervise(client)
         self.assertIsNone(self.media._direct_clean_mtime)   # an engine still holds it
@@ -457,7 +457,7 @@ class MediaRelayTests(unittest.TestCase):
         self.assertEqual(held, [True])
 
     def test_a_probe_that_never_started_is_cleaned_up(self):
-        leftover = Mock(attrs={"Config": {"Labels": {"io.mdd-sim-gateway.managed": "true"}}})
+        leftover = Mock(attrs={"Config": {"Labels": {"io.onewifi.managed": "true"}}})
         client = Mock()
         client.containers.get.return_value = leftover
         client.containers.run.side_effect = RuntimeError("start failed")
@@ -466,7 +466,7 @@ class MediaRelayTests(unittest.TestCase):
             with self.assertRaises(self.media.MediaError):
                 self.media.probe_engine_firewall(client, SimpleNamespace(name="media-net"))
         self.assertEqual(client.containers.run.call_args[1]["name"],
-                         "mdd-sim-gateway-media-probe")
+                         "onewifi-media-probe")
         self.assertEqual(leftover.remove.call_count, 2)    # before, and after the failure
 
 
@@ -502,7 +502,7 @@ class RelayImageTests(unittest.TestCase):
         self.assertRegex(self.media.UPSTREAM_IMAGE,
                          r"^coturn/coturn:4\.17\.2-alpine@sha256:[0-9a-f]{64}$")
         self.assertEqual(self.media.default_image(),
-                         f"mdd-sim-gateway/relay:v{self.media.VERSION}")
+                         f"onewifi/relay:v{self.media.VERSION}")
 
     def test_a_loaded_release_asset_is_used_as_is(self):
         client, pulled, _tagged = self.client({self.media.default_image()})
@@ -524,8 +524,8 @@ class RelayImageTests(unittest.TestCase):
         workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text()
         self.assertIn("control/app/media.py", workflow)
         self.assertIn("UPSTREAM_IMAGE", workflow)
-        self.assertIn("mdd-sim-gateway-relay-${GITHUB_REF_NAME}-arm64.tar.gz", workflow)
-        self.assertIn("mdd-sim-gateway-relay-${GITHUB_REF_NAME}-amd64.tar.gz", workflow)
+        self.assertIn("onewifi-relay-${GITHUB_REF_NAME}-arm64.tar.gz", workflow)
+        self.assertIn("onewifi-relay-${GITHUB_REF_NAME}-amd64.tar.gz", workflow)
 
 
 class RelayEntrypointTests(unittest.TestCase):
@@ -551,7 +551,7 @@ class RelayEntrypointTests(unittest.TestCase):
                 .replace(media.RELAY_CONFIG_MOUNT, f"{tmp}/relay.conf")
             return subprocess.run(
                 ["sh", "-c", script],
-                env={"PATH": f"{bin_dir}:/usr/bin:/bin", "MDD_MEDIA_SUBNET": "172.30.0.0/16"},
+                env={"PATH": f"{bin_dir}:/usr/bin:/bin", "ONEWIFI_MEDIA_SUBNET": "172.30.0.0/16"},
                 capture_output=True, text=True)
 
     def test_allocations_live_on_the_media_network_and_listeners_everywhere_else(self):

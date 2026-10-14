@@ -38,13 +38,13 @@ class UpdateCheckTests(unittest.TestCase):
         payload = {"tag_name": "v" + ".".join(map(str, newer)),
                    "html_url": "https://example.invalid/release",
                    "published_at": "2026-08-01T00:00:00Z", "body": "notes",
-                   "assets": [{"name": "mdd-sim-gateway-v9.9.9.tar.gz", "size": 1234}]}
+                   "assets": [{"name": "onewifi-v9.9.9.tar.gz", "size": 1234}]}
         with patch("control.app.update_check.requests.Session.get",
                    return_value=_Response(payload)):
             result = update_check.check(True)
         self.assertTrue(result["update_available"])
         self.assertEqual(result["current"], update_check.VERSION)
-        self.assertEqual(result["asset_sizes"]["mdd-sim-gateway-v9.9.9.tar.gz"], 1234)
+        self.assertEqual(result["asset_sizes"]["onewifi-v9.9.9.tar.gz"], 1234)
         self.assertNotIn("apply", result)
 
     def test_bilingual_release_notes_are_not_truncated_at_the_old_limit(self):
@@ -146,7 +146,7 @@ class UpdateCheckTests(unittest.TestCase):
 
     def test_tagged_release_lookup_can_fetch_an_older_configured_main(self):
         payload = {"tag_name": "v1.6.0", "html_url": "https://example.invalid/v1.6.0",
-                   "assets": [{"name": "mdd-sim-gateway-v1.6.0.tar.gz", "size": 1024}]}
+                   "assets": [{"name": "onewifi-v1.6.0.tar.gz", "size": 1024}]}
         session = MagicMock()
         session.get.return_value = _Response(payload)
         # This exercises an older installed gateway fetching the independently configured
@@ -250,8 +250,8 @@ class UpdateCheckTests(unittest.TestCase):
         )
 
     def test_repository_can_be_overridden_without_changing_the_ui(self):
-        self.assertEqual(update_check.repository(), "MddIdd/mdd-sim-gateway")
-        with patch.dict("os.environ", {"MDD_UPDATE_REPOSITORY": "example/private"}):
+        self.assertEqual(update_check.repository(), "OneCatx/OneWIFIX")
+        with patch.dict("os.environ", {"ONEWIFI_UPDATE_REPOSITORY": "example/private"}):
             self.assertEqual(update_check.repository(), "example/private")
 
     def test_release_request_never_sends_a_github_token(self):
@@ -262,7 +262,7 @@ class UpdateCheckTests(unittest.TestCase):
             captured["authorization"] = headers.get("Authorization")
             return _Response(payload)
 
-        with patch.dict("os.environ", {"MDD_GITHUB_TOKEN": "must-not-be-used"}), patch(
+        with patch.dict("os.environ", {"ONEWIFI_GITHUB_TOKEN": "must-not-be-used"}), patch(
                 "control.app.update_check.requests.Session.get", side_effect=get):
             update_check.check(True)
         self.assertIsNone(captured["authorization"])

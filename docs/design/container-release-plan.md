@@ -22,7 +22,7 @@
 **尚未实现**，不得在用户文档或发布说明中描述为可用：
 
 - §4 的驱动目录作为 Release 资产和自动下载。`drivers/catalog/` 仍只供人工查阅和 CI 校验，
-  没有运行时消费者；`--driver-bundle` 与 `MDD_DRIVER_INDEX_URL` 不存在。驱动包是 tar.gz，
+  没有运行时消费者；`--driver-bundle` 与 `ONEWIFI_DRIVER_INDEX_URL` 不存在。驱动包是 tar.gz，
   按部署指南用一次 SSH 手动安装，不是 SPK。
 - §5 第 3–5 步的启动硬件预检，以及 `host-native` / `driver_required` 状态。代码中不存在
   这两个状态，WebUI 也不展示兼容键。当前实际行为是：缺少设备节点时 Hardware 容器保持
@@ -118,7 +118,7 @@ socket 使用它们。实体读卡器只显示 VoWiFi/eSIM 能力，不显示 4G
 默认目录随 Release 发布，资产从同一个 GitHub Release 下载。允许两种显式覆盖：
 
 - `--driver-bundle /absolute/path/to/bundle.tar.gz`：离线安装或内部审计后的驱动包；
-- `MDD_DRIVER_INDEX_URL=https://.../driver-index.json`：企业镜像站，目录本身仍需匹配
+- `ONEWIFI_DRIVER_INDEX_URL=https://.../driver-index.json`：企业镜像站，目录本身仍需匹配
   Release 中固定的 SHA-256。
 
 不提供“忽略平台/内核版本”开关。没有精确匹配时，安装器输出脱敏后的宿主兼容键和缺失

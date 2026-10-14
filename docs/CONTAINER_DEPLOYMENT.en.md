@@ -18,7 +18,7 @@ the file for each SIM.
 
 ## 1. Release and host requirements
 
-Use `mdd-sim-gateway-compose-vX.Y.Z.yaml` from a GitHub Release. All four GHCR image references in
+Use `onewifi-compose-vX.Y.Z.yaml` from a GitHub Release. All four GHCR image references in
 that asset are pinned to the same version; `latest` is never used. A Release without this asset is
 not a supported full-container release.
 
@@ -27,7 +27,7 @@ Before deployment, prepare:
 - Docker Engine and Docker Compose v2; use the official Container Manager package on Synology;
 - an amd64 or arm64 host;
 - at least 6 GiB of free space for the first pull and one rollback image generation;
-- a dedicated persistent directory, such as `/volume1/docker/mdd-sim-gateway` on Synology;
+- a dedicated persistent directory, such as `/volume1/docker/onewifi` on Synology;
 - an unused HTTPS host port; the default is `10443`;
 - a fixed LAN address or stable LAN DNS name for the host;
 - host USB enumeration under `/dev/bus/usb`. Cellular modems also need their serial, QMI/MBIM and
@@ -80,17 +80,17 @@ before creating the project.
 
 ## 3. Create the Synology project in the UI
 
-1. Download `mdd-sim-gateway-compose-vX.Y.Z.yaml` and verify it against the Release
+1. Download `onewifi-compose-vX.Y.Z.yaml` and verify it against the Release
    `SHA256SUMS` file.
 2. Open **Container Manager → Project → Create → Create docker-compose.yml**.
-3. Enter `mdd-sim-gateway` as the project name and paste the YAML.
+3. Enter `onewifi` as the project name and paste the YAML.
 4. Replace the example `192.168.1.100` with this NAS's fixed LAN address.
-5. If the Docker shared folder is elsewhere, replace `/volume1/docker/mdd-sim-gateway` with its
+5. If the Docker shared folder is elsewhere, replace `/volume1/docker/onewifi` with its
    absolute path. Do not use a temporary directory.
 6. The default port mapping is `10443:8443`. If host port `10443` is occupied, change only the
    left side; keep the container port at `8443`.
 7. If a proxy subscription is served by this NAS under its public DNS name, set
-   `MDD_NAS_HOSTNAME` to that name. This changes resolution only inside Egress and does not alter
+   `ONEWIFI_NAS_HOSTNAME` to that name. This changes resolution only inside Egress and does not alter
    NAS DNS or its default route.
 8. Save and build the project. Container Manager pulls Control, Hardware and Egress. Control uses
    the same pinned version of the Engine image when the first line starts.
@@ -105,7 +105,7 @@ does not automatically add the stack to its **Project** registry. After starting
 three Container Manager registration files once:
 
 ```sh
-PROJ=mdd-sim-gateway
+PROJ=onewifi
 UUID=$(cat /proc/sys/kernel/random/uuid)
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S.%6NZ")
 CMDIR=/volume1/@appconf/ContainerManager/projects
@@ -177,7 +177,7 @@ UDP 30000 by default; allow the assigned range between clients and the NAS when 
 firewalls.
 
 A line behind a country exit (SOCKS) is only on the internal Engine network, where Docker publishes
-no port. Control publishes and forwards its RTP range through a `mdd-sim-gateway-rtp-forward`
+no port. Control publishes and forwards its RTP range through a `onewifi-rtp-forward`
 container it creates from its own image (nothing to download). It forwards UDP only, and sends an
 Engine's answer only back to the browser address that opened that call; the Engine gains no route
 of its own. Without such a line the container is not created.
@@ -193,16 +193,16 @@ of its own. Without such a line the container is not created.
 
 Call audio defaults to direct mode: each line publishes its own RTP ports (see above). It can
 be switched to relay mode instead, where a single coturn relay container carries all media and no
-Engine publishes any port. The relay container (`mdd-sim-gateway-relay`) and the internal media
-network it uses (`mdd-sim-gateway-media`) are both created and managed by Control on demand,
+Engine publishes any port. The relay container (`onewifi-relay`) and the internal media
+network it uses (`onewifi-media`) are both created and managed by Control on demand,
 **not by the Compose file** — `docker compose down`/`up` does not touch them.
 
 Switch it over SSH inside the Control container:
 
 ```sh
-sudo docker exec -w /app/control mdd-sim-gateway-control python -m app.media status
-sudo docker exec -w /app/control mdd-sim-gateway-control python -m app.media direct
-sudo docker exec -w /app/control mdd-sim-gateway-control python -m app.media relay \
+sudo docker exec -w /app/control onewifi-control python -m app.media status
+sudo docker exec -w /app/control onewifi-control python -m app.media direct
+sudo docker exec -w /app/control onewifi-control python -m app.media relay \
     [--port N] [--bind ADDR] [--public-host HOST] [--public-port N]
 ```
 
@@ -285,29 +285,29 @@ not delete its bind-mounted data unless the administrator removes that directory
 installed kernel drivers are independent of Compose and must be removed separately.
 
 Engine containers are created per line by Control and are not part of the Compose project, so deleting
-the project leaves them behind, still attached to `mdd-sim-gateway-engine`; removing that network then
+the project leaves them behind, still attached to `onewifi-engine`; removing that network then
 fails with "Resource is still in use". When uninstalling over SSH, remove the Engines first:
 
 ```sh
-sudo docker ps -aq --filter "label=io.mdd-sim-gateway.component=engine" | xargs -r sudo docker rm -f
+sudo docker ps -aq --filter "label=io.onewifi.component=engine" | xargs -r sudo docker rm -f
 ```
 
 If relay mode was ever enabled, the relay container and the media network are not part of the
 project either; remove them too:
 
 ```sh
-sudo docker rm -f mdd-sim-gateway-relay
-sudo docker network rm mdd-sim-gateway-media
+sudo docker rm -f onewifi-relay
+sudo docker network rm onewifi-media
 ```
 
 ## 9. Common problems
 
 **Hardware is unhealthy:** confirm the host enumerated the USB device, then use the section 2
 commands to check whether the required device nodes exist — missing nodes mean the host lacks the
-kernel driver. `docker logs mdd-sim-gateway-hardware` reports why the supervisor failed.
+kernel driver. `docker logs onewifi-hardware` reports why the supervisor failed.
 Re-evaluate drivers against the complete build and kernel after every DSM update.
 
-**Rebuilding the project reports "dependency failed to start: container mdd-sim-gateway-hardware is
+**Rebuilding the project reports "dependency failed to start: container onewifi-hardware is
 unhealthy":** a new Hardware container inherits the modem's stale QMI session and must reset the modem
 and wait for it to re-enumerate, which takes a minute or two; if that outlasts the health-check grace
 period, Control stays in `Created`. Wait for Hardware to
@@ -320,7 +320,7 @@ ignores `pids_limit` from the Compose file and warns. It is harmless; memory lim
 image already contains pcsc-lite, libccid and the project's verified reader patches.
 
 **A NAS-hosted subscription works in a browser but not in Egress:** configure
-`MDD_NAS_HOSTNAME` with the original public DNS name. Do not replace the subscription URL with a
+`ONEWIFI_NAS_HOSTNAME` with the original public DNS name. Do not replace the subscription URL with a
 container IP or alter global NAS DNS.
 
 **Concern that modem 4G changes NAS networking:** verify the original LAN default route remains in

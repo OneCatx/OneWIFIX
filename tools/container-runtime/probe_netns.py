@@ -79,7 +79,7 @@ def main():
                "--security-opt", "no-new-privileges", "--pids-limit", "32",
                "--memory", "128m",
                "--label", "com.centurylinklabs.watchtower.enable=false",
-               "--label", "io.mdd-sim-gateway.component=netns-proof",
+               "--label", "io.onewifi.component=netns-proof",
                "--entrypoint", "python3", image, "-c", PROBE)
         for _ in range(10):
             logs = docker("logs", name)

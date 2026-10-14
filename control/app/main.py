@@ -1,5 +1,5 @@
 """
-main.py - MDD Sim Gateway control surface (FastAPI).
+main.py - OneWIFI control surface (FastAPI).
 
 Serves the management REST API + WebSocket live feed + the built WebUI, and (for the
 browser softphone) proxies provisioning. Runs natively or in a container; talks to
@@ -47,39 +47,39 @@ STATUS_OK_GRACE_SECONDS = 20
 STATUS_POLL_FAST_SECONDS = 4.0
 STATUS_POLL_HEALTHY_SECONDS = 15.0
 ESIM_BRIDGE_RESTART_TIMEOUT = float(
-    os.environ.get("MDD_ESIM_BRIDGE_RESTART_TIMEOUT", "50"))
+    os.environ.get("ONEWIFI_ESIM_BRIDGE_RESTART_TIMEOUT", "50"))
 ESIM_CARD_REFRESH_ATTEMPTS = int(
-    os.environ.get("MDD_ESIM_CARD_REFRESH_ATTEMPTS", "12"))
+    os.environ.get("ONEWIFI_ESIM_CARD_REFRESH_ATTEMPTS", "12"))
 ESIM_CARD_REFRESH_INTERVAL = float(
-    os.environ.get("MDD_ESIM_CARD_REFRESH_INTERVAL", "0.75"))
+    os.environ.get("ONEWIFI_ESIM_CARD_REFRESH_INTERVAL", "0.75"))
 # Once Asterisk has completed its own bounded REGISTER transaction and explicitly reports no
 # response, another two minutes of same-session retries cannot repair the stale carrier-side
 # P-CSCF/ESP state.  Rebuild promptly, but leave enough time for the diagnostic worker to capture
 # and remove the expected container generation before auto-start runs.  Per-line rate limiting
 # prevents a broken carrier from turning this fast path into a rebuild loop.
 REG_UNANSWERED_RECOVERY_DELAY_SECONDS = float(
-    os.environ.get("MDD_REG_UNANSWERED_RECOVERY_DELAY", "10"))
+    os.environ.get("ONEWIFI_REG_UNANSWERED_RECOVERY_DELAY", "10"))
 REG_UNANSWERED_MIN_INTERVAL_SECONDS = float(
-    os.environ.get("MDD_REG_UNANSWERED_MIN_INTERVAL", "300"))
+    os.environ.get("ONEWIFI_REG_UNANSWERED_MIN_INTERVAL", "300"))
 # Number portability is a rare administrative event. Verification re-reads the public identity
 # from the registrations the line makes anyway, so it costs one log read; a six-hour cadence
 # detects a change promptly without re-reading every healthy line's log every ten minutes.
-MSISDN_VERIFY_INTERVAL_SECONDS = float(os.environ.get("MDD_MSISDN_VERIFY", "21600"))
+MSISDN_VERIFY_INTERVAL_SECONDS = float(os.environ.get("ONEWIFI_MSISDN_VERIFY", "21600"))
 MSISDN_VERIFY_FAILURE_RETRY_SECONDS = float(
-    os.environ.get("MDD_MSISDN_VERIFY_FAILURE_RETRY", "600"))
+    os.environ.get("ONEWIFI_MSISDN_VERIFY_FAILURE_RETRY", "600"))
 # Spacing between the capped attempts to read a not-yet-learned number out of the engine log.
 # The identity is logged when the line registers, so the first attempt normally succeeds; the
 # retries only cover a log tail that has not caught up with a registration that just completed.
-MSISDN_LEARN_RETRY_SECONDS = float(os.environ.get("MDD_MSISDN_LEARN_RETRY", "30"))
+MSISDN_LEARN_RETRY_SECONDS = float(os.environ.get("ONEWIFI_MSISDN_LEARN_RETRY", "30"))
 # How far back to look for the identity. It is re-announced on every registration refresh, so
 # the tail only has to outlast one refresh interval — generous here because the alternative,
 # not finding it, silently stops the ported-number check on a line whose engine talks a lot.
-MSISDN_LOG_TAIL_LINES = int(os.environ.get("MDD_MSISDN_LOG_TAIL", "4000"))
+MSISDN_LOG_TAIL_LINES = int(os.environ.get("ONEWIFI_MSISDN_LOG_TAIL", "4000"))
 # Conditions that are genuinely measured but routinely spike for one sample. Starting a
 # container on a memory-tight box pages a batch back in; that is the cost of the operation,
 # not a problem anyone can act on. Only a rate that holds across consecutive polls is one.
 SUSTAINED_ALERT_CODES = {"swap_pressure"}
-SUSTAINED_ALERT_SAMPLES = int(os.environ.get("MDD_SUSTAINED_ALERT_SAMPLES", "3"))
+SUSTAINED_ALERT_SAMPLES = int(os.environ.get("ONEWIFI_SUSTAINED_ALERT_SAMPLES", "3"))
 # Connectivity timeline shown per line. The window follows how much history has actually
 # accumulated so a fresh install is not stretched across an empty two-day axis.
 LINE_HISTORY_MAX_SECONDS = 2 * 24 * 3600
@@ -88,7 +88,7 @@ LINE_HISTORY_PRUNE_INTERVAL_SECONDS = 3600
 # Comfortably below store.LINE_STATE_CONTINUITY_SECONDS, so throttled writes still read back
 # as one uninterrupted observation.
 LINE_STATE_WRITE_INTERVAL_SECONDS = 30
-UPDATE_CHECK_INTERVAL_SECONDS = float(os.environ.get("MDD_UPDATE_CHECK_INTERVAL", "21600"))
+UPDATE_CHECK_INTERVAL_SECONDS = float(os.environ.get("ONEWIFI_UPDATE_CHECK_INTERVAL", "21600"))
 _line_state_written: dict[str, tuple[str, float]] = {}
 _line_registered_written: dict[str, float] = {}   # per-line throttle for the durable
                                                  # "last registered" stamp
@@ -99,7 +99,7 @@ logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("vowifi.main")
 
-WEBUI_DIR = os.environ.get("MDD_WEBUI", os.path.join(
+WEBUI_DIR = os.environ.get("ONEWIFI_WEBUI", os.path.join(
     os.path.dirname(os.path.dirname(__file__)), "webui", "dist"))
 
 
@@ -670,7 +670,7 @@ def _start_engine_checked(inst: dict, settings: dict, dev_mounts: bool = False,
     if not cfg.line_allowed(str(inst.get("id") or "")):
         raise HTTPException(409, {
             "code": "line_limit",
-            "message": (f"MDD Sim Gateway supports at most "
+            "message": (f"OneWIFI supports at most "
                         f"{cfg.MAX_SIM_LINES} SIM lines. Delete an existing line "
                         "before starting this one."),
         })
@@ -922,7 +922,7 @@ async def _auto_start_hotplugged_line(iid: str) -> None:
         if not inst.get("enabled", True):
             return
         await asyncio.to_thread(_start_engine_checked, inst, cfg.get_settings(),
-                                os.environ.get("MDD_DEV_MOUNTS", "") == "1")
+                                os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1")
         hub.reset_health(iid, "hotplug_start")
         await hub.broadcast({"type": "engine", "instance": iid, "event": "hotplug_started",
                              "args": []})
@@ -1406,7 +1406,7 @@ async def _verify_ims_msisdn(iid: str, inst: dict) -> None:
     try:
         await hub.drop_ami(iid)
         await asyncio.to_thread(_start_engine_checked, candidate, cfg.get_settings(),
-                                os.environ.get("MDD_DEV_MOUNTS", "") == "1",
+                                os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1",
                                 "number-changed")
         updated = await asyncio.to_thread(
             cfg.upsert_instance, {"id": iid, "msisdn": observed, "msisdn_source": "ims"})
@@ -1471,7 +1471,7 @@ async def learn_msisdn(iid):
         if identity_changed and await asyncio.to_thread(engine.is_running, iid):
             await hub.drop_ami(iid)
             await asyncio.to_thread(_start_engine_checked, updated, cfg.get_settings(),
-                                    os.environ.get("MDD_DEV_MOUNTS", "") == "1")
+                                    os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1")
             hub.reset_health(iid, "configuration_restart")
             log.info("restarted instance %s to apply IMS line identity", iid)
         await hub.broadcast({"type": "engine", "instance": iid, "event": "msisdn", "args": [msisdn]})
@@ -1681,7 +1681,7 @@ async def _media_converge_once() -> bool:
         try:
             await asyncio.to_thread(_start_engine_checked, cfg.get_instance(iid) or inst,
                                     cfg.get_settings(),
-                                    os.environ.get("MDD_DEV_MOUNTS", "") == "1", "media_mode")
+                                    os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1", "media_mode")
         except Exception as exc:  # noqa: BLE001 - this line waits, the others go on
             _media_back_off(iid, retry, now, exc)
             continue
@@ -1883,11 +1883,11 @@ def _announce_line_offline(settings: dict, event: str, entries: list[dict],
 
 HOST_ALERT_POLL_SECONDS = 60.0
 # Re-announce a condition that simply persists, rather than staying silent for days.
-HOST_ALERT_REPEAT_SECONDS = float(os.environ.get("MDD_HOST_ALERT_REPEAT", "21600"))
+HOST_ALERT_REPEAT_SECONDS = float(os.environ.get("ONEWIFI_HOST_ALERT_REPEAT", "21600"))
 # A condition has to stay absent this long before it counts as recovered. Without it, a
 # measurement sitting near its threshold crosses back and forth all day and each re-entry
 # looks like a new problem worth notifying about.
-HOST_ALERT_CLEAR_SECONDS = float(os.environ.get("MDD_HOST_ALERT_CLEAR", "1800"))
+HOST_ALERT_CLEAR_SECONDS = float(os.environ.get("ONEWIFI_HOST_ALERT_CLEAR", "1800"))
 
 HOST_ALERT_TEXT = {
     "undervoltage_now": "供电电压不足（正在发生）。网口、蜂窝模块和读卡器共用同一路供电，"
@@ -1953,7 +1953,7 @@ def _keep_modem_storage_on_upgrade(previous_schema: int | None) -> bool:
     operator deliberately kept on a SIM. An upgraded installation therefore gets "keep" written
     into its settings, visibly, and the release notes explain how to opt in to "delete". A new
     installation (no history database yet) and an explicit choice, in settings or in
-    MDD_CELLULAR_SMS_STORAGE, are left as they are. Runs before the schema migration, so a
+    ONEWIFI_CELLULAR_SMS_STORAGE, are left as they are. Runs before the schema migration, so a
     crash in between cannot lose the distinction.
     """
     if previous_schema is None or previous_schema >= 1:
@@ -2785,7 +2785,7 @@ async def _auto_recover_instance(iid: str, inst: dict, delay: int):
         await hub.broadcast({"type": "status", "instance": str(iid), **recovering})
         await asyncio.to_thread(
             _start_engine_checked, inst, cfg.get_settings(),
-            os.environ.get("MDD_DEV_MOUNTS", "") == "1",
+            os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1",
             # Records why the health policy gave up on the previous container, so the captured
             # snapshot explains itself without cross-referencing the journal.
             f"auto-recover:{h.get('frozen_code') or 'unhealthy'}")
@@ -3075,7 +3075,7 @@ async def lifespan(app: FastAPI):
     await asyncio.to_thread(engine.close_client)
 
 
-app = FastAPI(title="MDD Sim Gateway", lifespan=lifespan)
+app = FastAPI(title="OneWIFI", lifespan=lifespan)
 
 # Authentication for every API request and WebSocket handshake; see gate.py.
 app.add_middleware(gate.Gate)
@@ -3653,7 +3653,7 @@ async def _esim_restore_profile_switch(previous: dict[str, dict],
             try:
                 await asyncio.to_thread(
                     _start_engine_checked, inst, cfg.get_settings(),
-                    os.environ.get("MDD_DEV_MOUNTS", "") == "1")
+                    os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1")
             except Exception as exc:  # noqa
                 log.warning("could not restore line %s after failed eSIM switch: %s", iid, exc)
                 restart_errors.append(iid)
@@ -4351,7 +4351,7 @@ async def api_provision(body: dict):
     # client can't keep Login'ing the old (or IP-reused) engine with a stale secret.
     await hub.drop_ami(str(inst["id"]))
     await asyncio.to_thread(_start_engine_checked, inst, cfg.get_settings(),
-                            dev_mounts=os.environ.get("MDD_DEV_MOUNTS", "") == "1")
+                            dev_mounts=os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1")
     _refresh_card_matches()
     await hub.broadcast({"type": "cards", "cards": _client_cards()})
     safe = {k: v for k, v in inst.items() if k not in ("pin", "carrier_identity")}
@@ -5038,14 +5038,14 @@ async def api_device_hardware(device_id: str, body: dict):
         if running:
             await hub.drop_ami(iid)
             await asyncio.to_thread(_start_engine_checked, inst, cfg.get_settings(),
-                                    dev_mounts=os.environ.get("MDD_DEV_MOUNTS", "") == "1")
+                                    dev_mounts=os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1")
             hub.reset_health(iid, "configuration_restart")
             applied = True
         elif inst.get("provisioning_state") != "draft":
             allowed, _reason = _line_auto_start_allowed(inst)
             if allowed:
                 await asyncio.to_thread(_start_engine_checked, inst, cfg.get_settings(),
-                                        dev_mounts=os.environ.get("MDD_DEV_MOUNTS", "") == "1")
+                                        dev_mounts=os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1")
                 hub.reset_health(iid, "hardware_identity_completed")
                 applied = True
                 started = True
@@ -5519,7 +5519,7 @@ def _egress_not_ready_reason(country: str, latest: dict) -> str:
     updated_at = float(document.get("updated_at") or 0)
     if not updated_at:
         return ("the host orchestrator has not published any exit status yet — check that "
-                "mdd-sim-gateway-orchestrator is running")
+                "onewifi-orchestrator is running")
     age = time.time() - updated_at
     if age > 60:
         return ("the host orchestrator last published exit status "
@@ -5584,7 +5584,7 @@ def _test_push_payload(event: str = notify_push.EV_INCOMING_SMS) -> dict:
     return notify_push.build_payload(
         event,
         {"id": "test", "name": "Gateway test", "iccid": "", "msisdn": ""},
-        "+10000000000", "MDD Sim Gateway notification test")
+        "+10000000000", "OneWIFI notification test")
 
 
 def _notification_test_event(body: dict) -> str:
@@ -5674,8 +5674,8 @@ async def api_apns_test(body: dict | None = None):
                  if item.get("environment") == settings.get("environment")]
     if not endpoints:
         raise HTTPException(409, "no owned SMS APNs endpoint registered for this environment")
-    event = {"id": int(time.time() * 1000), "content": "MDD APNs test",
-             "number": "", "deviceLabel": "MDD"}
+    event = {"id": int(time.time() * 1000), "content": "OneWIFI APNs test",
+             "number": "", "deviceLabel": "OneWIFI"}
     accepted = 0
     for endpoint in endpoints:
         try:
@@ -5708,7 +5708,7 @@ def api_system_status():
     host = hub.host_snapshot or sysinfo.collect(
         cfg.DATA_DIR, include_docker_storage=False)
     return {
-        "system_name": "MDD Sim Gateway",
+        "system_name": "OneWIFI",
         "host": host,
         "host_alerts": hub.host_alerts if hub.host_snapshot else sysinfo.alerts(host),
         # Drives the unread dot on the Calls entry: a message nobody has played is the one
@@ -5805,7 +5805,7 @@ async def api_system_update_cancel():
 async def api_system_backup():
     settings = cfg.get_settings()
     return await asyncio.to_thread(
-        operations.create_local_backup, "mdd-sim-gateway")
+        operations.create_local_backup, "onewifi")
 
 
 @app.delete("/api/system/backups/{name}")
@@ -5858,7 +5858,7 @@ async def api_system_maintenance(body: dict):
                 await asyncio.to_thread(engine.stop, iid)
                 await hub.drop_ami(iid)
                 await asyncio.to_thread(_start_engine_checked, inst, cfg.get_settings(),
-                                        dev_mounts=os.environ.get("MDD_DEV_MOUNTS", "") == "1")
+                                        dev_mounts=os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1")
                 restarted.append(iid)
             except Exception as exc:
                 failed[iid] = str(getattr(exc, "detail", exc))
@@ -6053,7 +6053,7 @@ async def api_instance_upsert(body: dict):
             hub.reset_health(iid, "configuration_restart")
             await hub.drop_ami(iid)
             await asyncio.to_thread(_start_engine_checked, inst, cfg.get_settings(),
-                                    dev_mounts=os.environ.get("MDD_DEV_MOUNTS", "") == "1")
+                                    dev_mounts=os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1")
             applied = True
             asyncio.create_task(push_status(iid))
         except Exception as e:  # noqa
@@ -6179,7 +6179,7 @@ async def api_instance_start(iid: str, body: dict | None = None):
         _raise_preflight_block(str(iid), pf)
 
     settings = cfg.get_settings()
-    dev = os.environ.get("MDD_DEV_MOUNTS", "") == "1"
+    dev = os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1"
     # Bind the line to the reader that CURRENTLY holds its SIM, keyed on the STABLE physical USB
     # port. Two identical readers (no serial) get their pcscd enumeration order — and thus their
     # indices — flipped at boot/pcscd-restart with the cables untouched; a stored index then points
@@ -6233,7 +6233,7 @@ async def api_reprovision(iid: str, body: dict | None = None):
     hub._msisdn_tries.pop(str(iid), None)
     hub.reset_health(iid, "user_requested")
     await hub.drop_ami(iid)      # engine.start recreates the container (maybe new IP) -> stale client
-    dev = os.environ.get("MDD_DEV_MOUNTS", "") == "1"
+    dev = os.environ.get("ONEWIFI_DEV_MOUNTS", "") == "1"
     cid = await asyncio.to_thread(_start_engine_checked, inst, cfg.get_settings(), dev_mounts=dev)
     asyncio.create_task(push_status(str(iid)))
     return {"ok": True, "container": cid}

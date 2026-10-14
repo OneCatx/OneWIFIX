@@ -13,9 +13,9 @@ Config via env (set by entrypoint from /config/instance.json):
   USIM_PIN        - the CHV1 PIN (digits). If empty/"none", PIN is assumed disabled.
   USIM_READER     - exact PC/SC reader name, "imsi:<IMSI>", "iccid:<ICCID>", or
                     integer reader index. Default 0.
-  MDD_RUNDIR   - status dir (default /run/mdd-sim-gateway)
+  ONEWIFI_RUNDIR   - status dir (default /run/onewifi)
 
-Writes JSON status to $MDD_RUNDIR/pin_status.json:
+Writes JSON status to $ONEWIFI_RUNDIR/pin_status.json:
   {"state": "...", "tries_left": N, "reader": "...", "ts": ...}
 States: NO_READER, NO_CARD, PIN_DISABLED, VERIFIED, WRONG_PIN, PIN_BLOCKED, ERROR
 Exit code is always 0 while running; it loops forever. A non-recoverable PIN problem
@@ -68,7 +68,7 @@ class _Tx:
             except Exception:
                 pass
 
-RUNDIR = os.environ.get("MDD_RUNDIR", "/run/mdd-sim-gateway")
+RUNDIR = os.environ.get("ONEWIFI_RUNDIR", "/run/onewifi")
 STATUS_PATH = os.path.join(RUNDIR, "pin_status.json")
 MIN_TRIES = 2  # never spend the PIN when only this many attempts remain (avoid PUK lock)
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo-lockup.svg" width="520" alt="MDD Sim Gateway">
+  <img src="assets/logo-lockup.svg" width="520" alt="OneWIFI">
 </p>
 
 <p align="center"><strong>把物理 SIM 和 eSIM 变成自己可控的 VoWiFi、通话、短信与独立网络出口网关。</strong></p>
@@ -10,10 +10,10 @@
   <a href="docs/ARCHITECTURE.md">架构</a> ·
   <a href="docs/INSTALL.md">安装文档</a> ·
   <a href="docs/CONTAINER_DEPLOYMENT.md">容器部署</a> ·
-  <a href="https://github.com/MddIdd/mdd-sim-gateway/discussions">社区讨论</a>
+  <a href="https://github.com/OneCatx/OneWIFIX/discussions">社区讨论</a>
 </p>
 
-MDD Sim Gateway 是自托管的多 SIM 通信网关，可以直接安装在 Debian / Ubuntu / Armbian ARM64 主机上，也可以在任何能运行 Docker Compose 的 Linux 主机上以全容器方式运行，包括群晖等 NAS。它将蜂窝模块、USB 读卡器、IMS、EAP-AKA、eSIM、ModemManager 和 sing-box 整合进一个中英文 Web 控制台。
+OneWIFI 是自托管的多 SIM 通信网关，可以直接安装在 Debian / Ubuntu / Armbian ARM64 主机上，也可以在任何能运行 Docker Compose 的 Linux 主机上以全容器方式运行，包括群晖等 NAS。它将蜂窝模块、USB 读卡器、IMS、EAP-AKA、eSIM、ModemManager 和 sing-box 整合进一个中英文 Web 控制台。
 
 | 真实 SIM 鉴权 | 通话与短信 | 多模块管理 | 独立国家出口 |
 |---|---|---|---|
@@ -21,7 +21,7 @@ MDD Sim Gateway 是自托管的多 SIM 通信网关，可以直接安装在 Debi
 
 ## 界面导览
 
-![MDD Sim Gateway 中文界面导览（使用虚构演示数据）](assets/product-tour.zh-CN.gif)
+![OneWIFI 中文界面导览（使用虚构演示数据）](assets/product-tour.zh-CN.gif)
 
 <p align="center">概览 → 设备管理 → 浏览器通话 → 短信 → 余额与保号 → 系统更新　·　界面中的身份与内容均为虚构演示数据</p>
 
@@ -51,8 +51,8 @@ MDD Sim Gateway 是自托管的多 SIM 通信网关，可以直接安装在 Debi
 扩展根分区和文件系统，并以 `df -h /` 显示的容量为准。
 
 ```bash
-git clone https://github.com/MddIdd/mdd-sim-gateway.git
-cd mdd-sim-gateway
+git clone https://github.com/OneCatx/OneWIFIX.git
+cd onewifi
 sudo ./install.sh install
 ```
 
@@ -68,10 +68,10 @@ sudo ./install.sh install
    主流发行版内核一般自带所需驱动；群晖等精简内核可能缺失，DS1621+ 可使用随 Release 发布的驱动包，
    见 [兼容性与驱动目录](drivers/README.md)。
    宿主若已运行 ModemManager（Ubuntu 等发行版默认启用），先停用，否则它会和容器抢占模块。
-2. **下载 Compose 文件。**从 [Releases](https://github.com/MddIdd/mdd-sim-gateway/releases) 下载
-   `mdd-sim-gateway-compose-vX.Y.Z.yaml`，四个镜像已固定为该版本。
-3. **修改文件开头标出的两项。**`MDD_ADVERTISE_ADDR` 改成主机的局域网地址（浏览器通话的媒体
-   地址）；数据目录改成你的实际路径，文件中的 `/volume1/docker/mdd-sim-gateway` 是群晖的示例。
+2. **下载 Compose 文件。**从 [Releases](https://github.com/OneCatx/OneWIFIX/releases) 下载
+   `onewifi-compose-vX.Y.Z.yaml`，四个镜像已固定为该版本。
+3. **修改文件开头标出的两项。**`ONEWIFI_ADVERTISE_ADDR` 改成主机的局域网地址（浏览器通话的媒体
+   地址）；数据目录改成你的实际路径，文件中的 `/volume1/docker/onewifi` 是群晖的示例。
    管理端口默认 `10443`。
 4. **启动。**普通 Linux 把文件保存为数据目录下的 `docker-compose.yml`，在该目录执行
    `docker compose up -d`；群晖在 Container Manager 中新建项目并粘贴 YAML。
@@ -86,24 +86,24 @@ sudo ./install.sh install
 
 ## 系统架构
 
-![MDD Sim Gateway 系统架构](docs/architecture.svg)
+![OneWIFI 系统架构](docs/architecture.svg)
 
 ## 完整截图
 
 <details>
 <summary>查看概览、设备、通话、短信、余额与保号及系统更新页面</summary>
 
-![MDD Sim Gateway 中文概览（使用虚构演示数据）](screenshots/overview-redacted.zh-CN.png)
+![OneWIFI 中文概览（使用虚构演示数据）](screenshots/overview-redacted.zh-CN.png)
 
-![MDD Sim Gateway 中文设备页（使用虚构演示数据）](screenshots/devices-redacted.zh-CN.png)
+![OneWIFI 中文设备页（使用虚构演示数据）](screenshots/devices-redacted.zh-CN.png)
 
-![MDD Sim Gateway 中文通话页（使用虚构演示数据）](screenshots/calls-redacted.zh-CN.png)
+![OneWIFI 中文通话页（使用虚构演示数据）](screenshots/calls-redacted.zh-CN.png)
 
-![MDD Sim Gateway 中文短信页（使用虚构演示数据）](screenshots/sms-redacted.zh-CN.png)
+![OneWIFI 中文短信页（使用虚构演示数据）](screenshots/sms-redacted.zh-CN.png)
 
-![MDD Sim Gateway 中文余额与保号页（使用虚构演示数据）](screenshots/keepalive-redacted.zh-CN.png)
+![OneWIFI 中文余额与保号页（使用虚构演示数据）](screenshots/keepalive-redacted.zh-CN.png)
 
-![MDD Sim Gateway 中文系统更新页（使用虚构演示数据）](screenshots/settings-redacted.zh-CN.png)
+![OneWIFI 中文系统更新页（使用虚构演示数据）](screenshots/settings-redacted.zh-CN.png)
 
 </details>
 
@@ -149,10 +149,10 @@ sudo ./install.sh install
 1. 检查并复用现有系统 Docker（没有时才从发行版安装），安装 pcscd、ModemManager/NetworkManager；
 2. 按架构下载 sing-box 1.13.15 与 Xray-core 26.3.27 并验证 SHA-256；
 3. 下载固定版本 lpac 2.3.0 源码并本地构建；
-4. 构建 MDD 控制面、WebUI 与每 SIM VoWiFi 引擎；
+4. 构建 OneWIFI 控制面、WebUI 与每 SIM VoWiFi 引擎；
 5. 安装 systemd 服务并设置开机启动。
 
-已有 Docker 不会被升级、重配或清理；安装前会检查 rootless 模式、端口占用与容器归属，只管理带 MDD 标记的容器。
+已有 Docker 不会被升级、重配或清理；安装前会检查 rootless 模式、端口占用与容器归属，只管理带 OneWIFI 标记的容器。
 
 常用命令：
 
@@ -168,12 +168,12 @@ sudo ./install.sh uninstall
 
 ## 使用边界
 
-> **合规警告：** 本软件仅供号码实名持有人在运营商明确允许的范围内自用。严禁用于诈骗、群呼、营销骚扰、验证码接收、号码或线路出租、代拨转接、隐藏实际控制地点，或向第三人提供电信服务。使用者必须遵守所在地法律、电话实名制和运营商协议；本项目不构成任何电信业务许可或运营商授权。MDD Sim Gateway 最多保存和运行 **10 条 SIM 线路**，不提供独立 SIP 账号或 Telegram 远程拨号、发短信及挂断功能。技术限制不代表某种使用方式当然合法。
+> **合规警告：** 本软件仅供号码实名持有人在运营商明确允许的范围内自用。严禁用于诈骗、群呼、营销骚扰、验证码接收、号码或线路出租、代拨转接、隐藏实际控制地点，或向第三人提供电信服务。使用者必须遵守所在地法律、电话实名制和运营商协议；本项目不构成任何电信业务许可或运营商授权。OneWIFI 最多保存和运行 **10 条 SIM 线路**，不提供独立 SIP 账号或 Telegram 远程拨号、发短信及挂断功能。技术限制不代表某种使用方式当然合法。
 
 ## 社区与反馈
 
-- 安装、硬件和运营商兼容性讨论：[GitHub Discussions](https://github.com/MddIdd/mdd-sim-gateway/discussions)
-- 可复现的缺陷或明确的功能请求：[GitHub Issues](https://github.com/MddIdd/mdd-sim-gateway/issues/new/choose)
+- 安装、硬件和运营商兼容性讨论：[GitHub Discussions](https://github.com/OneCatx/OneWIFIX/discussions)
+- 可复现的缺陷或明确的功能请求：[GitHub Issues](https://github.com/OneCatx/OneWIFIX/issues/new/choose)
 - 参与代码或文档贡献：[CONTRIBUTING.md](CONTRIBUTING.md)
 
 如果项目对你有用，欢迎在 GitHub 上收藏它，并分享经过脱敏的硬件或运营商兼容性结果。
@@ -198,7 +198,7 @@ sudo ./install.sh uninstall
 
 ## 开源与致谢
 
-MDD Sim Gateway 以 **GPL-3.0-only** 发布。它包含或调用多个独立上游组件，各自仍遵循原许可证；完整清单见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) 和 [NOTICE](NOTICE)。
+OneWIFI 以 **GPL-3.0-only** 发布。它包含或调用多个独立上游组件，各自仍遵循原许可证；完整清单见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) 和 [NOTICE](NOTICE)。
 
 特别感谢：
 

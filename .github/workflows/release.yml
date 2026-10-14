@@ -42,14 +42,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -eu
-          registry_image="ghcr.io/$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')/mdd-sim-gateway-engine"
+          registry_image="ghcr.io/$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')/onewifi-engine"
           release_image="$registry_image:${GITHUB_REF_NAME}"
           architecture_image="$registry_image:${GITHUB_REF_NAME}-${{ matrix.arch }}"
           runtime_fp=$(sh tools/engine-fingerprint.sh runtime)
           base_fp=$(sh tools/engine-fingerprint.sh base)
           printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           docker buildx build --platform "linux/${{ matrix.arch }}" --load --no-cache \
-            --build-arg "MDD_VERSION=$(cat VERSION)" \
+            --build-arg "ONEWIFI_VERSION=$(cat VERSION)" \
             --build-arg "RUNTIME_FP=$runtime_fp" \
             --build-arg "BASE_FP=$base_fp" \
             -t "$release_image" -t "$architecture_image" engine
@@ -64,13 +64,13 @@ jobs:
             asterisk -V
           '
           docker push "$architecture_image"
-          engine_archive="mdd-sim-gateway-engine-${GITHUB_REF_NAME}-${{ matrix.arch }}.tar"
+          engine_archive="onewifi-engine-${GITHUB_REF_NAME}-${{ matrix.arch }}.tar"
           docker save --output "$engine_archive" "$release_image"
           gzip -1 "$engine_archive"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: engine-image-${{ matrix.arch }}
-          path: mdd-sim-gateway-engine-v*-${{ matrix.arch }}.tar.gz
+          path: onewifi-engine-v*-${{ matrix.arch }}.tar.gz
           compression-level: 0
           if-no-files-found: error
 
@@ -98,34 +98,34 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -eu
-          registry_image="ghcr.io/$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')/mdd-sim-gateway-control"
+          registry_image="ghcr.io/$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')/onewifi-control"
           architecture_image="$registry_image:${GITHUB_REF_NAME}-${{ matrix.arch }}"
-          image_tar="mdd-sim-gateway-control-${GITHUB_REF_NAME}-${{ matrix.arch }}.tar"
+          image_tar="onewifi-control-${GITHUB_REF_NAME}-${{ matrix.arch }}.tar"
           printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           docker buildx build --platform "linux/${{ matrix.arch }}" --load --no-cache \
-            --build-arg "MDD_VERSION=$(cat VERSION)" \
+            --build-arg "ONEWIFI_VERSION=$(cat VERSION)" \
             -f control/Dockerfile \
-            -t mdd-sim-gateway/control \
-            -t "mdd-sim-gateway/control:${GITHUB_REF_NAME}" \
+            -t onewifi/control \
+            -t "onewifi/control:${GITHUB_REF_NAME}" \
             -t "$architecture_image" .
-          test "$(docker image inspect mdd-sim-gateway/control --format '{{.Architecture}}')" = \
+          test "$(docker image inspect onewifi/control --format '{{.Architecture}}')" = \
             "${{ matrix.arch }}"
-          test "$(docker image inspect mdd-sim-gateway/control --format '{{index .Config.Labels "io.mdd-sim-gateway.component"}}|{{index .Config.Labels "org.opencontainers.image.version"}}')" = \
+          test "$(docker image inspect onewifi/control --format '{{index .Config.Labels "io.onewifi.component"}}|{{index .Config.Labels "org.opencontainers.image.version"}}')" = \
             "control|$(cat VERSION)"
-          docker run --rm --platform "linux/${{ matrix.arch }}" --entrypoint sh mdd-sim-gateway/control -c '
+          docker run --rm --platform "linux/${{ matrix.arch }}" --entrypoint sh onewifi/control -c '
             docker --version
             docker compose version
             test -f /app/host/mdd_update.py
             test -f /app/host/mdd_container_update.py
           '
           docker push "$architecture_image"
-          docker save --output "$image_tar" mdd-sim-gateway/control \
-            "mdd-sim-gateway/control:${GITHUB_REF_NAME}"
+          docker save --output "$image_tar" onewifi/control \
+            "onewifi/control:${GITHUB_REF_NAME}"
           gzip -1 "$image_tar"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: control-image-${{ matrix.arch }}
-          path: mdd-sim-gateway-control-v*-${{ matrix.arch }}.tar.gz
+          path: onewifi-control-v*-${{ matrix.arch }}.tar.gz
           compression-level: 0
           if-no-files-found: error
 
@@ -158,34 +158,34 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -eu
-          gzip -dc "mdd-sim-gateway-control-${GITHUB_REF_NAME}-${{ matrix.arch }}.tar.gz" | docker load
+          gzip -dc "onewifi-control-${GITHUB_REF_NAME}-${{ matrix.arch }}.tar.gz" | docker load
           python tools/container-runtime/prepare_egress_assets.py --arch "${{ matrix.arch }}"
           owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
           printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           for component in hardware egress; do
-            registry_image="ghcr.io/$owner/mdd-sim-gateway-$component"
+            registry_image="ghcr.io/$owner/onewifi-$component"
             architecture_image="$registry_image:${GITHUB_REF_NAME}-${{ matrix.arch }}"
-            local_image="mdd-sim-gateway/$component"
+            local_image="onewifi/$component"
             if [ "$component" = hardware ]; then
               docker buildx build --platform "linux/${{ matrix.arch }}" --load --no-cache \
-                --build-arg "MDD_VERSION=$(cat VERSION)" \
-                --build-arg "BASE_IMAGE=mdd-sim-gateway/control:${GITHUB_REF_NAME}" \
+                --build-arg "ONEWIFI_VERSION=$(cat VERSION)" \
+                --build-arg "BASE_IMAGE=onewifi/control:${GITHUB_REF_NAME}" \
                 -f runtime/Dockerfile.hardware \
                 -t "$local_image" -t "$local_image:${GITHUB_REF_NAME}" \
                 -t "$architecture_image" .
             else
               docker buildx build --platform "linux/${{ matrix.arch }}" --load --no-cache \
-                --build-arg "MDD_VERSION=$(cat VERSION)" \
+                --build-arg "ONEWIFI_VERSION=$(cat VERSION)" \
                 --build-arg "TARGETARCH=${{ matrix.arch }}" \
                 -f runtime/Dockerfile.egress \
                 -t "$local_image" -t "$local_image:${GITHUB_REF_NAME}" \
                 -t "$architecture_image" .
             fi
             identity=$(docker image inspect "$local_image" --format \
-              '{{.Architecture}}|{{index .Config.Labels "io.mdd-sim-gateway.component"}}|{{index .Config.Labels "io.mdd-sim-gateway.managed"}}|{{index .Config.Labels "org.opencontainers.image.version"}}')
+              '{{.Architecture}}|{{index .Config.Labels "io.onewifi.component"}}|{{index .Config.Labels "io.onewifi.managed"}}|{{index .Config.Labels "org.opencontainers.image.version"}}')
             test "$identity" = "${{ matrix.arch }}|$component|true|$(cat VERSION)"
             docker push "$architecture_image"
-            image_tar="mdd-sim-gateway-$component-${GITHUB_REF_NAME}-${{ matrix.arch }}.tar"
+            image_tar="onewifi-$component-${GITHUB_REF_NAME}-${{ matrix.arch }}.tar"
             docker save --output "$image_tar" "$local_image" "$local_image:${GITHUB_REF_NAME}"
             gzip -1 "$image_tar"
           done
@@ -200,8 +200,8 @@ jobs:
           upstream=$(python3 -c "import re;print(''.join(re.search(r'UPSTREAM_IMAGE = \(([^)]*)\)', open('control/app/media.py').read()).group(1).replace('\"', '').split()))")
           case "$upstream" in coturn/coturn:*@sha256:*) ;; *) echo "unexpected relay image: $upstream" >&2; exit 1 ;; esac
           owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
-          local_image="mdd-sim-gateway/relay:${GITHUB_REF_NAME}"
-          architecture_image="ghcr.io/$owner/mdd-sim-gateway-relay:${GITHUB_REF_NAME}-${{ matrix.arch }}"
+          local_image="onewifi/relay:${GITHUB_REF_NAME}"
+          architecture_image="ghcr.io/$owner/onewifi-relay:${GITHUB_REF_NAME}-${{ matrix.arch }}"
           docker pull --platform "linux/${{ matrix.arch }}" "$upstream"
           docker tag "$upstream" "$local_image"
           docker tag "$upstream" "$architecture_image"
@@ -209,16 +209,16 @@ jobs:
           docker run --rm --entrypoint sh "$local_image" -c \
             'command -v turnserver turnutils_stunclient ip awk >/dev/null'
           docker push "$architecture_image"
-          image_tar="mdd-sim-gateway-relay-${GITHUB_REF_NAME}-${{ matrix.arch }}.tar"
+          image_tar="onewifi-relay-${GITHUB_REF_NAME}-${{ matrix.arch }}.tar"
           docker save --output "$image_tar" "$local_image"
           gzip -1 "$image_tar"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: runtime-images-${{ matrix.arch }}
           path: |
-            mdd-sim-gateway-hardware-v*-${{ matrix.arch }}.tar.gz
-            mdd-sim-gateway-egress-v*-${{ matrix.arch }}.tar.gz
-            mdd-sim-gateway-relay-v*-${{ matrix.arch }}.tar.gz
+            onewifi-hardware-v*-${{ matrix.arch }}.tar.gz
+            onewifi-egress-v*-${{ matrix.arch }}.tar.gz
+            onewifi-relay-v*-${{ matrix.arch }}.tar.gz
           compression-level: 0
           if-no-files-found: error
 
@@ -300,7 +300,7 @@ jobs:
           owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
           printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           for component in engine control hardware egress relay; do
-            registry_image="ghcr.io/$owner/mdd-sim-gateway-$component"
+            registry_image="ghcr.io/$owner/onewifi-$component"
             docker buildx imagetools create \
               --tag "$registry_image:${GITHUB_REF_NAME}" \
               "$registry_image:${GITHUB_REF_NAME}-arm64" \
@@ -308,10 +308,10 @@ jobs:
           done
       - name: Build checksummed source archive
         run: |
-          archive="mdd-sim-gateway-${GITHUB_REF_NAME}.tar.gz"
-          compose_asset="mdd-sim-gateway-compose-${GITHUB_REF_NAME}.yaml"
+          archive="onewifi-${GITHUB_REF_NAME}.tar.gz"
+          compose_asset="onewifi-compose-${GITHUB_REF_NAME}.yaml"
           staging="$(mktemp -d)"
-          root="$staging/mdd-sim-gateway-${GITHUB_REF_NAME}"
+          root="$staging/onewifi-${GITHUB_REF_NAME}"
           mkdir -p "$root"
           git archive HEAD | tar -x -C "$root"
           rm -rf "$root/webui/dist"
@@ -323,24 +323,24 @@ jobs:
           from pathlib import Path
 
           source = Path("runtime/compose.yaml").read_text(encoding="utf-8")
-          marker = "${MDD_IMAGE_TAG:?set a release tag such as v1.12.0}"
+          marker = "${ONEWIFI_IMAGE_TAG:?set a release tag such as v1.12.0}"
           if source.count(marker) != 4:
               raise SystemExit("release Compose template does not contain four image markers")
           source = source.replace(marker, os.environ["GITHUB_REF_NAME"])
           source = source.replace(
-              "${MDD_DATA_DIR:?set an absolute NAS data directory}",
-              "/volume1/docker/mdd-sim-gateway")
+              "${ONEWIFI_DATA_DIR:?set an absolute NAS data directory}",
+              "/volume1/docker/onewifi")
           source = source.replace(
-              "${MDD_ADVERTISE_ADDR:?set the NAS LAN address}",
+              "${ONEWIFI_ADVERTISE_ADDR:?set the NAS LAN address}",
               "192.168.1.100")
-          header = """# MDD Sim Gateway full-container deployment (Docker Compose v2, Linux host).\n# Before starting, replace 192.168.1.100 with this host's LAN address, and replace\n# /volume1/docker/mdd-sim-gateway (the Synology example) with your data directory.\n# Ordinary Linux: save as docker-compose.yml in the data directory and run `docker compose up -d`.\n# Synology: paste into a new Container Manager project.\n\n"""
+          header = """# OneWIFI full-container deployment (Docker Compose v2, Linux host).\n# Before starting, replace 192.168.1.100 with this host's LAN address, and replace\n# /volume1/docker/onewifi (the Synology example) with your data directory.\n# Ordinary Linux: save as docker-compose.yml in the data directory and run `docker compose up -d`.\n# Synology: paste into a new Container Manager project.\n\n"""
           Path(sys.argv[1]).write_text(
               header + source, encoding="utf-8")
           PY
-          test "$(grep -c "ghcr.io/.*/mdd-sim-gateway-.*:${GITHUB_REF_NAME}" "$compose_asset")" = 4
-          ! grep -F '${MDD_IMAGE_TAG' "$compose_asset"
-          ! grep -F '${MDD_DATA_DIR' "$compose_asset"
-          ! grep -F '${MDD_ADVERTISE_ADDR' "$compose_asset"
+          test "$(grep -c "ghcr.io/.*/onewifi-.*:${GITHUB_REF_NAME}" "$compose_asset")" = 4
+          ! grep -F '${ONEWIFI_IMAGE_TAG' "$compose_asset"
+          ! grep -F '${ONEWIFI_DATA_DIR' "$compose_asset"
+          ! grep -F '${ONEWIFI_ADVERTISE_ADDR' "$compose_asset"
           docker compose -f "$compose_asset" config --quiet
           # v1.3.4's updater requires this legacy channel marker before it will apply an
           # archive. Generate it only for the hand-off release; the new installer removes it.
@@ -350,30 +350,30 @@ jobs:
           # This manifest is covered by the source archive checksum. It lets both v1.4.1's old
           # updater and a fresh official install verify the native image assets before import.
           sha256sum \
-            "mdd-sim-gateway-control-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-control-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-engine-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-engine-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-hardware-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-hardware-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-egress-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-egress-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-relay-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-relay-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-control-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-control-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-engine-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-engine-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-hardware-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-hardware-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-egress-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-egress-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-relay-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-relay-${GITHUB_REF_NAME}-amd64.tar.gz" \
             > "$root/engine/release-image.SHA256SUMS"
-          tar -czf "$archive" -C "$staging" "mdd-sim-gateway-${GITHUB_REF_NAME}"
+          tar -czf "$archive" -C "$staging" "onewifi-${GITHUB_REF_NAME}"
           sha256sum "$archive" \
             "$compose_asset" \
-            "mdd-sim-gateway-control-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-control-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-engine-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-engine-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-hardware-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-hardware-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-egress-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-egress-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-relay-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-relay-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-control-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-control-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-engine-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-engine-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-hardware-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-hardware-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-egress-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-egress-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-relay-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-relay-${GITHUB_REF_NAME}-amd64.tar.gz" \
             "mdd-driver-synology-ds1621plus-dsm7.4.1-90080-k4.4.302plus-x86_64.tar.gz" > SHA256SUMS
       - name: Publish GitHub Release
         env:
@@ -389,19 +389,19 @@ jobs:
             *-rc*|*-beta*|*-alpha*) release_flags+=(--prerelease) ;;
           esac
           gh release create "${GITHUB_REF_NAME}" \
-            "mdd-sim-gateway-${GITHUB_REF_NAME}.tar.gz" \
-            "mdd-sim-gateway-compose-${GITHUB_REF_NAME}.yaml" \
-            "mdd-sim-gateway-control-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-control-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-engine-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-engine-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-hardware-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-hardware-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-egress-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-egress-${GITHUB_REF_NAME}-amd64.tar.gz" \
-            "mdd-sim-gateway-relay-${GITHUB_REF_NAME}-arm64.tar.gz" \
-            "mdd-sim-gateway-relay-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-${GITHUB_REF_NAME}.tar.gz" \
+            "onewifi-compose-${GITHUB_REF_NAME}.yaml" \
+            "onewifi-control-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-control-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-engine-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-engine-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-hardware-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-hardware-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-egress-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-egress-${GITHUB_REF_NAME}-amd64.tar.gz" \
+            "onewifi-relay-${GITHUB_REF_NAME}-arm64.tar.gz" \
+            "onewifi-relay-${GITHUB_REF_NAME}-amd64.tar.gz" \
             "mdd-driver-synology-ds1621plus-dsm7.4.1-90080-k4.4.302plus-x86_64.tar.gz" \
             SHA256SUMS \
-            --verify-tag --notes-file "$notes_file" --title "MDD Sim Gateway ${GITHUB_REF_NAME}" \
+            --verify-tag --notes-file "$notes_file" --title "OneWIFI ${GITHUB_REF_NAME}" \
             "${release_flags[@]}"

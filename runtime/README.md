@@ -21,7 +21,7 @@ Python 3.12 的 PyYAML wheel 和校验清单。ARM64 可准备资产，但尚未
 
 ```sh
 docker build -f runtime/Dockerfile.egress --build-arg TARGETARCH=amd64 \
-  -t mdd-sim-gateway/egress:dev .
+  -t onewifi/egress:dev .
 ```
 
 NAS 已有合适的 Python 3.12 glibc 镜像时，可从开发机远程构建：
@@ -42,8 +42,8 @@ python tools/container-runtime/build_remote_egress.py \
 ```sh
 python tools/container-runtime/probe_udp.py \
   --host USER@NAS --port SSH_PORT --identity /path/to/key \
-  --image mdd-sim-gateway/egress:dev \
-  --client-image mdd-sim-gateway/engine:dev \
+  --image onewifi/egress:dev \
+  --client-image onewifi/engine:dev \
   --singbox runtime/vendor/amd64/bin/sing-box
 ```
 
@@ -61,7 +61,7 @@ python tools/container-runtime/probe_udp.py \
 不能依赖 root 绕过其他用户的 0700 目录权限）。不要挂载生产数据。
 
 ```sh
-MDD_LAB_DATA=/absolute/dedicated/data \
+ONEWIFI_LAB_DATA=/absolute/dedicated/data \
   docker compose -f runtime/compose.egress-lab.yaml up -d --no-build
 ```
 
@@ -72,18 +72,18 @@ GB 是 22157。SOCKS 端口仅供项目网络内受信客户端使用，没有�
 
 Control 的后续部署应设置：
 
-- `MDD_ENGINE_NETWORK`：Control 和 Engine 都加入的专用 bridge 网络名。
-- `MDD_MANAGER_URL`：该网络内可访问的 Control URL，不依赖 NAS 端口回流。
-- `MDD_HOST_DATA`：Docker daemon 可见的数据目录绝对路径。
-- `MDD_HOST_PCSCD_DIR`：Docker daemon 可见的共享 PC/SC socket 目录。
+- `ONEWIFI_ENGINE_NETWORK`：Control 和 Engine 都加入的专用 bridge 网络名。
+- `ONEWIFI_MANAGER_URL`：该网络内可访问的 Control URL，不依赖 NAS 端口回流。
+- `ONEWIFI_HOST_DATA`：Docker daemon 可见的数据目录绝对路径。
+- `ONEWIFI_HOST_PCSCD_DIR`：Docker daemon 可见的共享 PC/SC socket 目录。
 
-Control 已实现实验性 `MDD_EGRESS_TRANSPORT=socks5` 状态检查（默认 `host`）。
+Control 已实现实验性 `ONEWIFI_EGRESS_TRANSPORT=socks5` 状态检查（默认 `host`）。
 它要求版本匹配、15 秒内心跳、当前代理配置指纹、对应国家出口 ready。
 配置失配或状态过期不会放行；只有显式选择 direct 的国家可以直连。
 代理进程 ready 尚不代表 UDP 或运营商可达。
 
 启动代理线路前还检查 Engine 镜像标签
-`io.mdd-sim-gateway.egress-transports` 是否包含 `socks5`，然后使用核验过的镜像 ID
+`io.onewifi.egress-transports` 是否包含 `socks5`，然后使用核验过的镜像 ID
 创建容器。旧镜像会被拒绝，已有容器不会因此被删除。
 Engine 已接入该传输并声明 `socks5` 能力：IKE/500 和 NAT-T/4500 使用独立 association，
 代理模式不创建 raw ESP socket；PMTU 计算计入 SOCKS5 UDP 的 10 字节 IPv4 目标头。
@@ -114,8 +114,8 @@ python tools/container-runtime/build_remote_hardware.py \
 ```sh
 python tools/container-runtime/build_remote_hardware_overlay.py \
   --host USER@NAS --port SSH_PORT --identity /path/to/key \
-  --base-image mdd-sim-gateway/hardware:VALIDATED_TAG \
-  --tag mdd-sim-gateway/hardware:dev
+  --base-image onewifi/hardware:VALIDATED_TAG \
+  --tag onewifi/hardware:dev
 ```
 
 源码压缩包始终按 Dockerfile 中的 SHA256 校验。`compose.hardware-lab.yaml`
@@ -150,15 +150,15 @@ ssh -i /path/to/key -p SSH_PORT USER@NAS 'sh -s' \
 先构建当前 Control、Engine、Hardware 和 Egress 镜像，再使用绝对数据目录启动：
 
 ```sh
-MDD_DATA_DIR=/volume1/docker/mdd-sim-gateway-dev \
-MDD_ADVERTISE_ADDR=10.0.0.100 \
-MDD_HTTP_PORT=10443 \
-MDD_NAS_HOSTNAME=nas.example.com \
-MDD_IMAGE_TAG=v1.13.0 \
+ONEWIFI_DATA_DIR=/volume1/docker/onewifi-dev \
+ONEWIFI_ADVERTISE_ADDR=10.0.0.100 \
+ONEWIFI_HTTP_PORT=10443 \
+ONEWIFI_NAS_HOSTNAME=nas.example.com \
+ONEWIFI_IMAGE_TAG=v1.13.0 \
 docker compose -f runtime/compose.yaml up -d --no-build
 ```
 
-正式 Release 会额外发布 `mdd-sim-gateway-compose-vX.Y.Z.yaml`，其中四个 GHCR 镜像已经
+正式 Release 会额外发布 `onewifi-compose-vX.Y.Z.yaml`，其中四个 GHCR 镜像已经
 固定为对应 Release 标签。群晖用户可以把该 YAML 直接粘贴到 Container Manager 新项目，
 把文件开头标出的示例 LAN 地址改成自己的 NAS 地址，按需修改数据目录、管理端口和 NAS
 域名映射后启动；不需要额外的 `.env` 或应用安装脚本。只有宿主没有生成所需设备节点时，
@@ -166,11 +166,11 @@ docker compose -f runtime/compose.yaml up -d --no-build
 
 常驻容器为 Control、Hardware、Egress，加每条已启用线路一个 Engine，即 `3 + N`。
 Control 只发布管理端口；Hardware 和 Egress 不发布宿主端口。Engine 的国家 SOCKS
-线路只连接内部网络；明确 direct 的线路才额外连接 `mdd-sim-gateway-uplink`。
-PC/SC socket 使用固定命名卷 `mdd-sim-gateway-pcscd` 在 Hardware、Control 和动态
+线路只连接内部网络；明确 direct 的线路才额外连接 `onewifi-uplink`。
+PC/SC socket 使用固定命名卷 `onewifi-pcscd` 在 Hardware、Control 和动态
 Engine 之间共享。容器部署默认从 UDP 30000 分配 RTP，避开 NAS 上常见的 10000 段冲突。
 
 宿主管理端口默认使用 `10443`，容器内 Control 仍监听 `8443`：
 `https://NAS地址:10443/`。第一次访问由用户设置管理员口令。
-若代理订阅由 NAS 自己提供，`MDD_NAS_HOSTNAME` 会把该域名仅在 Egress 容器内映射到
+若代理订阅由 NAS 自己提供，`ONEWIFI_NAS_HOSTNAME` 会把该域名仅在 Egress 容器内映射到
 Docker 宿主网关，保留原 URL 和 HTTP Host 头，避免公网回环失败。

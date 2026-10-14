@@ -60,7 +60,7 @@ import json, multiprocessing, os, select, socket, sys, time
 from pathlib import Path
 from engine.outer_transport import proxy_udp_socket
 target = (os.environ["PEER_IP"], 15000)
-proxy = "socks5://mdd-egress:22157"
+proxy = "socks5://onewifi-egress:22157"
 mode = sys.argv[1]
 def blocked(sock):
     try:
@@ -125,7 +125,7 @@ target = (os.environ["PEER_IP"], 15000)
 app = swu.__new__(swu)
 app.socket_type = UDP
 app.timeout = 2
-app.egress_proxy = "socks5://mdd-egress:22157"
+app.egress_proxy = "socks5://onewifi-egress:22157"
 app.proxy_udp_overhead = 10
 app.server_address = target
 app.server_address_nat = target
@@ -224,18 +224,18 @@ def main():
         remote(["chmod", "755", stage])
         for network in (front, back):
             docker("network", "create", "--internal", "--label",
-                   "io.mdd-sim-gateway.component=udp-proof", network)
+                   "io.onewifi.component=udp-proof", network)
 
         def start(name, network, program, *extra):
             docker("run", "--detach", "--name", name, "--network", network,
                    "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                    "--memory", "192m", "--pids-limit", "64",
                    "--label", "com.centurylinklabs.watchtower.enable=false",
-                   "--label", "io.mdd-sim-gateway.component=udp-proof",
+                   "--label", "io.onewifi.component=udp-proof",
                    "--mount", "type=bind,src=" + stage + ",dst=/probe,readonly",
                    "--tmpfs", "/tmp:rw,size=16m", "--tmpfs", "/data:rw,size=16m",
                    "--workdir", "/probe", "--env", "PYTHONPATH=/probe:/probe/vendor",
-                   "--env", "MDD_SINGBOX_BIN=/probe/sing-box", *extra,
+                   "--env", "ONEWIFI_SINGBOX_BIN=/probe/sing-box", *extra,
                    "--entrypoint", "python3", image, *program)
 
         start(peer, back, ["peer.py"])
@@ -243,7 +243,7 @@ def main():
         peer_ip = docker("inspect", peer, "--format",
                          '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
         start(egress, back, ["start_egress.py"], "--env", "PEER_IP=" + peer_ip)
-        docker("network", "connect", "--alias", "mdd-egress", front, egress)
+        docker("network", "connect", "--alias", "onewifi-egress", front, egress)
         start(client, front, ["-c", "import time; time.sleep(300)"], "--env", "PEER_IP=" + peer_ip)
 
         def ready():
@@ -265,7 +265,7 @@ def main():
             docker("run", "--detach", "--name", engine_client, "--network", front,
                    "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                    "--memory", "256m", "--pids-limit", "64",
-                   "--label", "io.mdd-sim-gateway.component=udp-proof",
+                   "--label", "io.onewifi.component=udp-proof",
                    "--mount", "type=bind,src=" + stage + ",dst=/probe,readonly",
                    "--tmpfs", "/tmp:rw,size=16m", "--workdir", "/probe",
                    "--env", "PEER_IP=" + peer_ip, "--entrypoint", "python3",

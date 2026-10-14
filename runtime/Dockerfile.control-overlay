@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ghcr.io/mddidd/mdd-sim-gateway-control:v1.11.0
+ARG BASE_IMAGE=ghcr.io/onecatx/onewifi-control:v1.11.0
 FROM ${BASE_IMAGE} AS lpac-build
 
 ARG LPAC_COMMIT=c2fcf5e4b21c712d54e35a11da2ad9ad134fb821
@@ -72,10 +72,10 @@ RUN pip install --no-cache-dir --only-binary=:all: -r /tmp/requirements.txt \
     && python -c "import PIL.Image, pi_heif"
 
 ENV PYTHONDONTWRITEBYTECODE=1
-ARG MDD_VERSION=dev
-LABEL io.mdd-sim-gateway.managed="true" \
-      io.mdd-sim-gateway.component="control" \
-      org.opencontainers.image.version="${MDD_VERSION}"
+ARG ONEWIFI_VERSION=dev
+LABEL io.onewifi.managed="true" \
+      io.onewifi.component="control" \
+      org.opencontainers.image.version="${ONEWIFI_VERSION}"
 # Each check is a docker exec that starts a fresh Python: on a Raspberry Pi the three
 # containers' checks cost about a fifth of a core at 10 s. The first check now comes
 # 30 s after start. --start-interval would keep starts fast, but Docker before 25

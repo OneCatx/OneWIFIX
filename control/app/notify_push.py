@@ -80,7 +80,7 @@ EV_MISSED_CALL = "missed_call"
 # Somebody left a message. Announced separately from the missed call itself because the
 # action it invites is different: there is now something to listen to.
 EV_VOICEMAIL = "voicemail_received"
-# A new MDD Sim Gateway Release is available. This is a gateway-level event and therefore
+# A new OneWIFI Release is available. This is a gateway-level event and therefore
 # carries no SIM identity; update settings decide whether patch-only releases are announced.
 EV_SOFTWARE_UPDATE = "software_update"
 
@@ -98,7 +98,7 @@ _REPLY_TARGET_LIMIT = 200
 
 
 def _history_path() -> str:
-    root = os.environ.get("MDD_DATA", os.path.join(os.getcwd(), "data"))
+    root = os.environ.get("ONEWIFI_DATA", os.path.join(os.getcwd(), "data"))
     return os.path.join(root, "notifications", "deliveries.jsonl")
 
 
@@ -266,12 +266,12 @@ def build_payload(event: str, instance: dict, source: str, text: str | None,
 # Every notification leads with this. A push arrives out of context — on a lock screen, in a
 # Telegram list beside a dozen other bots — and "未接来电" alone does not say which machine is
 # talking. Kept short because notification titles are truncated aggressively.
-BRAND = "MDD"
+BRAND = "OneWIFI"
 
 
 def _titled(text: str) -> str:
     """Prefix once. The software-update title already carries the product name, so a blind
-    prefix would render it as "MDD · MDD Sim Gateway …"."""
+    prefix would render it as "OneWIFI · OneWIFI …"."""
     return text if text.startswith(BRAND) else f"{BRAND} · {text}"
 
 
@@ -306,7 +306,7 @@ def _default_notification_message(payload: dict) -> dict:
         lines.append(f"来源号码: {sender}")
         return {"title": _titled(f"未接来电 · {sim}"), "content": "\n".join(lines)}
     if event == EV_SOFTWARE_UPDATE:
-        return {"title": _titled(f"MDD Sim Gateway 新版本 · v{sender}"),
+        return {"title": _titled(f"OneWIFI 新版本 · v{sender}"),
                 "content": payload.get("text") or ""}
     title = _titled(f"VoWiFi {'短信' if event == EV_INCOMING_SMS else '来电'} · {sim}")
     lines = [f"SIM: {sim}"]
@@ -435,7 +435,7 @@ def build_webhook_request(cfg: dict, payload: dict) -> tuple[str, str, dict]:
     if not url:
         raise ValueError("webhook URL is empty")
 
-    headers = {"User-Agent": "mdd-sim-gateway"}
+    headers = {"User-Agent": "onewifi"}
     custom_headers = _json_setting(cfg.get("headers_json") or cfg.get("headers"), {})
     if not isinstance(custom_headers, dict):
         raise ValueError("webhook headers must be a JSON object")

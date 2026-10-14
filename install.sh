@@ -1,5 +1,5 @@
 #!/bin/sh
-# install.sh — one-click installer / lifecycle manager for MDD Sim Gateway.
+# install.sh — one-click installer / lifecycle manager for OneWIFI.
 #
 # Deploys the whole system on any Docker-capable Linux with a PC/SC reader, in one of two
 # DEPLOY MODES:
@@ -28,21 +28,21 @@
 #   ./install.sh status | logs
 #
 # The chosen mode is remembered (persisted under the data dir), so reload/status/logs/uninstall
-# don't need --mode again. An explicit --mode or the MDD_MODE env var always overrides.
+# don't need --mode again. An explicit --mode or the ONEWIFI_MODE env var always overrides.
 #
 # Config via env (or a .env file next to this script):
-#   MDD_MODE            deploy mode: local | docker                (default local)
-#   MDD_PORT            host port to publish/serve the WebUI on    (default 8443)
-#   MDD_DATA_DIR        runtime data dir                           (default <repo>/data)
-#   MDD_ADVERTISE_ADDR  host LAN IP for SIP/WebRTC media           (default: auto-detect)
-#   MDD_BIND            control bind addr                          (default 0.0.0.0)
-#   MDD_ENGINE_BASE_IMAGE optional trusted local engine image for an offline overlay migration
-#   MDD_ENGINE_DISTRIBUTION_IMAGE optional already-pulled, release-matched Engine image
+#   ONEWIFI_MODE            deploy mode: local | docker                (default local)
+#   ONEWIFI_PORT            host port to publish/serve the WebUI on    (default 8443)
+#   ONEWIFI_DATA_DIR        runtime data dir                           (default <repo>/data)
+#   ONEWIFI_ADVERTISE_ADDR  host LAN IP for SIP/WebRTC media           (default: auto-detect)
+#   ONEWIFI_BIND            control bind addr                          (default 0.0.0.0)
+#   ONEWIFI_ENGINE_BASE_IMAGE optional trusted local engine image for an offline overlay migration
+#   ONEWIFI_ENGINE_DISTRIBUTION_IMAGE optional already-pulled, release-matched Engine image
 #   PJPROJECT_REPOSITORY optional reviewed pjproject Git repository override for a full build
 #   ASTERISK_REPOSITORY optional reviewed Asterisk Git repository override for a full build
-#   MDD_REUSE_WEBUI     set to 1 to reuse a prebuilt, reviewed webui/dist in an offline install
-#   MDD_REUSE_CONTROL_IMAGE set to 1 to reuse a checksummed Release control image (docker mode)
-#   MDD_BUILD_IMAGES    set to 1 to build images from source instead of using Release assets
+#   ONEWIFI_REUSE_WEBUI     set to 1 to reuse a prebuilt, reviewed webui/dist in an offline install
+#   ONEWIFI_REUSE_CONTROL_IMAGE set to 1 to reuse a checksummed Release control image (docker mode)
+#   ONEWIFI_BUILD_IMAGES    set to 1 to build images from source instead of using Release assets
 #   PCSC_VERSION           pinned pcsc-lite version                   (default 2.3.3)
 #   LPAC_SRC               optional path to lpac source (for build-lpac)
 #   CMAKE_FETCH_VER        Kitware cmake version if system is too old (default 3.31.12)
@@ -53,36 +53,36 @@ SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 REPO_DIR="$SELF_DIR"
 [ -f "$REPO_DIR/.env" ] && . "$REPO_DIR/.env"
 
-MDD_PORT="${MDD_PORT:-8443}"
-DATA_DIR_STATE="/etc/mdd-sim-gateway/data-dir"
-if [ -n "${MDD_DATA_DIR+x}" ]; then
-  MDD_DATA_DIR=$MDD_DATA_DIR
+ONEWIFI_PORT="${ONEWIFI_PORT:-8443}"
+DATA_DIR_STATE="/etc/onewifi/data-dir"
+if [ -n "${ONEWIFI_DATA_DIR+x}" ]; then
+  ONEWIFI_DATA_DIR=$ONEWIFI_DATA_DIR
 elif [ -r "$DATA_DIR_STATE" ]; then
-  MDD_DATA_DIR=$(sed -n '1p' "$DATA_DIR_STATE")
-  case "$MDD_DATA_DIR" in /*) ;; *) MDD_DATA_DIR="$REPO_DIR/data" ;; esac
+  ONEWIFI_DATA_DIR=$(sed -n '1p' "$DATA_DIR_STATE")
+  case "$ONEWIFI_DATA_DIR" in /*) ;; *) ONEWIFI_DATA_DIR="$REPO_DIR/data" ;; esac
 else
-  MDD_DATA_DIR="$REPO_DIR/data"
+  ONEWIFI_DATA_DIR="$REPO_DIR/data"
 fi
-MDD_BIND="${MDD_BIND:-0.0.0.0}"
-MDD_ADVERTISE_ADDR="${MDD_ADVERTISE_ADDR:-}"
+ONEWIFI_BIND="${ONEWIFI_BIND:-0.0.0.0}"
+ONEWIFI_ADVERTISE_ADDR="${ONEWIFI_ADVERTISE_ADDR:-}"
 
-CONTROL_IMAGE="mdd-sim-gateway/control"
-ENGINE_IMAGE="mdd-sim-gateway/engine"
+CONTROL_IMAGE="onewifi/control"
+ENGINE_IMAGE="onewifi/engine"
 ENGINE_HANDOFF_MANIFEST="$REPO_DIR/engine/release-image.SHA256SUMS"
-CONTROL_NAME="mdd-sim-gateway-control"
-ENGINE_PREFIX="mdd-sim-gateway-engine-"
-RELAY_NAME="mdd-sim-gateway-relay"
-MEDIA_NETWORK="mdd-sim-gateway-media"
-MDD_DOCKER_LABEL="io.mdd-sim-gateway.managed"
+CONTROL_NAME="onewifi-control"
+ENGINE_PREFIX="onewifi-engine-"
+RELAY_NAME="onewifi-relay"
+MEDIA_NETWORK="onewifi-media"
+ONEWIFI_DOCKER_LABEL="io.onewifi.managed"
 WEBUI_BUILD_IMAGE="node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32"
 
 # Native (local-mode) control plane bits.
 VENV_DIR="$REPO_DIR/control/.venv"
 WEBUI_DIST="$REPO_DIR/webui/dist"
-SYSTEMD_UNIT="/etc/systemd/system/mdd-sim-gateway-control.service"
-ORCHESTRATOR_UNIT="/etc/systemd/system/mdd-sim-gateway-orchestrator.service"
+SYSTEMD_UNIT="/etc/systemd/system/onewifi-control.service"
+ORCHESTRATOR_UNIT="/etc/systemd/system/onewifi-orchestrator.service"
 # Where the selected deploy mode is remembered between invocations.
-MODE_STATE="$MDD_DATA_DIR/install-mode"
+MODE_STATE="$ONEWIFI_DATA_DIR/install-mode"
 
 # pcsc-lite version pinned across host + both container images so the PC/SC client/server
 # protocol always matches (distro defaults differ -> "Failed to establish context").
@@ -116,17 +116,17 @@ VPCD_SLOTS="${VPCD_SLOTS:-4}"
 
 # Host-side runtime dependencies. Versions and hashes are pinned so an upstream replacement
 # cannot silently change what this root installer executes. Override only for a reviewed release.
-SINGBOX_VERSION="${MDD_SINGBOX_VERSION:-1.13.15}"
+SINGBOX_VERSION="${ONEWIFI_SINGBOX_VERSION:-1.13.15}"
 SINGBOX_SHA256_AMD64="a3a3ff223b23c3f4731d0a17cb0ef94c97ce257c70721a5b07dc7ca079203c9f"
 SINGBOX_SHA256_ARM64="f0810bbb5722ae36635687c421019defcc8b328d31a0b3c287901f331747ca93"
 # 26.3.27 is the newest release Xray marks stable; everything after it is a prerelease.
 # REALITY moves with Xray, so an operator whose server runs a prerelease may need to match
 # it here. Overriding the version alone would only fail the checksum of the pinned one, so
 # the digests are overridable together with it — a reviewed override, never a silent one.
-XRAY_VERSION="${MDD_XRAY_VERSION:-26.3.27}"
-XRAY_SHA256_AMD64="${MDD_XRAY_SHA256_AMD64:-23cd9af937744d97776ee35ecad4972cf4b2109d1e0fe6be9930467608f7c8ae}"
-XRAY_SHA256_ARM64="${MDD_XRAY_SHA256_ARM64:-4d30283ae614e3057f730f67cd088a42be6fdf91f8639d82cb69e48cde80413c}"
-LPAC_VERSION="${MDD_LPAC_VERSION:-2.3.0}"
+XRAY_VERSION="${ONEWIFI_XRAY_VERSION:-26.3.27}"
+XRAY_SHA256_AMD64="${ONEWIFI_XRAY_SHA256_AMD64:-23cd9af937744d97776ee35ecad4972cf4b2109d1e0fe6be9930467608f7c8ae}"
+XRAY_SHA256_ARM64="${ONEWIFI_XRAY_SHA256_ARM64:-4d30283ae614e3057f730f67cd088a42be6fdf91f8639d82cb69e48cde80413c}"
+LPAC_VERSION="${ONEWIFI_LPAC_VERSION:-2.3.0}"
 LPAC_COMMIT="c2fcf5e4b21c712d54e35a11da2ad9ad134fb821"
 CMAKE_SHA256_AMD64="0dc2e9a6860f06bf10bd8fadc03e35d9eeb4df46e33763a7e480e987758f385c"
 CMAKE_SHA256_ARM64="83f8fd91d2038a56556e1400390fcfe42f79602940c494f6c6f1cdae7f9e7f40"
@@ -231,7 +231,7 @@ ensure_cellular_tools() {
 # releases only a port ModemManager itself classifies as a Quectel module's *secondary* AT
 # port; the primary AT port and QMI/MBIM stay with ModemManager, and a module with a single
 # AT port has no secondary one to match.
-MMS_AT_PORT_RULE="${MDD_UDEV_RULES_DIR:-/etc/udev/rules.d}/78-mdd-mms-at-port.rules"
+MMS_AT_PORT_RULE="${ONEWIFI_UDEV_RULES_DIR:-/etc/udev/rules.d}/78-mdd-mms-at-port.rules"
 
 # Re-evaluate tty udev properties and let ModemManager re-probe with them. Both are needed: a
 # changed rules file only reaches the udev database on the next event for the device, and
@@ -252,7 +252,7 @@ ensure_mms_at_port_rule() {
   rule_file=$MMS_AT_PORT_RULE
   temporary=$(mktemp /tmp/mdd-udev.XXXXXX)
   cat >"$temporary" <<'RULE'
-# MDD Sim Gateway: let the gateway own a Quectel module's secondary AT port for MMS uploads.
+# OneWIFI: let the gateway own a Quectel module's secondary AT port for MMS uploads.
 # ModemManager keeps the primary AT port and QMI; a module with a single AT port is unaffected.
 ACTION!="remove", SUBSYSTEM=="tty", ATTRS{idVendor}=="2c7c", ENV{ID_MM_PORT_TYPE_AT_SECONDARY}=="1", ENV{ID_MM_PORT_IGNORE}="1"
 RULE
@@ -363,11 +363,11 @@ enable_pcscd_autostart() {
   fi
 }
 
-data_dir_abs() { CDPATH= cd -- "$MDD_DATA_DIR" 2>/dev/null && pwd -P || printf '%s' "$MDD_DATA_DIR"; }
+data_dir_abs() { CDPATH= cd -- "$ONEWIFI_DATA_DIR" 2>/dev/null && pwd -P || printf '%s' "$ONEWIFI_DATA_DIR"; }
 
 # ------------------------------------------------------------------ deploy-mode state
 persist_mode() {
-  mkdir -p "$MDD_DATA_DIR"
+  mkdir -p "$ONEWIFI_DATA_DIR"
   install -d -m 0755 "$(dirname -- "$DATA_DIR_STATE")"
   printf '%s\n' "$(data_dir_abs)" > "$DATA_DIR_STATE"
   chmod 0644 "$DATA_DIR_STATE"
@@ -386,10 +386,10 @@ detect_installed_mode() {
 
 # Resolve the deploy mode. For lifecycle commands (start/stop/status/…): prefer what's actually
 # installed, so controls act on the real plane regardless of the state file. Precedence:
-#   --mode arg > MDD_MODE env > detected-from-artifacts > persisted state > default(local).
+#   --mode arg > ONEWIFI_MODE env > detected-from-artifacts > persisted state > default(local).
 resolve_mode() {
   m="${MODE_ARG:-}"
-  [ -z "$m" ] && m="${MDD_MODE:-}"
+  [ -z "$m" ] && m="${ONEWIFI_MODE:-}"
   if [ -z "$m" ]; then d=$(detect_installed_mode); [ "$d" != none ] && m="$d"; fi
   [ -z "$m" ] && [ -f "$MODE_STATE" ] && m=$(cat "$MODE_STATE" 2>/dev/null || true)
   [ -z "$m" ] && m="local"
@@ -403,7 +403,7 @@ resolve_mode() {
 # True (0) if the control plane is currently running.
 control_running() {
   if [ "${MODE:-}" = local ]; then
-    have systemctl && systemctl is-active --quiet mdd-sim-gateway-control
+    have systemctl && systemctl is-active --quiet onewifi-control
   else
     [ "$(docker inspect -f '{{.State.Running}}' "$CONTROL_NAME" 2>/dev/null)" = true ]
   fi
@@ -432,9 +432,9 @@ ensure_docker() {
 
 docker_container_owned() {
   name=$1
-  label=$(docker inspect -f "{{ index .Config.Labels \"$MDD_DOCKER_LABEL\" }}" "$name" 2>/dev/null || true)
+  label=$(docker inspect -f "{{ index .Config.Labels \"$ONEWIFI_DOCKER_LABEL\" }}" "$name" 2>/dev/null || true)
   image=$(docker inspect -f '{{.Config.Image}}' "$name" 2>/dev/null || true)
-  [ "$label" = true ] || case "$image" in mdd-sim-gateway/*) return 0;; *) return 1;; esac
+  [ "$label" = true ] || case "$image" in onewifi/*) return 0;; *) return 1;; esac
 }
 
 engine_names() {
@@ -446,8 +446,8 @@ engine_names() {
 }
 
 docker_preflight() {
-  case "$MDD_PORT" in ''|*[!0-9]*) die "MDD_PORT must be a number between 1 and 65535";; esac
-  [ "$MDD_PORT" -ge 1 ] && [ "$MDD_PORT" -le 65535 ] || die "MDD_PORT must be between 1 and 65535"
+  case "$ONEWIFI_PORT" in ''|*[!0-9]*) die "ONEWIFI_PORT must be a number between 1 and 65535";; esac
+  [ "$ONEWIFI_PORT" -ge 1 ] && [ "$ONEWIFI_PORT" -le 65535 ] || die "ONEWIFI_PORT must be between 1 and 65535"
 
   security=$(docker info --format '{{json .SecurityOptions}}' 2>/dev/null || true)
   printf '%s' "$security" | grep -qi rootless && \
@@ -463,15 +463,15 @@ docker_preflight() {
     esac
   done
 
-  publishers=$(docker ps --filter "publish=$MDD_PORT" --format '{{.Names}}' 2>/dev/null || true)
+  publishers=$(docker ps --filter "publish=$ONEWIFI_PORT" --format '{{.Names}}' 2>/dev/null || true)
   for name in $publishers; do
     [ "$name" = "$CONTROL_NAME" ] && docker_container_owned "$name" && continue
-    die "TCP port $MDD_PORT is already published by Docker container '$name'"
+    die "TCP port $ONEWIFI_PORT is already published by Docker container '$name'"
   done
   if [ -z "$publishers" ] && have ss && ss -ltnH 2>/dev/null | awk '{print $4}' | \
-      grep -Eq "(^|:)$MDD_PORT$"; then
-    if ! { have systemctl && systemctl is-active --quiet mdd-sim-gateway-control; }; then
-      die "TCP port $MDD_PORT is already in use by a non-MDD process"
+      grep -Eq "(^|:)$ONEWIFI_PORT$"; then
+    if ! { have systemctl && systemctl is-active --quiet onewifi-control; }; then
+      die "TCP port $ONEWIFI_PORT is already in use by a non-MDD process"
     fi
   fi
   info "existing Docker daemon passed ownership, port and privilege checks; daemon configuration was left unchanged"
@@ -584,9 +584,9 @@ ensure_ccid_host() {
   # by the host orchestrator first, so the control-plane card monitor does not mistake this
   # planned enumeration gap for a physical unplug and stop healthy VoWiFi engines.
   if have systemctl; then
-    install -d -m 0700 "$MDD_DATA_DIR/orchestrator"
-    : > "$MDD_DATA_DIR/orchestrator/pcsc-maintenance"
-    chmod 0600 "$MDD_DATA_DIR/orchestrator/pcsc-maintenance" 2>/dev/null || true
+    install -d -m 0700 "$ONEWIFI_DATA_DIR/orchestrator"
+    : > "$ONEWIFI_DATA_DIR/orchestrator/pcsc-maintenance"
+    chmod 0600 "$ONEWIFI_DATA_DIR/orchestrator/pcsc-maintenance" 2>/dev/null || true
     systemctl restart pcscd 2>/dev/null || true
   fi
   info "patched CCID driver $CCID_VERSION (set: $set_label) installed to $drivers_dir"
@@ -616,7 +616,7 @@ _build_pcsclite_host() {
 # Dockerfile — so an unforced reinstall reuses the existing patched image instead of rebuilding it.
 # Files the overlay can refresh on its own, versus the ones that decide what the base contains.
 # Splitting them is what lets an update ship an engine fix without a 15-minute Asterisk rebuild.
-ENGINE_BASE_TAG="mdd-sim-gateway/engine-base:trusted"
+ENGINE_BASE_TAG="onewifi/engine-base:trusted"
 
 engine_fingerprint() {
   PCSC_VERSION="$PCSC_VERSION" sh "$REPO_DIR/tools/engine-fingerprint.sh" "$1"
@@ -644,8 +644,8 @@ ensure_engine_image() {
   have_image=0
   docker image inspect "$ENGINE_IMAGE" >/dev/null 2>&1 && have_image=1
 
-  if [ -n "${MDD_ENGINE_DISTRIBUTION_IMAGE:-}" ]; then
-    distributed="$MDD_ENGINE_DISTRIBUTION_IMAGE"
+  if [ -n "${ONEWIFI_ENGINE_DISTRIBUTION_IMAGE:-}" ]; then
+    distributed="$ONEWIFI_ENGINE_DISTRIBUTION_IMAGE"
     docker image inspect "$distributed" >/dev/null 2>&1 || \
       die "distributed engine image not found: $distributed"
     expected_version=$(tr -d '\n' < "$REPO_DIR/VERSION")
@@ -653,7 +653,7 @@ ensure_engine_image() {
     [ "$expected_arch" = aarch64 ] && expected_arch=arm64
     [ "$expected_arch" = x86_64 ] && expected_arch=amd64
     identity=$(docker image inspect "$distributed" --format \
-      '{{.Architecture}}|{{index .Config.Labels "org.opencontainers.image.version"}}|{{index .Config.Labels "io.mdd-sim-gateway.runtime-fp"}}|{{index .Config.Labels "io.mdd-sim-gateway.base-fp"}}' 2>/dev/null || true)
+      '{{.Architecture}}|{{index .Config.Labels "org.opencontainers.image.version"}}|{{index .Config.Labels "io.onewifi.runtime-fp"}}|{{index .Config.Labels "io.onewifi.base-fp"}}' 2>/dev/null || true)
     expected="$expected_arch|$expected_version|$runtime_fp|$base_fp"
     [ "$identity" = "$expected" ] || \
       die "distributed engine image identity mismatch: ${identity:-unreadable}"
@@ -669,8 +669,8 @@ ensure_engine_image() {
   fi
 
   if [ "$have_image" = 1 ] && [ -z "$force" ] && [ -z "$NOCACHE_FLAG" ]; then
-    image_runtime=$(engine_image_label "$ENGINE_IMAGE" io.mdd-sim-gateway.runtime-fp)
-    image_base=$(engine_image_label "$ENGINE_IMAGE" io.mdd-sim-gateway.base-fp)
+    image_runtime=$(engine_image_label "$ENGINE_IMAGE" io.onewifi.runtime-fp)
+    image_base=$(engine_image_label "$ENGINE_IMAGE" io.onewifi.base-fp)
     if [ "$image_base" = "$base_fp" ] && [ "$image_runtime" = "$runtime_fp" ]; then
       info "engine image $ENGINE_IMAGE matches this checkout — reusing"
       return
@@ -695,11 +695,11 @@ ensure_engine_image() {
     fi
   fi
 
-  if [ -n "${MDD_ENGINE_BASE_IMAGE:-}" ]; then
-    docker image inspect "$MDD_ENGINE_BASE_IMAGE" >/dev/null 2>&1 || \
-      die "trusted local engine base image not found: $MDD_ENGINE_BASE_IMAGE"
-    info "building offline engine overlay from trusted local image $MDD_ENGINE_BASE_IMAGE"
-    engine_overlay_build "$MDD_ENGINE_BASE_IMAGE" "$runtime_fp" "$base_fp" || \
+  if [ -n "${ONEWIFI_ENGINE_BASE_IMAGE:-}" ]; then
+    docker image inspect "$ONEWIFI_ENGINE_BASE_IMAGE" >/dev/null 2>&1 || \
+      die "trusted local engine base image not found: $ONEWIFI_ENGINE_BASE_IMAGE"
+    info "building offline engine overlay from trusted local image $ONEWIFI_ENGINE_BASE_IMAGE"
+    engine_overlay_build "$ONEWIFI_ENGINE_BASE_IMAGE" "$runtime_fp" "$base_fp" || \
       die "offline engine overlay build failed"
     ENGINE_IMAGE_CHANGED=1
   else
@@ -712,7 +712,7 @@ ensure_engine_image() {
     [ -n "$NOCACHE_FLAG" ] && set -- "$@" "$NOCACHE_FLAG"
     set -- "$@" --build-arg "PCSC_VERSION=$PCSC_VERSION" \
       --build-arg "RUNTIME_FP=$runtime_fp" --build-arg "BASE_FP=$base_fp" \
-      --build-arg "MDD_VERSION=$(tr -d '\n' < "$REPO_DIR/VERSION")"
+      --build-arg "ONEWIFI_VERSION=$(tr -d '\n' < "$REPO_DIR/VERSION")"
     [ -n "${PJPROJECT_REPOSITORY:-}" ] && \
       set -- "$@" --build-arg "PJPROJECT_REPOSITORY=$PJPROJECT_REPOSITORY"
     [ -n "${ASTERISK_REPOSITORY:-}" ] && \
@@ -734,8 +734,8 @@ engine_matches_checkout() {
   docker image inspect "$ENGINE_IMAGE" >/dev/null 2>&1 || return 1
   runtime_fp=$(engine_fingerprint runtime)
   base_fp=$(engine_fingerprint base)
-  [ "$(engine_image_label "$ENGINE_IMAGE" io.mdd-sim-gateway.runtime-fp)" = "$runtime_fp" ] && \
-    [ "$(engine_image_label "$ENGINE_IMAGE" io.mdd-sim-gateway.base-fp)" = "$base_fp" ]
+  [ "$(engine_image_label "$ENGINE_IMAGE" io.onewifi.runtime-fp)" = "$runtime_fp" ] && \
+    [ "$(engine_image_label "$ENGINE_IMAGE" io.onewifi.base-fp)" = "$base_fp" ]
 }
 
 control_image_matches_checkout() {
@@ -750,27 +750,27 @@ control_image_matches_checkout() {
 handoff_release_images() {
   have python3 || die "python3 is required to import the Release image assets"
   version=$(tr -d '\n' < "$REPO_DIR/VERSION")
-  repository=${MDD_UPDATE_REPOSITORY:-MddIdd/mdd-sim-gateway}
-  network_file="$MDD_DATA_DIR/update/network.json"
+  repository=${ONEWIFI_UPDATE_REPOSITORY:-OneCatx/OneWIFIX}
+  network_file="$ONEWIFI_DATA_DIR/update/network.json"
   if [ -f "$network_file" ]; then
     distributed=$(python3 "$REPO_DIR/host/mdd_update.py" \
-      --repo "$REPO_DIR" --data "$MDD_DATA_DIR" --version "$version" \
+      --repo "$REPO_DIR" --data "$ONEWIFI_DATA_DIR" --version "$version" \
       --repository "$repository" --network-config "$network_file" \
       --install-images --install-mode "$MODE") || \
       die "could not import the Release image assets"
   else
     distributed=$(python3 "$REPO_DIR/host/mdd_update.py" \
-      --repo "$REPO_DIR" --data "$MDD_DATA_DIR" --version "$version" \
+      --repo "$REPO_DIR" --data "$ONEWIFI_DATA_DIR" --version "$version" \
       --repository "$repository" --install-images --install-mode "$MODE") || \
       die "could not import the Release image assets"
   fi
   [ -n "$distributed" ] || die "Release image handoff returned no Engine image"
-  MDD_ENGINE_DISTRIBUTION_IMAGE=$distributed
-  MDD_PRUNE_BUILD_CACHE=1
-  export MDD_ENGINE_DISTRIBUTION_IMAGE MDD_PRUNE_BUILD_CACHE
+  ONEWIFI_ENGINE_DISTRIBUTION_IMAGE=$distributed
+  ONEWIFI_PRUNE_BUILD_CACHE=1
+  export ONEWIFI_ENGINE_DISTRIBUTION_IMAGE ONEWIFI_PRUNE_BUILD_CACHE
   if [ "$MODE" = docker ]; then
-    MDD_REUSE_CONTROL_IMAGE=1
-    export MDD_REUSE_CONTROL_IMAGE
+    ONEWIFI_REUSE_CONTROL_IMAGE=1
+    export ONEWIFI_REUSE_CONTROL_IMAGE
   fi
   info "old updater handed off to verified $(host_arch) Release images"
 }
@@ -780,49 +780,49 @@ handoff_release_images() {
 # the same architecture-checked Release assets as one-click updates without trusting a floating
 # registry tag or silently falling back to a lengthy build after a verification failure.
 prepare_release_images() {
-  [ "${MDD_BUILD_IMAGES:-0}" != 1 ] || {
-    info "building images from source (MDD_BUILD_IMAGES=1)"
+  [ "${ONEWIFI_BUILD_IMAGES:-0}" != 1 ] || {
+    info "building images from source (ONEWIFI_BUILD_IMAGES=1)"
     return 0
   }
   [ -f "$ENGINE_HANDOFF_MANIFEST" ] || return 0
   have python3 || die "python3 is required to import Release image assets"
-  MDD_REUSE_WEBUI=1
-  MDD_PRUNE_BUILD_CACHE=1
-  export MDD_REUSE_WEBUI MDD_PRUNE_BUILD_CACHE
+  ONEWIFI_REUSE_WEBUI=1
+  ONEWIFI_PRUNE_BUILD_CACHE=1
+  export ONEWIFI_REUSE_WEBUI ONEWIFI_PRUNE_BUILD_CACHE
   if engine_matches_checkout; then
     if [ "$MODE" = local ]; then
       info "installed Engine already matches the official release — reusing images"
       return 0
     fi
     if control_image_matches_checkout; then
-      MDD_REUSE_CONTROL_IMAGE=1
-      export MDD_REUSE_CONTROL_IMAGE
+      ONEWIFI_REUSE_CONTROL_IMAGE=1
+      export ONEWIFI_REUSE_CONTROL_IMAGE
       info "installed Engine and Control already match the official release — reusing images"
       return 0
     fi
   fi
   version=$(tr -d '\n' < "$REPO_DIR/VERSION")
-  repository=${MDD_UPDATE_REPOSITORY:-MddIdd/mdd-sim-gateway}
-  network_file="$MDD_DATA_DIR/update/network.json"
+  repository=${ONEWIFI_UPDATE_REPOSITORY:-OneCatx/OneWIFIX}
+  network_file="$ONEWIFI_DATA_DIR/update/network.json"
   info "downloading verified $(host_arch) Release images for a fresh install…"
   if [ -f "$network_file" ]; then
     distributed=$(python3 "$REPO_DIR/host/mdd_update.py" \
-      --repo "$REPO_DIR" --data "$MDD_DATA_DIR" --version "$version" \
+      --repo "$REPO_DIR" --data "$ONEWIFI_DATA_DIR" --version "$version" \
       --repository "$repository" --network-config "$network_file" \
       --install-images --install-mode "$MODE") || \
-      die "could not import Release images; set MDD_BUILD_IMAGES=1 to build from source"
+      die "could not import Release images; set ONEWIFI_BUILD_IMAGES=1 to build from source"
   else
     distributed=$(python3 "$REPO_DIR/host/mdd_update.py" \
-      --repo "$REPO_DIR" --data "$MDD_DATA_DIR" --version "$version" \
+      --repo "$REPO_DIR" --data "$ONEWIFI_DATA_DIR" --version "$version" \
       --repository "$repository" --install-images --install-mode "$MODE") || \
-      die "could not import Release images; set MDD_BUILD_IMAGES=1 to build from source"
+      die "could not import Release images; set ONEWIFI_BUILD_IMAGES=1 to build from source"
   fi
   [ -n "$distributed" ] || die "Release image importer returned no Engine image"
-  MDD_ENGINE_DISTRIBUTION_IMAGE=$distributed
-  export MDD_ENGINE_DISTRIBUTION_IMAGE MDD_REUSE_WEBUI MDD_PRUNE_BUILD_CACHE
+  ONEWIFI_ENGINE_DISTRIBUTION_IMAGE=$distributed
+  export ONEWIFI_ENGINE_DISTRIBUTION_IMAGE ONEWIFI_REUSE_WEBUI ONEWIFI_PRUNE_BUILD_CACHE
   if [ "$MODE" = docker ]; then
-    MDD_REUSE_CONTROL_IMAGE=1
-    export MDD_REUSE_CONTROL_IMAGE
+    ONEWIFI_REUSE_CONTROL_IMAGE=1
+    export ONEWIFI_REUSE_CONTROL_IMAGE
   fi
   info "using verified Release images for $(host_arch)"
 }
@@ -842,14 +842,14 @@ engine_overlay_build() {
     docker tag "$ENGINE_IMAGE" "$ENGINE_IMAGE:previous" >/dev/null 2>&1
   docker build --build-arg "BASE_IMAGE=$overlay_base" \
     --build-arg "RUNTIME_FP=$overlay_runtime_fp" --build-arg "BASE_FP=$overlay_base_fp" \
-    --build-arg "MDD_VERSION=$(tr -d '\n' < "$REPO_DIR/VERSION")" \
+    --build-arg "ONEWIFI_VERSION=$(tr -d '\n' < "$REPO_DIR/VERSION")" \
     -t "$ENGINE_IMAGE" -f "$REPO_DIR/engine/Dockerfile.overlay" "$REPO_DIR/engine"
 }
 
 build_control_image() {
-  if [ "${MDD_REUSE_CONTROL_IMAGE:-0}" = 1 ]; then
+  if [ "${ONEWIFI_REUSE_CONTROL_IMAGE:-0}" = 1 ]; then
     docker image inspect "$CONTROL_IMAGE" >/dev/null 2>&1 || \
-      die "MDD_REUSE_CONTROL_IMAGE=1 but $CONTROL_IMAGE is not loaded"
+      die "ONEWIFI_REUSE_CONTROL_IMAGE=1 but $CONTROL_IMAGE is not loaded"
     expected=$(tr -d '\n' < "$REPO_DIR/VERSION")
     actual=$(docker image inspect "$CONTROL_IMAGE" \
       --format '{{index .Config.Labels "org.opencontainers.image.version"}}' 2>/dev/null || true)
@@ -867,7 +867,7 @@ build_control_image() {
   info "building control image ($CONTROL_IMAGE) from source (WebUI + FastAPI)…"
   # shellcheck disable=SC2086
   docker build $NOCACHE_FLAG --build-arg "PCSC_VERSION=$PCSC_VERSION" \
-    --build-arg "MDD_VERSION=$(tr -d '\n' < "$REPO_DIR/VERSION")" \
+    --build-arg "ONEWIFI_VERSION=$(tr -d '\n' < "$REPO_DIR/VERSION")" \
     -t "$CONTROL_IMAGE" -f "$REPO_DIR/control/Dockerfile" "$REPO_DIR"
   info "control image built"
 }
@@ -876,15 +876,15 @@ build_control_image() {
 # no Node/JS toolchain on the host. Builds in an isolated dir inside the container (ignores any
 # host node_modules that might be built for another arch), then copies dist back to the host.
 build_webui_local() {
-  if [ "${MDD_REUSE_WEBUI:-0}" = 1 ]; then
-    [ -f "$WEBUI_DIST/index.html" ] || die "MDD_REUSE_WEBUI=1 but webui/dist/index.html is missing"
+  if [ "${ONEWIFI_REUSE_WEBUI:-0}" = 1 ]; then
+    [ -f "$WEBUI_DIST/index.html" ] || die "ONEWIFI_REUSE_WEBUI=1 but webui/dist/index.html is missing"
     info "reusing reviewed prebuilt WebUI at $WEBUI_DIST"
     return
   fi
   # v1.3.3 bootstrap: v1.3.2's updater downloads GitHub's tag archive, which cannot contain
   # ignored CI artifacts. Reuse the already-installed dist only when every file matches the
   # reviewed manifest committed with this release. Newer updaters install a checksummed Release
-  # asset and set MDD_REUSE_WEBUI=1 explicitly, so this is not a trust-on-first-use shortcut.
+  # asset and set ONEWIFI_REUSE_WEBUI=1 explicitly, so this is not a trust-on-first-use shortcut.
   webui_manifest="$REPO_DIR/webui/release-dist.SHA256SUMS"
   if [ -f "$webui_manifest" ] && [ -f "$WEBUI_DIST/index.html" ] && have sha256sum && \
       (cd "$REPO_DIR/webui" && sha256sum -c "$(basename -- "$webui_manifest")" >/dev/null 2>&1); then
@@ -955,38 +955,38 @@ setup_venv() {
 
 # Write + (re)start the native control-plane systemd unit. Runs as root (needs the reader via
 # host pcscd + the Docker socket to manage engine containers). Because the control plane runs
-# ON the host, MDD_HOST_DATA == MDD_DATA (the real host path the manager hands to engine
+# ON the host, ONEWIFI_HOST_DATA == ONEWIFI_DATA (the real host path the manager hands to engine
 # bind-mounts). Engines reach it back over host.docker.internal:<port> (engine.start adds the
 # host-gateway extra_host), same as in docker mode.
 run_control_local() {
   have systemctl || die "local mode needs systemd (systemctl not found). Re-run with --mode docker."
-  install -d -m 0700 "$MDD_DATA_DIR"
+  install -d -m 0700 "$ONEWIFI_DATA_DIR"
   DATA_ABS=$(data_dir_abs)
-  LAN_IP="$MDD_ADVERTISE_ADDR"
+  LAN_IP="$ONEWIFI_ADVERTISE_ADDR"
   [ -z "$LAN_IP" ] && LAN_IP=$(detect_lan_ip)
-  [ -z "$LAN_IP" ] && warn "could not auto-detect a LAN IP; set MDD_ADVERTISE_ADDR — SIP/WebRTC audio needs a routable host address"
+  [ -z "$LAN_IP" ] && warn "could not auto-detect a LAN IP; set ONEWIFI_ADVERTISE_ADDR — SIP/WebRTC audio needs a routable host address"
 
   info "installing systemd unit $SYSTEMD_UNIT (native control plane)"
   cat > "$SYSTEMD_UNIT" <<EOF
 [Unit]
-Description=MDD Sim Gateway control surface (native / manager + WebUI)
+Description=OneWIFI control surface (native / manager + WebUI)
 After=network-online.target pcscd.service docker.service
 Wants=network-online.target
 
 [Service]
 Type=simple
 WorkingDirectory=$REPO_DIR/control
-Environment=MDD_DATA=$DATA_ABS
-Environment=MDD_HOST_DATA=$DATA_ABS
-Environment=MDD_REPO_DIR=$REPO_DIR
-Environment=MDD_VENV_DIR=$VENV_DIR
-Environment=MDD_WEBUI=$WEBUI_DIST
-Environment=MDD_HTTP_PORT=$MDD_PORT
-Environment=MDD_BIND=$MDD_BIND
-Environment=MDD_ADVERTISE_ADDR=$LAN_IP
-Environment=MDD_ENGINE_IMAGE=$ENGINE_IMAGE
-Environment=MDD_MANAGER_URL=https://host.docker.internal:$MDD_PORT
-Environment=MDD_PCSCD_DIR=/run/pcscd
+Environment=ONEWIFI_DATA=$DATA_ABS
+Environment=ONEWIFI_HOST_DATA=$DATA_ABS
+Environment=ONEWIFI_REPO_DIR=$REPO_DIR
+Environment=ONEWIFI_VENV_DIR=$VENV_DIR
+Environment=ONEWIFI_WEBUI=$WEBUI_DIST
+Environment=ONEWIFI_HTTP_PORT=$ONEWIFI_PORT
+Environment=ONEWIFI_BIND=$ONEWIFI_BIND
+Environment=ONEWIFI_ADVERTISE_ADDR=$LAN_IP
+Environment=ONEWIFI_ENGINE_IMAGE=$ENGINE_IMAGE
+Environment=ONEWIFI_MANAGER_URL=https://host.docker.internal:$ONEWIFI_PORT
+Environment=ONEWIFI_PCSCD_DIR=/run/pcscd
 Environment=PYTHONUNBUFFERED=1
 ExecStart=$VENV_DIR/bin/python run.py
 Restart=on-failure
@@ -998,14 +998,14 @@ UMask=0077
 WantedBy=multi-user.target
 EOF
   systemctl daemon-reload
-  systemctl enable mdd-sim-gateway-control >/dev/null 2>&1 || true
-  systemctl restart mdd-sim-gateway-control
-  info "started native control plane on https://${LAN_IP:-<host>}:${MDD_PORT}"
+  systemctl enable onewifi-control >/dev/null 2>&1 || true
+  systemctl restart onewifi-control
+  info "started native control plane on https://${LAN_IP:-<host>}:${ONEWIFI_PORT}"
 }
 
 remove_control_local() {
   if have systemctl; then
-    systemctl disable --now mdd-sim-gateway-control >/dev/null 2>&1 || true
+    systemctl disable --now onewifi-control >/dev/null 2>&1 || true
   fi
   if [ -f "$SYSTEMD_UNIT" ]; then
     rm -f "$SYSTEMD_UNIT"
@@ -1109,9 +1109,9 @@ ensure_vpcd_host() {
   if have systemctl; then
     # Same maintenance marker the orchestrator publishes, so the control plane does not read
     # this planned enumeration gap as readers being unplugged and stop healthy engines.
-    install -d -m 0700 "$MDD_DATA_DIR/orchestrator"
-    : > "$MDD_DATA_DIR/orchestrator/pcsc-maintenance"
-    chmod 0600 "$MDD_DATA_DIR/orchestrator/pcsc-maintenance" 2>/dev/null || true
+    install -d -m 0700 "$ONEWIFI_DATA_DIR/orchestrator"
+    : > "$ONEWIFI_DATA_DIR/orchestrator/pcsc-maintenance"
+    chmod 0600 "$ONEWIFI_DATA_DIR/orchestrator/pcsc-maintenance" 2>/dev/null || true
     systemctl restart pcscd 2>/dev/null || true
   fi
   info "virtual smart-card driver installed with $VPCD_SLOTS slots ($drivers_dir)"
@@ -1137,7 +1137,7 @@ run_orchestrator() {
   have xray || die "Xray-core installation failed"
   cat > "$ORCHESTRATOR_UNIT" <<EOF
 [Unit]
-Description=MDD Sim Gateway host egress and modem orchestrator
+Description=OneWIFI host egress and modem orchestrator
 After=network-online.target pcscd.service
 Wants=network-online.target
 
@@ -1155,13 +1155,13 @@ UMask=0077
 WantedBy=multi-user.target
 EOF
   systemctl daemon-reload
-  systemctl enable mdd-sim-gateway-orchestrator >/dev/null 2>&1 || true
-  systemctl restart mdd-sim-gateway-orchestrator
+  systemctl enable onewifi-orchestrator >/dev/null 2>&1 || true
+  systemctl restart onewifi-orchestrator
 }
 
 remove_orchestrator() {
-  if have systemctl; then systemctl disable --now mdd-sim-gateway-orchestrator >/dev/null 2>&1 || true; fi
-  rm -f "$ORCHESTRATOR_UNIT" /etc/reader.conf.d/mdd-sim-gateway-modems
+  if have systemctl; then systemctl disable --now onewifi-orchestrator >/dev/null 2>&1 || true; fi
+  rm -f "$ORCHESTRATOR_UNIT" /etc/reader.conf.d/onewifi-modems
   # Nothing of ours is left to collide with it, so hand the packaged reader back.
   restore_packaged_vpcd_reader
   have systemctl && systemctl daemon-reload 2>/dev/null || true
@@ -1192,24 +1192,24 @@ control_tun_mtu() {
 }
 
 run_control() {
-  install -d -m 0700 "$MDD_DATA_DIR"
+  install -d -m 0700 "$ONEWIFI_DATA_DIR"
   DATA_ABS=$(data_dir_abs)
-  LAN_IP="$MDD_ADVERTISE_ADDR"
+  LAN_IP="$ONEWIFI_ADVERTISE_ADDR"
   [ -z "$LAN_IP" ] && LAN_IP=$(detect_lan_ip)
-  [ -z "$LAN_IP" ] && warn "could not auto-detect a LAN IP; set MDD_ADVERTISE_ADDR — SIP/WebRTC audio needs a routable host address"
+  [ -z "$LAN_IP" ] && warn "could not auto-detect a LAN IP; set ONEWIFI_ADVERTISE_ADDR — SIP/WebRTC audio needs a routable host address"
 
   TUN_MTU=$(control_tun_mtu)
   if docker inspect "$CONTROL_NAME" >/dev/null 2>&1; then
     docker_container_owned "$CONTROL_NAME" || die "refusing to replace foreign container '$CONTROL_NAME'"
     docker rm -f "$CONTROL_NAME" >/dev/null
   fi
-  info "starting control plane container ($CONTROL_NAME) on https://${LAN_IP:-<host>}:${MDD_PORT}"
+  info "starting control plane container ($CONTROL_NAME) on https://${LAN_IP:-<host>}:${ONEWIFI_PORT}"
   docker run -d --name "$CONTROL_NAME" \
-    --label "$MDD_DOCKER_LABEL=true" \
-    --label "io.mdd-sim-gateway.component=control" \
+    --label "$ONEWIFI_DOCKER_LABEL=true" \
+    --label "io.onewifi.component=control" \
     --privileged \
     --restart unless-stopped \
-    -p "${MDD_PORT}:8443" \
+    -p "${ONEWIFI_PORT}:8443" \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /run/pcscd:/run/pcscd \
     -v /run/dbus:/run/dbus:ro \
@@ -1217,17 +1217,17 @@ run_control() {
     -v /usr/local/bin/xray:/usr/local/bin/xray:ro \
     -v "${REPO_DIR}/host:/app/host:ro" \
     -v "${DATA_ABS}:/data" \
-    -e MDD_DATA=/data \
-    -e MDD_HOST_DATA="${DATA_ABS}" \
-    -e MDD_HTTP_PORT=8443 \
-    -e MDD_BIND="${MDD_BIND}" \
-    -e MDD_ADVERTISE_ADDR="${LAN_IP}" \
-    -e MDD_MANAGER_URL="https://host.docker.internal:${MDD_PORT}" \
-    -e MDD_ENGINE_IMAGE="${ENGINE_IMAGE}" \
-    -e MDD_PCSCD_DIR=/run/pcscd \
+    -e ONEWIFI_DATA=/data \
+    -e ONEWIFI_HOST_DATA="${DATA_ABS}" \
+    -e ONEWIFI_HTTP_PORT=8443 \
+    -e ONEWIFI_BIND="${ONEWIFI_BIND}" \
+    -e ONEWIFI_ADVERTISE_ADDR="${LAN_IP}" \
+    -e ONEWIFI_MANAGER_URL="https://host.docker.internal:${ONEWIFI_PORT}" \
+    -e ONEWIFI_ENGINE_IMAGE="${ENGINE_IMAGE}" \
+    -e ONEWIFI_PCSCD_DIR=/run/pcscd \
     ${TUN_MTU:+-e SWU_TUN_MTU=$TUN_MTU} \
-    -e MDD_SINGBOX_BIN=/usr/local/bin/sing-box \
-    -e MDD_XRAY_BIN=/usr/local/bin/xray \
+    -e ONEWIFI_SINGBOX_BIN=/usr/local/bin/sing-box \
+    -e ONEWIFI_XRAY_BIN=/usr/local/bin/xray \
     "$CONTROL_IMAGE"
 }
 
@@ -1236,7 +1236,7 @@ run_control() {
 restart_control_plane() {
   if [ "$MODE" = local ]; then
     have systemctl || return 1
-    systemctl restart mdd-sim-gateway-control || return 1
+    systemctl restart onewifi-control || return 1
   else
     managed_control_exists || return 1
     docker restart "$CONTROL_NAME" >/dev/null || return 1
@@ -1246,9 +1246,9 @@ restart_control_plane() {
 cleanup_release_artifacts() {
   set -- python3 "$REPO_DIR/host/mdd_image_cleanup.py" \
     --version "$(tr -d '\n' < "$REPO_DIR/VERSION")"
-  [ "${MDD_PRUNE_BUILD_CACHE:-0}" != 1 ] || set -- "$@" --prune-build-cache
+  [ "${ONEWIFI_PRUNE_BUILD_CACHE:-0}" != 1 ] || set -- "$@" --prune-build-cache
   if "$@"; then
-    if [ "${MDD_PRUNE_BUILD_CACHE:-0}" = 1 ]; then
+    if [ "${ONEWIFI_PRUNE_BUILD_CACHE:-0}" = 1 ]; then
       info "removed superseded MDD images and dangling legacy build cache"
     else
       info "removed superseded MDD image tags and dangling images"
@@ -1263,13 +1263,13 @@ cmd_install() {
   need_root
   rm -f "$REPO_DIR/EDITION"
   resolve_mode
-  info "MDD Sim Gateway install — repo: $REPO_DIR  (mode: ${B}$MODE${N})"
+  info "OneWIFI install — repo: $REPO_DIR  (mode: ${B}$MODE${N})"
   # Development checkouts have no CI-generated asset manifest and therefore compile from source.
   # Warn only on that path; official release archives import the matching native image instead.
   ensure_docker
   docker_preflight
   if ! docker image inspect "$ENGINE_IMAGE" >/dev/null 2>&1 \
-      && { [ ! -f "$ENGINE_HANDOFF_MANIFEST" ] || [ "${MDD_BUILD_IMAGES:-0}" = 1 ]; }; then
+      && { [ ! -f "$ENGINE_HANDOFF_MANIFEST" ] || [ "${ONEWIFI_BUILD_IMAGES:-0}" = 1 ]; }; then
     warn "the engine image builds from source (Asterisk + pcsc-lite + SWu tunnel deps). On low-power ARM"
     warn "machines this can take 20-30 minutes — this is normal, please be patient. It runs only once;"
     warn "later installs/reloads reuse the built image."
@@ -1278,10 +1278,10 @@ cmd_install() {
   ensure_singbox
   ensure_xray
   ensure_cellular_tools
-  if [ ! -x "$MDD_DATA_DIR/lpac/lpac" ]; then
+  if [ ! -x "$ONEWIFI_DATA_DIR/lpac/lpac" ]; then
     saved_args=$ARGS; ARGS=""; cmd_build_lpac; ARGS=$saved_args
   else
-    info "lpac already installed at $MDD_DATA_DIR/lpac/lpac"
+    info "lpac already installed at $ONEWIFI_DATA_DIR/lpac/lpac"
   fi
   prepare_release_images
   ensure_engine_image
@@ -1299,13 +1299,13 @@ cmd_install() {
   run_orchestrator
   cleanup_release_artifacts
   DATA_ABS=$(data_dir_abs)
-  LAN_IP="${MDD_ADVERTISE_ADDR:-$(detect_lan_ip)}"
+  LAN_IP="${ONEWIFI_ADVERTISE_ADDR:-$(detect_lan_ip)}"
   printf '\n'
   info "install complete (mode: $MODE)"
-  printf '   %sWebUI:%s   https://%s:%s\n' "$B" "$N" "${LAN_IP:-<host-ip>}" "$MDD_PORT"
+  printf '   %sWebUI:%s   https://%s:%s\n' "$B" "$N" "${LAN_IP:-<host-ip>}" "$ONEWIFI_PORT"
   printf '   %sData:%s    %s\n' "$B" "$N" "$DATA_ABS"
   if [ "$MODE" = local ]; then
-    printf '   %sControl:%s native systemd service (mdd-sim-gateway-control); engines run in Docker\n' "$B" "$N"
+    printf '   %sControl:%s native systemd service (onewifi-control); engines run in Docker\n' "$B" "$N"
   else
     printf '   %sControl:%s Docker container (%s); engines run in Docker\n' "$B" "$N" "$CONTROL_NAME"
   fi
@@ -1338,7 +1338,7 @@ cmd_reload() {
   ensure_cellular_tools
   ENGINE_IMAGE_CHANGED=0
   if [ "$PRESERVE_ENGINES" = 1 ] && [ -f "$ENGINE_HANDOFF_MANIFEST" ] \
-      && [ -f "$MDD_DATA_DIR/update/network.json" ]; then
+      && [ -f "$ONEWIFI_DATA_DIR/update/network.json" ]; then
     if engine_matches_checkout \
         && { [ "$MODE" = local ] || control_image_matches_checkout; }; then
       info "installed release images already match the handoff — preserving them"
@@ -1414,11 +1414,11 @@ cmd_reload() {
 # relay (one TURN relay port, nothing published by the engines). control/app/media.py does the
 # work; this runs it in the control plane's own environment and supplies the relay image.
 relay_image_ref() {
-  printf 'mdd-sim-gateway/relay:v%s' "$(tr -d '\n' < "$REPO_DIR/VERSION")"
+  printf 'onewifi/relay:v%s' "$(tr -d '\n' < "$REPO_DIR/VERSION")"
 }
 
 media_mode_recorded() {
-  grep -q '"mode": "relay"' "$MDD_DATA_DIR/media/state.json" 2>/dev/null && echo relay || echo direct
+  grep -q '"mode": "relay"' "$ONEWIFI_DATA_DIR/media/state.json" 2>/dev/null && echo relay || echo direct
 }
 
 # The relay is upstream coturn, unmodified (control/app/media.py pins it). An official release
@@ -1429,13 +1429,13 @@ media_mode_recorded() {
 ensure_relay_image() {
   ref=$(relay_image_ref)
   docker image inspect "$ref" >/dev/null 2>&1 && return 0
-  [ -f "$ENGINE_HANDOFF_MANIFEST" ] && grep -q "mdd-sim-gateway-relay-" "$ENGINE_HANDOFF_MANIFEST" \
+  [ -f "$ENGINE_HANDOFF_MANIFEST" ] && grep -q "onewifi-relay-" "$ENGINE_HANDOFF_MANIFEST" \
     && have python3 || return 0
-  set -- python3 "$REPO_DIR/host/mdd_update.py" --repo "$REPO_DIR" --data "$MDD_DATA_DIR" \
+  set -- python3 "$REPO_DIR/host/mdd_update.py" --repo "$REPO_DIR" --data "$ONEWIFI_DATA_DIR" \
     --version "$(tr -d '\n' < "$REPO_DIR/VERSION")" \
-    --repository "${MDD_UPDATE_REPOSITORY:-MddIdd/mdd-sim-gateway}" --install-relay-image
-  [ -f "$MDD_DATA_DIR/update/network.json" ] && \
-    set -- "$@" --network-config "$MDD_DATA_DIR/update/network.json"
+    --repository "${ONEWIFI_UPDATE_REPOSITORY:-OneCatx/OneWIFIX}" --install-relay-image
+  [ -f "$ONEWIFI_DATA_DIR/update/network.json" ] && \
+    set -- "$@" --network-config "$ONEWIFI_DATA_DIR/update/network.json"
   if "$@" >/dev/null; then
     info "imported the media relay image $ref from the Release"
   else
@@ -1445,8 +1445,8 @@ ensure_relay_image() {
 
 media_cli() {
   if [ "$MODE" = local ]; then
-    ( cd "$REPO_DIR/control" && MDD_DATA="$(data_dir_abs)" MDD_HOST_DATA="$(data_dir_abs)" \
-        MDD_ENGINE_IMAGE="$ENGINE_IMAGE" "$VENV_DIR/bin/python" -m app.media "$@" )
+    ( cd "$REPO_DIR/control" && ONEWIFI_DATA="$(data_dir_abs)" ONEWIFI_HOST_DATA="$(data_dir_abs)" \
+        ONEWIFI_ENGINE_IMAGE="$ENGINE_IMAGE" "$VENV_DIR/bin/python" -m app.media "$@" )
   else
     docker exec -w /app/control "$CONTROL_NAME" python -m app.media "$@"
   fi
@@ -1476,13 +1476,13 @@ cmd_start() {
   resolve_mode
   if [ "$MODE" = local ]; then
     have systemctl || die "local mode needs systemd"
-    systemctl start mdd-sim-gateway-control && info "control plane started (systemd)" || warn "could not start mdd-sim-gateway-control"
+    systemctl start onewifi-control && info "control plane started (systemd)" || warn "could not start onewifi-control"
   else
     if managed_control_exists; then
       docker start "$CONTROL_NAME" >/dev/null && info "control plane started (docker)"
     else warn "control container not found"; fi
   fi
-  have systemctl && systemctl start mdd-sim-gateway-orchestrator >/dev/null 2>&1 || true
+  have systemctl && systemctl start onewifi-orchestrator >/dev/null 2>&1 || true
 }
 
 cmd_stop() {
@@ -1490,13 +1490,13 @@ cmd_stop() {
   resolve_mode
   if [ "$MODE" = local ]; then
     have systemctl || die "local mode needs systemd"
-    systemctl stop mdd-sim-gateway-control && info "control plane stopped (systemd)" || warn "could not stop mdd-sim-gateway-control"
+    systemctl stop onewifi-control && info "control plane stopped (systemd)" || warn "could not stop onewifi-control"
   else
     if managed_control_exists; then
       docker stop "$CONTROL_NAME" >/dev/null && info "control plane stopped (docker)"
     else warn "control container not found"; fi
   fi
-  have systemctl && systemctl stop mdd-sim-gateway-orchestrator >/dev/null 2>&1 || true
+  have systemctl && systemctl stop onewifi-orchestrator >/dev/null 2>&1 || true
   info "note: engine containers keep running; the control plane just stops managing them until restarted"
 }
 
@@ -1505,26 +1505,26 @@ cmd_restart() {
   resolve_mode
   if [ "$MODE" = local ]; then
     have systemctl || die "local mode needs systemd"
-    systemctl restart mdd-sim-gateway-control && info "control plane restarted (systemd)" || warn "could not restart mdd-sim-gateway-control"
+    systemctl restart onewifi-control && info "control plane restarted (systemd)" || warn "could not restart onewifi-control"
   else
     if managed_control_exists; then
       docker restart "$CONTROL_NAME" >/dev/null && info "control plane restarted (docker)"
     else warn "control container not found"; fi
   fi
-  have systemctl && systemctl restart mdd-sim-gateway-orchestrator >/dev/null 2>&1 || true
+  have systemctl && systemctl restart onewifi-orchestrator >/dev/null 2>&1 || true
 }
 
 cmd_enable_autostart() {
   need_root
   resolve_mode
   if [ "$MODE" = local ]; then
-    have systemctl && systemctl enable mdd-sim-gateway-control >/dev/null 2>&1 && info "control autostart ON (systemd)" || warn "systemd unit not found"
+    have systemctl && systemctl enable onewifi-control >/dev/null 2>&1 && info "control autostart ON (systemd)" || warn "systemd unit not found"
   else
     if managed_control_exists; then
       docker update --restart unless-stopped "$CONTROL_NAME" >/dev/null && info "control autostart ON"
     else warn "control container not found"; fi
   fi
-  have systemctl && systemctl enable mdd-sim-gateway-orchestrator >/dev/null 2>&1 || true
+  have systemctl && systemctl enable onewifi-orchestrator >/dev/null 2>&1 || true
   for n in $(engine_names); do docker update --restart unless-stopped "$n" >/dev/null 2>&1 || true; done
 }
 
@@ -1532,13 +1532,13 @@ cmd_disable_autostart() {
   need_root
   resolve_mode
   if [ "$MODE" = local ]; then
-    have systemctl && systemctl disable mdd-sim-gateway-control >/dev/null 2>&1 && info "control autostart OFF (systemd)" || warn "systemd unit not found"
+    have systemctl && systemctl disable onewifi-control >/dev/null 2>&1 && info "control autostart OFF (systemd)" || warn "systemd unit not found"
   else
     if managed_control_exists; then
       docker update --restart no "$CONTROL_NAME" >/dev/null && info "control autostart OFF"
     else warn "control container not found"; fi
   fi
-  have systemctl && systemctl disable mdd-sim-gateway-orchestrator >/dev/null 2>&1 || true
+  have systemctl && systemctl disable onewifi-orchestrator >/dev/null 2>&1 || true
   for n in $(engine_names); do docker update --restart no "$n" >/dev/null 2>&1 || true; done
   info "note: already-running components keep running until stopped or the host reboots"
 }
@@ -1569,7 +1569,7 @@ cmd_uninstall() {
     info "removing MDD images…"
     docker rmi -f "$CONTROL_IMAGE" "$ENGINE_IMAGE" >/dev/null 2>&1 || true
     warn "purging data dir: $(data_dir_abs) and venv $VENV_DIR"
-    rm -rf "$MDD_DATA_DIR" "$VENV_DIR"
+    rm -rf "$ONEWIFI_DATA_DIR" "$VENV_DIR"
     rm -f "$DATA_DIR_STATE"
   else
     # Keep the ~15-20 min patched engine image (and the control image) so a reinstall reuses
@@ -1587,18 +1587,18 @@ cmd_status() {
   printf '%sControl:%s\n' "$B" "$N"
   if [ "$MODE" = local ]; then
     if have systemctl; then
-      systemctl is-active mdd-sim-gateway-control >/dev/null 2>&1 \
-        && printf '  mdd-sim-gateway-control  %s\n' "$(systemctl show -p ActiveState -p SubState --value mdd-sim-gateway-control 2>/dev/null | tr '\n' ' ')" \
-        || printf '  mdd-sim-gateway-control  (not running)\n'
+      systemctl is-active onewifi-control >/dev/null 2>&1 \
+        && printf '  onewifi-control  %s\n' "$(systemctl show -p ActiveState -p SubState --value onewifi-control 2>/dev/null | tr '\n' ' ')" \
+        || printf '  onewifi-control  (not running)\n'
     fi
   else
     docker ps -a --filter "name=^${CONTROL_NAME}$" --format '  {{.Names}}  {{.Status}}  {{.Ports}}' 2>/dev/null || true
   fi
   printf '%sHost orchestrator:%s\n' "$B" "$N"
-  if have systemctl && systemctl is-active mdd-sim-gateway-orchestrator >/dev/null 2>&1; then
-    printf '  mdd-sim-gateway-orchestrator  %s\n' "$(systemctl show -p ActiveState -p SubState --value mdd-sim-gateway-orchestrator 2>/dev/null | tr '\n' ' ')"
+  if have systemctl && systemctl is-active onewifi-orchestrator >/dev/null 2>&1; then
+    printf '  onewifi-orchestrator  %s\n' "$(systemctl show -p ActiveState -p SubState --value onewifi-orchestrator 2>/dev/null | tr '\n' ' ')"
   else
-    printf '  mdd-sim-gateway-orchestrator  (not running)\n'
+    printf '  onewifi-orchestrator  (not running)\n'
   fi
   printf '%sEngines:%s\n' "$B" "$N"
   docker ps -a --filter "name=^${ENGINE_PREFIX}" --format '  {{.Names}}  {{.Status}}' 2>/dev/null || true
@@ -1614,7 +1614,7 @@ cmd_status() {
     2) printf '  virtual reader driver  %s slots — run `%s vpcd` for a third logical channel\n' "$vpcd_slots" "$0" ;;
     *) printf '  virtual reader driver  %s slots\n' "$vpcd_slots" ;;
   esac
-  if [ -x "$MDD_DATA_DIR/lpac/lpac" ]; then printf '  lpac  installed\n'; else printf '  lpac  (not installed)\n'; fi
+  if [ -x "$ONEWIFI_DATA_DIR/lpac/lpac" ]; then printf '  lpac  installed\n'; else printf '  lpac  (not installed)\n'; fi
 }
 
 # One command whose output can be pasted into a bug report: everything needed to tell a card
@@ -1659,8 +1659,8 @@ cmd_diagnose() {
   [ -f "$VPCD_PACKAGED_READER" ] \
     && printf '\n!! the packaged "Virtual PCD" definition is still active — it collides with modem readers\n' \
     || printf '\npackaged "Virtual PCD" definition: not active (good)\n'
-  printf '\n--- /etc/reader.conf.d/mdd-sim-gateway-modems ---\n'
-  cat /etc/reader.conf.d/mdd-sim-gateway-modems 2>/dev/null || printf '(absent)\n'
+  printf '\n--- /etc/reader.conf.d/onewifi-modems ---\n'
+  cat /etc/reader.conf.d/onewifi-modems 2>/dev/null || printf '(absent)\n'
 
   diag_section "pcscd and live readers"
   if have systemctl; then systemctl is-active pcscd.service 2>/dev/null || true; fi
@@ -1697,7 +1697,7 @@ cmd_diagnose() {
   diag_section "Bridge process logs (masked)"
   # Since 1.3.10 bridge stdout/stderr land in per-modem files rather than the journal, so
   # the activity trail survives journald rotation and reaches the support bundle.
-  for bridge_log in "$MDD_DATA_DIR"/orchestrator/bridge-*.log; do
+  for bridge_log in "$ONEWIFI_DATA_DIR"/orchestrator/bridge-*.log; do
     [ -f "$bridge_log" ] || continue
     printf -- '--- %s ---\n' "$(basename "$bridge_log")"
     tail -40 "$bridge_log" | diag_redact
@@ -1708,7 +1708,7 @@ cmd_diagnose() {
     # -A6 keeps the exception line under a traceback header: the header paths matched the
     # filter but the one line that names the error did not, and a whole support round trip
     # was spent recovering exactly that line by hand.
-    journalctl -u mdd-sim-gateway-orchestrator -n 400 --no-pager 2>/dev/null \
+    journalctl -u onewifi-orchestrator -n 400 --no-pager 2>/dev/null \
       | grep -Ei -A6 'bridge|vpcd|reader|channel|modemmanager|traceback|error' \
       | tail -80 | diag_redact || printf '(nothing matched)\n'
   else
@@ -1716,7 +1716,7 @@ cmd_diagnose() {
   fi
 
   diag_section "eSIM chip read over each modem reader (masked)"
-  if [ ! -x "$MDD_DATA_DIR/lpac/lpac" ]; then
+  if [ ! -x "$ONEWIFI_DATA_DIR/lpac/lpac" ]; then
     printf 'lpac is not built — run: sudo ./install.sh build-lpac\n'
   else
     diag_readers | grep -F 'VoWiFi Modem' > /tmp/mdd-diag-readers.$$ 2>/dev/null || true
@@ -1728,7 +1728,7 @@ cmd_diagnose() {
         name=${entry#*: }
         printf -- '--- %s ---\n' "$name"
         LPAC_APDU=pcsc LPAC_APDU_PCSC_DRV_NAME="$name" \
-          "$MDD_DATA_DIR/lpac/lpac" chip info 2>&1 | head -30 | diag_redact || true
+          "$ONEWIFI_DATA_DIR/lpac/lpac" chip info 2>&1 | head -30 | diag_redact || true
         printf '\n'
       done < /tmp/mdd-diag-readers.$$
     fi
@@ -1742,16 +1742,16 @@ cmd_diagnose() {
 
 cmd_reset_admin() {
   need_root
-  auth_file="$MDD_DATA_DIR/auth.json"
+  auth_file="$ONEWIFI_DATA_DIR/auth.json"
   [ -f "$auth_file" ] || { info "administrator account is already unconfigured"; return; }
-  backup="$MDD_DATA_DIR/backups/auth-reset-$(date +%Y%m%d-%H%M%S).json"
+  backup="$ONEWIFI_DATA_DIR/backups/auth-reset-$(date +%Y%m%d-%H%M%S).json"
   mkdir -p "$(dirname -- "$backup")"
   mv "$auth_file" "$backup"
   chmod 600 "$backup" 2>/dev/null || true
   # Client app tokens were issued by the old administrator; a reset is usually because a phone
   # or the password was lost, so none of them may outlive it (the control plane also refuses
   # them while no administrator is configured, and revokes them when a new one is set up).
-  [ -f "$MDD_DATA_DIR/clients.json" ] && rm -f "$MDD_DATA_DIR/clients.json"
+  [ -f "$ONEWIFI_DATA_DIR/clients.json" ] && rm -f "$ONEWIFI_DATA_DIR/clients.json"
   info "administrator account reset; previous credential file preserved at $backup"
   info "open the WebUI to create a new administrator account"
 }
@@ -1792,12 +1792,12 @@ cmd_patchall() {
 }
 
 cmd_build_lpac() {
-  # Compile lpac (PC/SC + curl, STANDALONE) into $MDD_DATA_DIR/lpac for the eSIM UI.
+  # Compile lpac (PC/SC + curl, STANDALONE) into $ONEWIFI_DATA_DIR/lpac for the eSIM UI.
   # The resulting host-side helper is shared by both local and Docker control-plane modes.
   #
   # lpac STANDALONE uses cmake_policy(CMP0177) which needs CMake >= 3.31.
   # Ubuntu 22.04 / Armbian ship 3.22 — we fetch a Kitware binary toolchain into
-  # $MDD_DATA_DIR/tools/cmake when needed.
+  # $ONEWIFI_DATA_DIR/tools/cmake when needed.
   need_root
   LPAC_SRC="${LPAC_SRC:-}"
   DEST=""
@@ -1816,13 +1816,13 @@ cmd_build_lpac() {
       *) die "unknown build-lpac arg: $1 (supported: --lpac-src PATH, --dest DIR)" ;;
     esac
   done
-  DEST="${DEST:-$MDD_DATA_DIR/lpac}"
+  DEST="${DEST:-$ONEWIFI_DATA_DIR/lpac}"
 
   if [ -z "$LPAC_SRC" ]; then
-    LPAC_SRC="$MDD_DATA_DIR/sources/lpac-$LPAC_VERSION"
+    LPAC_SRC="$ONEWIFI_DATA_DIR/sources/lpac-$LPAC_VERSION"
     if [ ! -d "$LPAC_SRC/.git" ]; then
       info "fetching lpac v$LPAC_VERSION source…"
-      mkdir -p "$MDD_DATA_DIR/sources"
+      mkdir -p "$ONEWIFI_DATA_DIR/sources"
       git clone --depth 1 --branch "v$LPAC_VERSION" https://github.com/estkme-group/lpac.git "$LPAC_SRC"
     fi
     [ "$(git -C "$LPAC_SRC" rev-parse HEAD)" = "$LPAC_COMMIT" ] || die "lpac source commit mismatch"
@@ -1860,7 +1860,7 @@ cmd_build_lpac() {
       info "using system cmake $($CMAKE_BIN --version | head -1)"
       return 0
     fi
-    TOOLS="$MDD_DATA_DIR/tools"
+    TOOLS="$ONEWIFI_DATA_DIR/tools"
     CMAKE_HOME="$TOOLS/cmake-$CMAKE_FETCH_VER"
     CMAKE_BIN="$CMAKE_HOME/bin/cmake"
     if [ -x "$CMAKE_BIN" ] && cmake_version_ok "$CMAKE_BIN"; then
@@ -1968,7 +1968,7 @@ cmd_logs() {
   # matters when invoked from the interactive control menu.
   if [ "$MODE" = local ]; then
     have systemctl || die "systemd not available"
-    journalctl -fu mdd-sim-gateway-control || true
+    journalctl -fu onewifi-control || true
   else
     docker logs -f "$CONTROL_NAME" || true
   fi
@@ -1996,7 +1996,7 @@ cmd_auto() {
   # Interactive control menu.
   autostart_state() {
     if [ "$MODE" = local ]; then
-      systemctl is-enabled --quiet mdd-sim-gateway-control 2>/dev/null && echo on || echo off
+      systemctl is-enabled --quiet onewifi-control 2>/dev/null && echo on || echo off
     else
       case "$(docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' "$CONTROL_NAME" 2>/dev/null)" in
         ""|no) echo off;; *) echo on;; esac
@@ -2031,7 +2031,7 @@ cmd_auto() {
 
 usage() {
   cat <<EOF
-${B}MDD Sim Gateway installer${N}
+${B}OneWIFI installer${N}
 
   $0                      auto: install if absent, else show status + control menu
   $0 install [--mode local|docker]   install + run (Release assets when available)
@@ -2056,16 +2056,16 @@ ${B}MDD Sim Gateway installer${N}
   $0 patchall             apply all CCID patches (01 + 02 + 03)
 
 ${B}Modes:${N}
-  local  (default) control plane runs natively (venv + systemd 'mdd-sim-gateway-control');
+  local  (default) control plane runs natively (venv + systemd 'onewifi-control');
                    Docker is the engine layer only. WebUI compiled via a throwaway
                    Node container, so the host needs no Node.
   docker           control plane AND engine run in containers.
   Both modes version-lock pcsc-lite ($PCSC_VERSION) and bake engine patches.
   Run with no arguments to auto-install, or to manage an existing install.
 
-Env: MDD_MODE(=local) MDD_PORT(=$MDD_PORT) MDD_DATA_DIR(=$MDD_DATA_DIR)
-     MDD_ADVERTISE_ADDR(auto) MDD_BIND(=$MDD_BIND) PCSC_VERSION(=$PCSC_VERSION)
-     MDD_BUILD_IMAGES(=0; set 1 to force source builds)
+Env: ONEWIFI_MODE(=local) ONEWIFI_PORT(=$ONEWIFI_PORT) ONEWIFI_DATA_DIR(=$ONEWIFI_DATA_DIR)
+     ONEWIFI_ADVERTISE_ADDR(auto) ONEWIFI_BIND(=$ONEWIFI_BIND) PCSC_VERSION(=$PCSC_VERSION)
+     ONEWIFI_BUILD_IMAGES(=0; set 1 to force source builds)
 EOF
 }
 

@@ -59,13 +59,13 @@ class ProductionDebugTests(unittest.TestCase):
     def test_tls_domain_is_not_used_as_an_ice_host_candidate(self):
         settings = {**config.DEFAULTS["settings"],
                     "tls": {"domain": "gateway.example.test"}}
-        with patch.dict(os.environ, {"MDD_ADVERTISE_ADDR": "192.0.2.25"}, clear=False):
+        with patch.dict(os.environ, {"ONEWIFI_ADVERTISE_ADDR": "192.0.2.25"}, clear=False):
             self.assertEqual(config.advertise_address(settings), "gateway.example.test")
             self.assertEqual(config.ice_advertise_address(settings), "192.0.2.25")
 
     def test_non_ip_ice_override_falls_back_to_detected_lan_ip(self):
         settings = {**config.DEFAULTS["settings"], "advertise_address": "not-an-ip"}
-        with patch.dict(os.environ, {"MDD_ADVERTISE_ADDR": "also-not-an-ip"}, clear=False), \
+        with patch.dict(os.environ, {"ONEWIFI_ADVERTISE_ADDR": "also-not-an-ip"}, clear=False), \
                 patch.object(config, "_host_lan_ipv4", return_value="198.51.100.8"):
             self.assertEqual(config.ice_advertise_address(settings), "198.51.100.8")
 
@@ -258,8 +258,8 @@ class MoSubmitReportTests(unittest.TestCase):
         # The refusal reason is only ever stated by the RP cause.
         self.assertIn("RP cause %d", patched)
         # Answered, then stopped: the messaging core never sees it.
-        self.assertIn("if (ack_ref == MDD_RP_SUBMIT_REPORT) {", patched)
-        report_at = patched.index("if (ack_ref == MDD_RP_SUBMIT_REPORT) {")
+        self.assertIn("if (ack_ref == ONEWIFI_RP_SUBMIT_REPORT) {", patched)
+        report_at = patched.index("if (ack_ref == ONEWIFI_RP_SUBMIT_REPORT) {")
         queue_at = patched.index("ast_msg_queue(msg);")
         self.assertLess(report_at, queue_at,
                         "the report must return before the message is queued")
@@ -289,7 +289,7 @@ class MoSubmitReportTests(unittest.TestCase):
 
         self.assertEqual(first.returncode, 1)
         self.assertIn("not found", first.stderr)
-        self.assertNotIn("MDD_RP_SUBMIT_REPORT", patched)
+        self.assertNotIn("ONEWIFI_RP_SUBMIT_REPORT", patched)
 
 
 if __name__ == "__main__":

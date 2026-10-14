@@ -51,7 +51,7 @@ class InstallMediaTests(unittest.TestCase):
             'warn() { echo "warn: $*"; }',
             'have() { command -v "$1" >/dev/null 2>&1; }',
             f'REPO_DIR="{self.repo}"',
-            f'MDD_DATA_DIR="{self.data}"',
+            f'ONEWIFI_DATA_DIR="{self.data}"',
             f'ENGINE_HANDOFF_MANIFEST="{self.manifest}"',
             shell_function("relay_image_ref"),
             shell_function("media_mode_recorded"),
@@ -67,15 +67,15 @@ class InstallMediaTests(unittest.TestCase):
 
     def test_the_relay_runs_from_a_local_tag_named_after_this_version(self):
         out = self.run_installer("relay_image_ref")
-        self.assertEqual(out.stdout, "mdd-sim-gateway/relay:v1.13.0")
+        self.assertEqual(out.stdout, "onewifi/relay:v1.13.0")
 
     def test_a_present_image_is_left_alone(self):
-        self.manifest.write_text("x  mdd-sim-gateway-relay-v1.13.0-amd64.tar.gz\n")
+        self.manifest.write_text("x  onewifi-relay-v1.13.0-amd64.tar.gz\n")
         self.assertEqual(self.run_installer("ensure_relay_image", present=True).returncode, 0)
         self.assertEqual(self.calls("python3"), [])
 
     def test_an_official_release_imports_its_relay_asset(self):
-        self.manifest.write_text("x  mdd-sim-gateway-relay-v1.13.0-amd64.tar.gz\n")
+        self.manifest.write_text("x  onewifi-relay-v1.13.0-amd64.tar.gz\n")
         out = self.run_installer("ensure_relay_image")
         self.assertEqual(out.returncode, 0)
         [call] = self.calls("python3")
@@ -84,14 +84,14 @@ class InstallMediaTests(unittest.TestCase):
         self.assertIn("imported the media relay image", out.stdout)
 
     def test_a_failed_import_is_not_fatal(self):
-        self.manifest.write_text("x  mdd-sim-gateway-relay-v1.13.0-amd64.tar.gz\n")
+        self.manifest.write_text("x  onewifi-relay-v1.13.0-amd64.tar.gz\n")
         out = self.run_installer("ensure_relay_image; echo rc=$?", importer_rc=1)
         self.assertIn("rc=0", out.stdout)
         self.assertIn("control plane will try the registries", out.stdout)
 
     def test_a_checkout_or_an_older_release_leaves_it_to_the_control_plane(self):
         self.assertEqual(self.run_installer("ensure_relay_image").returncode, 0)
-        self.manifest.write_text("x  mdd-sim-gateway-engine-v1.13.0-amd64.tar.gz\n")
+        self.manifest.write_text("x  onewifi-engine-v1.13.0-amd64.tar.gz\n")
         self.assertEqual(self.run_installer("ensure_relay_image").returncode, 0)
         self.assertEqual(self.calls("python3"), [])
 

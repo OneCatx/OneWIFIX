@@ -1,7 +1,7 @@
 """
 engine.py - Per-SIM engine container lifecycle via the Docker SDK.
 
-Each instance runs one `mdd-sim-gateway/engine` container that owns its ePDG tunnel + Asterisk.
+Each instance runs one `onewifi/engine` container that owns its ePDG tunnel + Asterisk.
 The manager renders instance.json, starts/stops/recreates the container with the right
 mounts/caps/ports, and reads the engine's runtime status files (bind-mounted run dir):
 the swu_ike daemon publishes swu_status.json {state: CONNECTED} for tunnel state.
@@ -78,24 +78,24 @@ _ASTERISK_TIMESTAMP = re.compile(r"^\[[A-Z][a-z]{2}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2
 SIP_EVIDENCE_LINES = 40
 
 DATA_DIR = cfg.DATA_DIR
-IMAGE = os.environ.get("MDD_ENGINE_IMAGE", "mdd-sim-gateway/engine")
-PCSCD_SOCK = os.environ.get("MDD_PCSCD_DIR", "/run/pcscd")
+IMAGE = os.environ.get("ONEWIFI_ENGINE_IMAGE", "onewifi/engine")
+PCSCD_SOCK = os.environ.get("ONEWIFI_PCSCD_DIR", "/run/pcscd")
 # Absolute host path to the project data dir (needed for bind mounts when the manager
 # itself runs in a container; defaults to DATA_DIR on the host).
-HOST_DATA_DIR = os.environ.get("MDD_HOST_DATA", DATA_DIR)
+HOST_DATA_DIR = os.environ.get("ONEWIFI_HOST_DATA", DATA_DIR)
 # Container-native deployments share their own pcscd directory and Docker network.
 # The mount source is a Docker-host path, distinct from Control's client socket path.
-HOST_PCSCD_DIR = os.environ.get("MDD_HOST_PCSCD_DIR", PCSCD_SOCK)
-PCSCD_VOLUME = os.environ.get("MDD_PCSCD_VOLUME", "").strip()
-ENGINE_NETWORK = os.environ.get("MDD_ENGINE_NETWORK", "").strip()
-DIRECT_NETWORK = os.environ.get("MDD_ENGINE_DIRECT_NETWORK", "").strip()
-MANAGED_LABEL = "io.mdd-sim-gateway.managed"
+HOST_PCSCD_DIR = os.environ.get("ONEWIFI_HOST_PCSCD_DIR", PCSCD_SOCK)
+PCSCD_VOLUME = os.environ.get("ONEWIFI_PCSCD_VOLUME", "").strip()
+ENGINE_NETWORK = os.environ.get("ONEWIFI_ENGINE_NETWORK", "").strip()
+DIRECT_NETWORK = os.environ.get("ONEWIFI_ENGINE_DIRECT_NETWORK", "").strip()
+MANAGED_LABEL = "io.onewifi.managed"
 
 
 def _owned(container) -> bool:
     labels = (container.attrs.get("Config") or {}).get("Labels") or {}
     image = str((container.attrs.get("Config") or {}).get("Image") or "")
-    return labels.get(MANAGED_LABEL) == "true" or image.startswith("mdd-sim-gateway/")
+    return labels.get(MANAGED_LABEL) == "true" or image.startswith("onewifi/")
 
 
 _docker_client = None
@@ -125,7 +125,7 @@ def close_client():
 
 
 def container_name(iid: str) -> str:
-    return f"mdd-sim-gateway-engine-{iid}"
+    return f"onewifi-engine-{iid}"
 
 
 _internal_networks: dict[str, bool] = {}
@@ -405,7 +405,7 @@ def _names_a_registry(reference: str) -> bool:
     """Whether pulling this reference would reach a registry rather than a local build.
 
     Docker treats the first segment as a registry host only when it contains a dot or a
-    colon. ``mdd-sim-gateway/engine`` is the tag a host-assisted install builds locally;
+    colon. ``onewifi/engine`` is the tag a host-assisted install builds locally;
     pulling it would ask Docker Hub for a repository that does not exist, turning a clear
     "the image was never built" into a confusing registry error.
     """
@@ -416,7 +416,7 @@ def _names_a_registry(reference: str) -> bool:
 def ensure_image(client, reference: str = "") -> object:
     """The Engine image, fetched once when this deployment names a registry copy.
 
-    Compose knows only the three base services. ``MDD_ENGINE_IMAGE`` is an environment
+    Compose knows only the three base services. ``ONEWIFI_ENGINE_IMAGE`` is an environment
     variable of the Control service, so neither Compose nor the container manager ever
     fetches the Engine image, and nothing else does either: the container update helper
     imports release archives instead. Without this, a container deployment comes up with
@@ -436,9 +436,9 @@ def ensure_image(client, reference: str = "") -> object:
 def start(inst: dict, settings: dict, dev_mounts: bool = False, reason: str = "rebuild"):
     """(Re)create and start the engine container for an instance."""
     if ENGINE_NETWORK in {"host", "none"}:
-        raise ValueError("MDD_ENGINE_NETWORK must be a Docker bridge network")
+        raise ValueError("ONEWIFI_ENGINE_NETWORK must be a Docker bridge network")
     if DIRECT_NETWORK in {"host", "none"} or (DIRECT_NETWORK and DIRECT_NETWORK == ENGINE_NETWORK):
-        raise ValueError("MDD_ENGINE_DIRECT_NETWORK must be a separate Docker bridge network")
+        raise ValueError("ONEWIFI_ENGINE_DIRECT_NETWORK must be a separate Docker bridge network")
     network_options = {"network": ENGINE_NETWORK} if ENGINE_NETWORK else {}
     engine_sysctls = {
         # These six settings predate the full-container runtime and remain part of the native
@@ -467,7 +467,7 @@ def start(inst: dict, settings: dict, dev_mounts: bool = False, reason: str = "r
     rendered_inst = inst
     if selected_exit.get("transport") == "socks5":
         if not ENGINE_NETWORK:
-            raise egress.EgressError("SOCKS egress requires MDD_ENGINE_NETWORK")
+            raise egress.EgressError("SOCKS egress requires ONEWIFI_ENGINE_NETWORK")
         # Old images ignore unknown environment variables and would silently go direct.
         # Inspect before writing configuration or removing the previous container.
         image = ensure_image(client)
@@ -522,7 +522,7 @@ def start(inst: dict, settings: dict, dev_mounts: bool = False, reason: str = "r
     volumes = {
         os.path.join(host_base, "instance.json"): {"bind": "/config/instance.json", "mode": "ro"},
         os.path.join(host_base, "logs"): {"bind": "/logs", "mode": "rw"},
-        os.path.join(host_base, "run"): {"bind": "/run/mdd-sim-gateway", "mode": "rw"},
+        os.path.join(host_base, "run"): {"bind": "/run/onewifi", "mode": "rw"},
         (PCSCD_VOLUME or HOST_PCSCD_DIR): {"bind": "/run/pcscd", "mode": "rw"},
     }
     # The image has no timezone, so every engine log (IKE, Asterisk) was stamped in UTC while
@@ -537,7 +537,7 @@ def start(inst: dict, settings: dict, dev_mounts: bool = False, reason: str = "r
                   "log_capture.py"]:
             volumes[os.path.join(eng, f)] = {"bind": f"/usr/local/bin/{f}", "mode": "ro"}
         volumes[os.path.join(eng, "entrypoint.sh")] = {"bind": "/entrypoint.sh", "mode": "ro"}
-        volumes[os.path.join(eng, "templates")] = {"bind": "/opt/mdd-sim-gateway/templates", "mode": "ro"}
+        volumes[os.path.join(eng, "templates")] = {"bind": "/opt/onewifi/templates", "mode": "ro"}
 
     # No SIP signalling is published to the host. The browser softphone's WebSocket reaches
     # Asterisk on the container's bridge address through the control surface relay
@@ -558,7 +558,7 @@ def start(inst: dict, settings: dict, dev_mounts: bool = False, reason: str = "r
     if media_attachment is None and not forwarded:
         for p in range(rtp_start, rtp_last + 1):
             port_bindings[f"{p}/udp"] = p
-    labels = {MANAGED_LABEL: "true", "io.mdd-sim-gateway.component": "engine"}
+    labels = {MANAGED_LABEL: "true", "io.onewifi.component": "engine"}
     if forwarded:
         labels[rtp_forward.FORWARD_LABEL] = rtp_forward.label_value(rtp_start, rtp_last)
     elif ENGINE_NETWORK and port_bindings:
@@ -582,7 +582,7 @@ def start(inst: dict, settings: dict, dev_mounts: bool = False, reason: str = "r
         # so the other possibility is not silently unrecorded.
         ulimits=[{"name": "core", "soft": -1, "hard": -1}],
         environment={
-            "MDD_ID": iid,
+            "ONEWIFI_ID": iid,
             "SWU_LIVENESS_PERIOD": str(inst.get("liveness_period", 0)),
             "SWU_TUN_MTU": os.environ.get("SWU_TUN_MTU", "1400"),
             **proxy_environment,

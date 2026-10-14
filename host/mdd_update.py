@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Detached self-update runner for MDD Sim Gateway.
+"""Detached self-update runner for OneWIFI.
 
 The WebUI publishes an update request; the host orchestrator stages a COPY of this script
 under ``<data>/update/`` and launches it as a transient systemd unit (``systemd-run``).
@@ -31,7 +31,7 @@ from urllib.parse import urlsplit
 from pathlib import Path
 
 # Top-level entries that belong to the installation, not to a release: never replaced and
-# never deleted (the default MDD_DATA_DIR lives at <repo>/data).
+# never deleted (the default ONEWIFI_DATA_DIR lives at <repo>/data).
 PRESERVE = {"data", ".env", ".git"}
 # Locally-built artifacts nested inside release-managed directories. webui/dist is kept so
 # the old UI keeps being served if the reload's WebUI rebuild fails; on success the rebuild
@@ -41,7 +41,7 @@ BACKUP_EXCLUDE = {"data", ".git", ".venv", "node_modules", "__pycache__"}
 
 VERSION_RE = re.compile(r"\d+(?:\.\d+)*(?:-[0-9A-Za-z.]+)?")
 REPOSITORY_RE = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
-ENGINE_REGISTRY_IMAGE = "ghcr.io/mddidd/mdd-sim-gateway-engine"
+ENGINE_REGISTRY_IMAGE = "ghcr.io/onecatx/onewifi-engine"
 ENGINE_HANDOFF_MANIFEST = Path("engine/release-image.SHA256SUMS")
 
 
@@ -153,7 +153,7 @@ def download(url: str, destination: Path, env: dict[str, str], proxy_url: str = 
         "curl", "--fail", "--location", "--proto", "=https", "--proto-redir", "=https",
         "--tlsv1.2", "--retry", "0" if allow_fallback else "3", "--retry-all-errors",
         "--connect-timeout", "20", "--max-time", max_time, "--silent", "--show-error",
-        "--user-agent", "mdd-sim-gateway-updater", "--output", str(destination), url,
+        "--user-agent", "onewifi-updater", "--output", str(destination), url,
     ]
     # A route that cannot sustain a useful asset-transfer rate should yield to the next Auto
     # candidate. The final/only route keeps the generous timeout for genuinely slow links.
@@ -298,7 +298,7 @@ def installed_mode(data: Path) -> str:
 
 def load_control_image(artifact: Path, version: str):
     """Load a verified image archive without changing or restarting the Docker daemon."""
-    image = "mdd-sim-gateway/control"
+    image = "onewifi/control"
     previous = f"{image}:previous"
     inspect = subprocess.run(
         ["docker", "image", "inspect", image, "--format", "{{.Id}}"],
@@ -330,7 +330,7 @@ def load_runtime_image(artifact: Path, version: str, component: str):
     """Load one verified full-container image and retain the previous local tag."""
     if component not in {"hardware", "egress"}:
         raise UpdateError(f"invalid runtime image component: {component!r}")
-    image = f"mdd-sim-gateway/{component}"
+    image = f"onewifi/{component}"
     previous = f"{image}:previous"
     inspected = subprocess.run(
         ["docker", "image", "inspect", image, "--format", "{{.Id}}"],
@@ -349,8 +349,8 @@ def load_runtime_image(artifact: Path, version: str, component: str):
             f"could not load Release {component} image: {loaded.stderr.strip()}")
     checked = subprocess.run(
         ["docker", "image", "inspect", image, "--format",
-         '{{.Architecture}}|{{index .Config.Labels "io.mdd-sim-gateway.component"}}|'
-         '{{index .Config.Labels "io.mdd-sim-gateway.managed"}}|'
+         '{{.Architecture}}|{{index .Config.Labels "io.onewifi.component"}}|'
+         '{{index .Config.Labels "io.onewifi.managed"}}|'
          '{{index .Config.Labels "org.opencontainers.image.version"}}'],
         text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     actual = checked.stdout.strip() if checked.returncode == 0 else ""
@@ -383,8 +383,8 @@ def release_engine_fingerprints(source_root: Path) -> tuple[str, str] | None:
 def engine_image_matches_inputs(image: str, runtime_fp: str, base_fp: str) -> bool:
     checked = subprocess.run(
         ["docker", "image", "inspect", image, "--format",
-         '{{index .Config.Labels "io.mdd-sim-gateway.runtime-fp"}}|'
-         '{{index .Config.Labels "io.mdd-sim-gateway.base-fp"}}'],
+         '{{index .Config.Labels "io.onewifi.runtime-fp"}}|'
+         '{{index .Config.Labels "io.onewifi.base-fp"}}'],
         text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     return checked.returncode == 0 and checked.stdout.strip() == f"{runtime_fp}|{base_fp}"
 
@@ -410,8 +410,8 @@ def load_release_engine(artifact: Path, version: str, runtime_fp: str, base_fp: 
     checked = subprocess.run(
         ["docker", "image", "inspect", image, "--format",
          '{{.Architecture}}|{{index .Config.Labels "org.opencontainers.image.version"}}|'
-         '{{index .Config.Labels "io.mdd-sim-gateway.runtime-fp"}}|'
-         '{{index .Config.Labels "io.mdd-sim-gateway.base-fp"}}'],
+         '{{index .Config.Labels "io.onewifi.runtime-fp"}}|'
+         '{{index .Config.Labels "io.onewifi.base-fp"}}'],
         text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     expected = f"{host_arch()}|{version}|{runtime_fp}|{base_fp}"
     actual = checked.stdout.strip() if checked.returncode == 0 else ""
@@ -449,7 +449,7 @@ def backup(repo: Path, data: Path, current: str) -> Path:
         return None if any(part in BACKUP_EXCLUDE for part in Path(info.name).parts) else info
 
     with tarfile.open(destination, "w:gz") as tar:
-        tar.add(repo, arcname="mdd-sim-gateway", filter=keep)
+        tar.add(repo, arcname="onewifi", filter=keep)
     os.chmod(destination, 0o600)
     return destination
 
@@ -510,7 +510,7 @@ def perform_engine_handoff(repo: Path, data: Path, version: str, repo_name: str,
     if not manifest.is_file():
         raise UpdateError("release has no Engine handoff manifest")
     arch = host_arch()
-    engine_name = f"mdd-sim-gateway-engine-v{version}-{arch}.tar.gz"
+    engine_name = f"onewifi-engine-v{version}-{arch}.tar.gz"
     if not any(line.strip().split(None, 1)[-1].lstrip("*") == engine_name
                for line in manifest.read_text(encoding="utf-8").splitlines()
                if len(line.strip().split(None, 1)) == 2):
@@ -565,9 +565,9 @@ def perform_release_image_install(repo: Path, data: Path, version: str, repo_nam
         raise UpdateError("release has no image asset manifest")
 
     arch = host_arch()
-    engine_name = f"mdd-sim-gateway-engine-v{version}-{arch}.tar.gz"
+    engine_name = f"onewifi-engine-v{version}-{arch}.tar.gz"
     base_names = {
-        component: f"mdd-sim-gateway-{component}-v{version}-{arch}.tar.gz"
+        component: f"onewifi-{component}-v{version}-{arch}.tar.gz"
         for component in ("control", "hardware", "egress")
     }
     components = (["control"] if mode == "docker" else
@@ -633,7 +633,7 @@ def load_relay_image(artifact: Path, version: str) -> str:
     """Load the media relay asset: upstream coturn, unmodified, so it carries no MDD labels.
     The checksum (covered by the release archive's) proves what it is; check the tag and the
     architecture it was loaded under."""
-    image = f"mdd-sim-gateway/relay:v{version}"
+    image = f"onewifi/relay:v{version}"
     loaded = subprocess.run(["docker", "load", "--input", str(artifact)],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if loaded.returncode:
@@ -658,7 +658,7 @@ def perform_relay_image_install(repo: Path, data: Path, version: str, repo_name:
     manifest = repo / ENGINE_HANDOFF_MANIFEST
     if not manifest.is_file():
         raise UpdateError("release has no image asset manifest")
-    name = f"mdd-sim-gateway-relay-v{version}-{host_arch()}.tar.gz"
+    name = f"onewifi-relay-v{version}-{host_arch()}.tar.gz"
     network = read_network_config(network_path) if network_path else {}
     fallback_proxy = str(network.get("proxy_url") or os.environ.get("HTTPS_PROXY")
                          or os.environ.get("https_proxy") or "")
@@ -696,10 +696,10 @@ def perform(repo: Path, data: Path, version: str, repo_name: str, status: Status
     try:
         mode = installed_mode(data)
         asset_sizes = asset_sizes or {}
-        archive_name = f"mdd-sim-gateway-v{version}.tar.gz"
+        archive_name = f"onewifi-v{version}.tar.gz"
         arch = host_arch()
-        control_name = f"mdd-sim-gateway-control-v{version}-{arch}.tar.gz"
-        engine_name = f"mdd-sim-gateway-engine-v{version}-{arch}.tar.gz"
+        control_name = f"onewifi-control-v{version}-{arch}.tar.gz"
+        engine_name = f"onewifi-engine-v{version}-{arch}.tar.gz"
         base = f"https://github.com/{repo_name}/releases/download/v{version}"
         url = f"{base}/{archive_name}"
         # Publish the transfer skeleton before curl starts so the dialog shows a sized bar from
@@ -738,7 +738,7 @@ def perform(repo: Path, data: Path, version: str, repo_name: str, status: Status
         engine_fingerprints = release_engine_fingerprints(source_root)
         engine_refresh_required = bool(
             engine_fingerprints and not engine_image_matches_inputs(
-                "mdd-sim-gateway/engine", *engine_fingerprints))
+                "onewifi/engine", *engine_fingerprints))
         if engine_refresh_required:
             if shutil.disk_usage(data / "update").free < 2 * 1024 * 1024 * 1024:
                 raise UpdateError("not enough persistent disk space to import the Engine image")
@@ -796,12 +796,12 @@ def perform(repo: Path, data: Path, version: str, repo_name: str, status: Status
         log_path = data / "update" / "reload.log"
         selected_proxy_url = clean_routes[active_route]["proxy_url"]
         env = network_environment(selected_proxy_url)
-        env["MDD_REUSE_WEBUI"] = "1"
-        env["MDD_PRUNE_BUILD_CACHE"] = "1"
+        env["ONEWIFI_REUSE_WEBUI"] = "1"
+        env["ONEWIFI_PRUNE_BUILD_CACHE"] = "1"
         if mode == "docker":
-            env["MDD_REUSE_CONTROL_IMAGE"] = "1"
+            env["ONEWIFI_REUSE_CONTROL_IMAGE"] = "1"
         if distributed_engine:
-            env["MDD_ENGINE_DISTRIBUTION_IMAGE"] = distributed_engine
+            env["ONEWIFI_ENGINE_DISTRIBUTION_IMAGE"] = distributed_engine
         reload_command = ["sh", str(repo / "install.sh"), "reload"]
         if not distributed_engine and not engine_refresh_required:
             reload_command.append("--no-engines")

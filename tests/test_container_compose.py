@@ -15,30 +15,30 @@ class ContainerComposeTests(unittest.TestCase):
     def test_three_base_services_and_fixed_runtime_names(self):
         self.assertEqual(set(self.compose["services"]), {"control", "hardware", "egress"})
         for component, service in self.compose["services"].items():
-            self.assertEqual(service["container_name"], f"mdd-sim-gateway-{component}")
-            self.assertEqual(service["labels"]["io.mdd-sim-gateway.managed"], "true")
-            self.assertEqual(service["labels"]["io.mdd-sim-gateway.component"], component)
+            self.assertEqual(service["container_name"], f"onewifi-{component}")
+            self.assertEqual(service["labels"]["io.onewifi.managed"], "true")
+            self.assertEqual(service["labels"]["io.onewifi.component"], component)
         self.assertEqual(self.compose["networks"]["engine"]["name"],
-                         "mdd-sim-gateway-engine")
+                         "onewifi-engine")
         self.assertTrue(self.compose["networks"]["engine"]["internal"])
         self.assertEqual(self.compose["volumes"]["pcscd"]["name"],
-                         "mdd-sim-gateway-pcscd")
+                         "onewifi-pcscd")
 
     def test_release_images_use_one_required_versioned_ghcr_tag(self):
-        marker = "${MDD_IMAGE_TAG:?set a release tag such as v1.12.0}"
+        marker = "${ONEWIFI_IMAGE_TAG:?set a release tag such as v1.12.0}"
         for component, service in self.compose["services"].items():
             self.assertEqual(
                 service["image"],
-                f"ghcr.io/mddidd/mdd-sim-gateway-{component}:{marker}")
+                f"ghcr.io/onecatx/onewifi-{component}:{marker}")
         self.assertEqual(
-            self.compose["services"]["control"]["environment"]["MDD_ENGINE_IMAGE"],
-            f"ghcr.io/mddidd/mdd-sim-gateway-engine:{marker}")
+            self.compose["services"]["control"]["environment"]["ONEWIFI_ENGINE_IMAGE"],
+            f"ghcr.io/onecatx/onewifi-engine:{marker}")
         self.assertNotIn("issue-108-dev", (ROOT / "runtime" / "compose.yaml").read_text())
 
     def test_host_https_defaults_to_nonstandard_10443_but_internal_port_stays_8443(self):
         control = self.compose["services"]["control"]
-        self.assertEqual(control["ports"], ["${MDD_HTTP_PORT:-10443}:8443"])
-        self.assertEqual(control["environment"]["MDD_HTTP_PORT"], 8443)
+        self.assertEqual(control["ports"], ["${ONEWIFI_HTTP_PORT:-10443}:8443"])
+        self.assertEqual(control["environment"]["ONEWIFI_HTTP_PORT"], 8443)
 
     def test_hardware_networkmanager_is_bounded_to_cellular_interfaces(self):
         hardware = self.compose["services"]["hardware"]
@@ -101,12 +101,12 @@ class ContainerComposeTests(unittest.TestCase):
         self.assertEqual(egress["cap_add"], ["DAC_OVERRIDE"])
         self.assertNotIn("ports", egress)
         control_env = self.compose["services"]["control"]["environment"]
-        self.assertEqual(control_env["MDD_EGRESS_TRANSPORT"], "socks5")
-        self.assertEqual(control_env["MDD_ENGINE_NETWORK"], "mdd-sim-gateway-engine")
-        self.assertEqual(control_env["MDD_ENGINE_DIRECT_NETWORK"], "mdd-sim-gateway-uplink")
-        self.assertEqual(control_env["MDD_PCSCD_VOLUME"], "mdd-sim-gateway-pcscd")
+        self.assertEqual(control_env["ONEWIFI_EGRESS_TRANSPORT"], "socks5")
+        self.assertEqual(control_env["ONEWIFI_ENGINE_NETWORK"], "onewifi-engine")
+        self.assertEqual(control_env["ONEWIFI_ENGINE_DIRECT_NETWORK"], "onewifi-uplink")
+        self.assertEqual(control_env["ONEWIFI_PCSCD_VOLUME"], "onewifi-pcscd")
         self.assertEqual(egress["extra_hosts"],
-                         ["${MDD_NAS_HOSTNAME:-host.docker.internal}:host-gateway"])
+                         ["${ONEWIFI_NAS_HOSTNAME:-host.docker.internal}:host-gateway"])
 
 
 if __name__ == "__main__":

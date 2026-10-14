@@ -21,7 +21,7 @@ def main():
     parser.add_argument("--identity", required=True)
     parser.add_argument("--arch", choices=("amd64", "arm64"), default="amd64")
     parser.add_argument("--base-image", required=True, help="Locally available Python 3.12 glibc image")
-    parser.add_argument("--tag", default="mdd-sim-gateway/egress:dev")
+    parser.add_argument("--tag", default="onewifi/egress:dev")
     parser.add_argument("--version", default="dev")
     args = parser.parse_args()
     artifacts = ROOT / "runtime" / "vendor" / args.arch
@@ -44,7 +44,7 @@ def main():
             archive.add(ROOT / name, arcname=name)
     build = ["sudo", "-n", "/usr/local/bin/docker", "build", "--network", "none",
              "--build-arg", "BASE_IMAGE=" + base, "--build-arg", "TARGETARCH=" + args.arch,
-             "--build-arg", "MDD_VERSION=" + args.version,
+             "--build-arg", "ONEWIFI_VERSION=" + args.version,
              "-f", "runtime/Dockerfile.egress", "-t", args.tag, "-"]
     subprocess.run(ssh + [shlex.join(build)], input=payload.getvalue(), check=True)
 

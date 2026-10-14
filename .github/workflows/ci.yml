@@ -83,7 +83,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Build control image
-        run: docker build -f control/Dockerfile -t mdd-sim-gateway/control:ci .
+        run: docker build -f control/Dockerfile -t onewifi/control:ci .
 
   engine-image:
     name: Engine image (${{ matrix.arch }})
@@ -111,11 +111,11 @@ jobs:
           runtime_fp=$(sh tools/engine-fingerprint.sh runtime)
           base_fp=$(sh tools/engine-fingerprint.sh base)
           docker build \
-            --build-arg "MDD_VERSION=$(cat VERSION)" \
+            --build-arg "ONEWIFI_VERSION=$(cat VERSION)" \
             --build-arg "RUNTIME_FP=$runtime_fp" \
             --build-arg "BASE_FP=$base_fp" \
-            -t mdd-sim-gateway/engine:ci engine
-          docker run --rm --entrypoint /bin/bash mdd-sim-gateway/engine:ci -lc '
+            -t onewifi/engine:ci engine
+          docker run --rm --entrypoint /bin/bash onewifi/engine:ci -lc '
             set -e
             actual_machine=$(uname -m)
             module_count=$(find /usr/lib/asterisk/modules -name "*.so" | wc -l)

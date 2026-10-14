@@ -5,7 +5,7 @@ ami_usim.py - Bridge Asterisk (ims_aka) SIP authentication to the physical USIM 
 Derived from phcoder/asterisk-docker (jolly). Changes:
   - VERIFY CHV1 (PIN) after selecting ADF.USIM, before AUTHENTICATE (reference didn't).
   - Clean type-annotation bug from the original (undefined Hexstr/Optional names).
-  - Emit status/heartbeat JSON to $MDD_RUNDIR/usim_status.json for the manager FSM.
+  - Emit status/heartbeat JSON to $ONEWIFI_RUNDIR/usim_status.json for the manager FSM.
 
 On Asterisk 'AuthRequest' it runs USIM AUTHENTICATE and returns RES/CK/IK (or AUTS on
 sync failure). Triggers registration on FullyBooted and confirms dedicated bearers.
@@ -23,7 +23,7 @@ from smartcard.System import readers
 from smartcard.util import toHexString, toBytes
 from smartcard.scard import SCardBeginTransaction, SCardEndTransaction, SCARD_LEAVE_CARD
 
-RUNDIR = os.environ.get("MDD_RUNDIR", "/run/mdd-sim-gateway")
+RUNDIR = os.environ.get("ONEWIFI_RUNDIR", "/run/onewifi")
 USIM_PIN = os.environ.get("USIM_PIN", "")
 
 

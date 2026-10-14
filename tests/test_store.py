@@ -32,7 +32,7 @@ class StoreMigrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             previous = root / "vowifi.sqlite"
-            current = root / "mdd-sim-gateway.sqlite"
+            current = root / "onewifi.sqlite"
             with contextlib.closing(sqlite3.connect(previous)) as connection, connection:
                 connection.execute("CREATE TABLE marker (value TEXT)")
                 connection.execute("INSERT INTO marker VALUES ('kept')")
@@ -47,7 +47,7 @@ class StoreMigrationTests(unittest.TestCase):
     def test_existing_database_merges_named_legacy_history_once(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            current = root / "mdd-sim-gateway.sqlite"
+            current = root / "onewifi.sqlite"
             previous = root / "vowifi.sqlite"
             with contextlib.closing(sqlite3.connect(previous)) as db, db:
                 db.executescript("""

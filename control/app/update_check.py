@@ -18,7 +18,7 @@ import requests
 
 from .version import VERSION
 
-DEFAULT_REPOSITORY = "MddIdd/mdd-sim-gateway"
+DEFAULT_REPOSITORY = "OneCatx/OneWIFIX"
 _cache: tuple[float, dict] | None = None
 _releases_cache: tuple[float, dict] | None = None
 _stars_cache: int | None = None
@@ -183,13 +183,13 @@ def _proxy_url(selection: dict) -> str:
 
 
 def repository() -> str:
-    return os.environ.get("MDD_UPDATE_REPOSITORY", DEFAULT_REPOSITORY).strip()
+    return os.environ.get("ONEWIFI_UPDATE_REPOSITORY", DEFAULT_REPOSITORY).strip()
 
 
 def _github_headers() -> dict:
     return {
         "Accept": "application/vnd.github+json",
-        "User-Agent": f"mdd-sim-gateway/{VERSION}",
+        "User-Agent": f"onewifi/{VERSION}",
         "X-GitHub-Api-Version": "2022-11-28",
     }
 
@@ -509,7 +509,7 @@ def check(force: bool = False) -> dict:
 
 
 def _policy_url() -> str:
-    override = os.environ.get("MDD_UPDATE_POLICY_URL", "").strip()
+    override = os.environ.get("ONEWIFI_UPDATE_POLICY_URL", "").strip()
     return override or f"https://raw.githubusercontent.com/{repository()}/main/update-policy.json"
 
 

@@ -2,7 +2,7 @@
 
 A Pi migrated from a native install to the container stack kept
 settings.manager_url = https://host.docker.internal:8443. The explicit setting won over the
-container's MDD_MANAGER_URL, the Engine (on an internal network) could not reach the host,
+container's ONEWIFI_MANAGER_URL, the Engine (on an internal network) could not reach the host,
 and notify.py swallowed every timeout: inbound SMS reached the Engine but never the web UI.
 """
 import importlib.util
@@ -22,13 +22,13 @@ from control.app import config
 ROOT = Path(__file__).resolve().parents[1]
 
 LEGACY = "https://host.docker.internal:8443"
-CONTAINER = "https://mdd-control:8443"
+CONTAINER = "https://onewifi-control:8443"
 
 
 class ManagerUrlTests(unittest.TestCase):
     def url(self, settings, env):
         with patch.dict(os.environ, env, clear=False):
-            for key in ("MDD_CONTAINER_STACK", "MDD_MANAGER_URL"):
+            for key in ("ONEWIFI_CONTAINER_STACK", "ONEWIFI_MANAGER_URL"):
                 if key not in env:
                     os.environ.pop(key, None)
             return config._engine_manager_url(settings)
@@ -36,21 +36,21 @@ class ManagerUrlTests(unittest.TestCase):
     def test_container_stack_ignores_a_saved_host_url(self):
         self.assertEqual(
             self.url({"manager_url": LEGACY},
-                     {"MDD_CONTAINER_STACK": "1", "MDD_MANAGER_URL": CONTAINER}),
+                     {"ONEWIFI_CONTAINER_STACK": "1", "ONEWIFI_MANAGER_URL": CONTAINER}),
             CONTAINER)
 
     def test_native_install_keeps_the_explicit_setting(self):
         self.assertEqual(
             self.url({"manager_url": "https://10.0.0.5:9443"},
-                     {"MDD_MANAGER_URL": LEGACY}),
+                     {"ONEWIFI_MANAGER_URL": LEGACY}),
             "https://10.0.0.5:9443")
 
     def test_native_install_falls_back_to_env_then_default(self):
-        self.assertEqual(self.url({}, {"MDD_MANAGER_URL": LEGACY}), LEGACY)
+        self.assertEqual(self.url({}, {"ONEWIFI_MANAGER_URL": LEGACY}), LEGACY)
         self.assertEqual(self.url({"http_port": 9443}, {}), "https://host.docker.internal:9443")
 
     def test_container_stack_without_env_keeps_the_old_fallbacks(self):
-        self.assertEqual(self.url({"manager_url": LEGACY}, {"MDD_CONTAINER_STACK": "1"}), LEGACY)
+        self.assertEqual(self.url({"manager_url": LEGACY}, {"ONEWIFI_CONTAINER_STACK": "1"}), LEGACY)
 
 
 def _load_notify():
@@ -71,8 +71,8 @@ class NotifyDeliveryTests(unittest.TestCase):
         err = io.StringIO()
         with tempfile.TemporaryDirectory() as temp, \
                 patch.dict(sys.modules, {"requests": requests, "urllib3": urllib3}), \
-                patch.dict(os.environ, {"MANAGER_URL": LEGACY, "MDD_ID": "5",
-                                        "MDD_ENV": str(Path(temp) / "none")}), \
+                patch.dict(os.environ, {"MANAGER_URL": LEGACY, "ONEWIFI_ID": "5",
+                                        "ONEWIFI_ENV": str(Path(temp) / "none")}), \
                 patch.object(notify.os, "makedirs"), \
                 patch("builtins.open", side_effect=OSError), \
                 patch.object(sys, "argv", ["notify.py", "sms_in", "+44700", "aGk="]), \

@@ -30,8 +30,8 @@ def main():
     parser.add_argument("--host", required=True)
     parser.add_argument("--port", type=int, default=22)
     parser.add_argument("--identity", required=True)
-    parser.add_argument("--base-image", default="ghcr.io/mddidd/mdd-sim-gateway-engine:v1.11.0")
-    parser.add_argument("--tag", default="mdd-sim-gateway/engine:dev")
+    parser.add_argument("--base-image", default="ghcr.io/onecatx/onewifi-engine:v1.11.0")
+    parser.add_argument("--tag", default="onewifi/engine:dev")
     parser.add_argument("--version", default="dev")
     args = parser.parse_args()
 
@@ -51,7 +51,7 @@ def main():
              "--build-arg", "BASE_IMAGE=" + base,
              "--build-arg", "RUNTIME_FP=" + fingerprint("runtime"),
              "--build-arg", "BASE_FP=" + fingerprint("base"),
-             "--build-arg", "MDD_VERSION=" + args.version,
+             "--build-arg", "ONEWIFI_VERSION=" + args.version,
              "-f", "Dockerfile.overlay", "-t", args.tag, "-"]
     subprocess.run(ssh + [shlex.join(build)], input=payload.getvalue(), check=True)
 

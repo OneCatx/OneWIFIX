@@ -15,7 +15,7 @@ from control.app import config, mms_staging, operations, store
 class _Store:
     def __init__(self, root: Path):
         self.root = root
-        self.db = root / "mdd-sim-gateway.sqlite"
+        self.db = root / "onewifi.sqlite"
         self.patch = patch.multiple(store, DATA_DIR=str(root), DB_PATH=str(self.db),
                                     PREVIOUS_DB_PATH=str(root / "vowifi.sqlite"))
 
@@ -59,7 +59,7 @@ class MigrationBackupTests(unittest.TestCase):
 
             restored = Path(temp, "restored")
             restored.mkdir()
-            shutil.copy2(backups[0], restored / "mdd-sim-gateway.sqlite")
+            shutil.copy2(backups[0], restored / "onewifi.sqlite")
             shutil.copytree(attachments, restored / "mms")
             self.assertEqual(read_back(restored, mid), [b"hi", b"\xff\xd8\xff-picture"])
 
@@ -83,7 +83,7 @@ class LocalBackupTests(unittest.TestCase):
                 Path(live, "config.yaml").write_text("settings: {}\ninstances: {}\n")
                 staging = Path(live, "update", "container-update.abc123")
                 staging.mkdir(parents=True)
-                Path(staging, "mdd-sim-gateway-engine-v9-arm64.tar.gz").write_bytes(b"x" * 4096)
+                Path(staging, "onewifi-engine-v9-arm64.tar.gz").write_bytes(b"x" * 4096)
                 Path(live, "update", "compose.previous.yaml").write_text("services: {}\n")
                 result = operations.create_local_backup("Test Gateway")
                 with tarfile.open(Path(store.backup_dir()) / result["name"]) as archive:

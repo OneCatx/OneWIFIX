@@ -2,7 +2,7 @@
 
 The control plane never edits host routes from its container namespace.  Instead it publishes a
 small desired-state document under the shared data directory.  The host-side
-``mdd-sim-gateway-orchestrator`` resolves each line's ePDG and owns the per-country sing-box TUN + /32
+``onewifi-orchestrator`` resolves each line's ePDG and owns the per-country sing-box TUN + /32
 routes.  Engine startup waits for the corresponding line to become ready, preventing an IKE
 attempt from leaking through the wrong country's default route.
 
@@ -37,7 +37,7 @@ _STATUS = os.path.join(_ORCH_DIR, "proxy-status.json")
 _RESELECT = os.path.join(_ORCH_DIR, "exit-reselect.json")
 _STALLED = os.path.join(_ORCH_DIR, "exit-stalled.json")
 # A line healthy at least this long has proved its exit node can carry IMS.
-RESELECT_MIN_STABLE_SECONDS = float(os.environ.get("MDD_EXIT_RESELECT_MIN_STABLE", "600"))
+RESELECT_MIN_STABLE_SECONDS = float(os.environ.get("ONEWIFI_EXIT_RESELECT_MIN_STABLE", "600"))
 
 
 class EgressError(RuntimeError):
@@ -52,7 +52,7 @@ def udp_probe_targets() -> list[str]:
     own, failed a check it should have passed — and the exit it condemned carries IKE on
     UDP 500/4500, which has nothing to do with DNS. Any one answer proves the path.
     """
-    raw = os.environ.get("MDD_UDP_PROBE_TARGETS", "1.1.1.1,8.8.8.8,9.9.9.9")
+    raw = os.environ.get("ONEWIFI_UDP_PROBE_TARGETS", "1.1.1.1,8.8.8.8,9.9.9.9")
     targets = []
     for value in raw.split(","):
         value = value.strip()
@@ -71,7 +71,7 @@ def stun_probe_targets() -> list[tuple[str, int]]:
     STUN is what the DNS probe should have been: a bare UDP round trip, on ports no
     resolver policy rewrites, answered by servers that exist to confirm exactly this.
     """
-    raw = os.environ.get("MDD_UDP_STUN_TARGETS",
+    raw = os.environ.get("ONEWIFI_UDP_STUN_TARGETS",
                          "stun.cloudflare.com:3478,stun.l.google.com:19302")
     targets = []
     for value in raw.split(","):
@@ -473,7 +473,7 @@ def test_proxy_profile(profile: dict, timeout: float = 8.0) -> int:
     value = str(profile.get("value") or "").strip()
     if not value:
         raise EgressError("node share link is empty")
-    singbox = shutil.which(os.environ.get("MDD_SINGBOX_BIN", "sing-box"))
+    singbox = shutil.which(os.environ.get("ONEWIFI_SINGBOX_BIN", "sing-box"))
     if not singbox:
         raise EgressError("sing-box executable not found")
     helper = _orchestrator_module()
@@ -510,7 +510,7 @@ def test_proxy_profile(profile: dict, timeout: float = 8.0) -> int:
             raise EgressError(_config_error("node configuration is invalid", check))
         try:
             if via_xray:
-                xray = shutil.which(os.environ.get("MDD_XRAY_BIN", "xray"))
+                xray = shutil.which(os.environ.get("ONEWIFI_XRAY_BIN", "xray"))
                 if not xray:
                     raise EgressError("Xray-core executable not found for this node")
                 xray_config = {
@@ -653,9 +653,9 @@ def status() -> dict:
 
 
 def transport() -> str:
-    value = os.environ.get("MDD_EGRESS_TRANSPORT", "host").strip()
+    value = os.environ.get("ONEWIFI_EGRESS_TRANSPORT", "host").strip()
     if value not in {"host", "socks5"}:
-        raise EgressError("MDD_EGRESS_TRANSPORT must be host or socks5")
+        raise EgressError("ONEWIFI_EGRESS_TRANSPORT must be host or socks5")
     return value
 
 

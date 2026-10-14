@@ -26,7 +26,7 @@ class ContainerEgressTests(unittest.TestCase):
         self.assertEqual(len({item["listen_port"] for item in config["inbounds"]}), 2)
         self.assertTrue(all(item["listen"] == "172.30.0.3" for item in config["inbounds"]))
         self.assertNotIn("interface", states["gb"])
-        self.assertEqual(states["gb"]["proxy_host"], "mdd-egress")
+        self.assertEqual(states["gb"]["proxy_host"], "onewifi-egress")
         self.assertNotIn("auto_detect_interface", config["route"])
         for rule in config["route"]["rules"]:
             self.assertFalse(any(tag.startswith("tun-") for tag in rule.get("inbound", [])))

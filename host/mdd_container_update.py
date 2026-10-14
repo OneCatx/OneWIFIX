@@ -33,8 +33,8 @@ COMPONENTS = ("control", "hardware", "egress", "engine")
 BASE_COMPONENTS = ("hardware", "egress", "control")
 # Hardware may have to reset the modem to recover a stale QMI session before it is healthy.
 WAIT_SECONDS = {"hardware": 300}
-MANAGED = "io.mdd-sim-gateway.managed"
-COMPONENT = "io.mdd-sim-gateway.component"
+MANAGED = "io.onewifi.managed"
+COMPONENT = "io.onewifi.component"
 VERSION = "org.opencontainers.image.version"
 COMPOSE_NAMES = ("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml")
 
@@ -50,9 +50,9 @@ IMAGE_STORE_MARGIN = 1 * GIB
 # images before they were slimmed, which refused a Raspberry Pi with over 5 GiB free.
 FALLBACK_REQUIRED = 4 * GIB
 # Stable aliases the host install and the Settings page treat as current; never pruned here.
-PROTECTED_TAGS = {"mdd-sim-gateway/engine:latest", "mdd-sim-gateway/control:latest",
-                  "mdd-sim-gateway/engine-base:trusted"}
-IMAGE_PREFIXES = ("mdd-sim-gateway/", "ghcr.io/mddidd/mdd-sim-gateway-")
+PROTECTED_TAGS = {"onewifi/engine:latest", "onewifi/control:latest",
+                  "onewifi/engine-base:trusted"}
+IMAGE_PREFIXES = ("onewifi/", "ghcr.io/onecatx/onewifi-")
 
 
 def space_required(sizes: dict, names: list[str]) -> tuple[int, int]:
@@ -123,14 +123,14 @@ def host_arch() -> str:
 
 
 def find_compose(project: Path) -> Path:
-    configured = os.environ.get("MDD_COMPOSE_FILE", "").strip()
+    configured = os.environ.get("ONEWIFI_COMPOSE_FILE", "").strip()
     if configured:
         candidate = Path(configured)
         if not candidate.is_absolute():
             candidate = project / candidate
         candidate = candidate.resolve()
         if candidate.parent != project.resolve() or candidate.name not in COMPOSE_NAMES:
-            raise mdd_update.UpdateError("MDD_COMPOSE_FILE must name a Compose file in /data")
+            raise mdd_update.UpdateError("ONEWIFI_COMPOSE_FILE must name a Compose file in /data")
         if not candidate.is_file():
             raise mdd_update.UpdateError(f"Compose file does not exist: {candidate.name}")
         return candidate
@@ -143,7 +143,7 @@ def find_compose(project: Path) -> Path:
 
 def canonical_images(repository: str, version: str) -> dict[str, str]:
     owner = repository.split("/", 1)[0].lower()
-    return {component: f"ghcr.io/{owner}/mdd-sim-gateway-{component}:v{version}"
+    return {component: f"ghcr.io/{owner}/onewifi-{component}:v{version}"
             for component in COMPONENTS}
 
 
@@ -153,12 +153,12 @@ def rewrite_compose(source: str, images: dict[str, str]) -> str:
     output = []
     image_line = re.compile(
         r"^(?P<indent>\s*)image:\s*(?P<quote>['\"]?)"
-        r"ghcr\.io/[^/\s'\"]+/mdd-sim-gateway-(?P<component>control|hardware|egress)"
+        r"ghcr\.io/[^/\s'\"]+/onewifi-(?P<component>control|hardware|egress)"
         r"(?::[^\s'\"]+|@sha256:[0-9a-f]{64})(?P=quote)"
         r"(?P<suffix>\s*(?:#.*)?)$")
     engine_line = re.compile(
-        r"^(?P<indent>\s*)MDD_ENGINE_IMAGE:\s*(?P<quote>['\"]?)"
-        r"ghcr\.io/[^/\s'\"]+/mdd-sim-gateway-engine"
+        r"^(?P<indent>\s*)ONEWIFI_ENGINE_IMAGE:\s*(?P<quote>['\"]?)"
+        r"ghcr\.io/[^/\s'\"]+/onewifi-engine"
         r"(?::[^\s'\"]+|@sha256:[0-9a-f]{64})(?P=quote)"
         r"(?P<suffix>\s*(?:#.*)?)$")
     for line in source.splitlines(keepends=True):
@@ -176,7 +176,7 @@ def rewrite_compose(source: str, images: dict[str, str]) -> str:
             if match:
                 changed.add("engine")
                 quote = match.group("quote")
-                line = (f"{match.group('indent')}MDD_ENGINE_IMAGE: "
+                line = (f"{match.group('indent')}ONEWIFI_ENGINE_IMAGE: "
                         f"{quote}{images['engine']}{quote}{match.group('suffix')}{newline}")
         output.append(line)
     if changed != set(COMPONENTS):
@@ -199,8 +199,8 @@ def run(command: list[str], *, cwd: Path | None = None, timeout: int = 600,
 def local_loaded_image(component: str, version: str, repository: str) -> str:
     if component == "engine":
         owner = repository.split("/", 1)[0].lower()
-        return f"ghcr.io/{owner}/mdd-sim-gateway-engine:v{version}"
-    return f"mdd-sim-gateway/{component}:v{version}"
+        return f"ghcr.io/{owner}/onewifi-engine:v{version}"
+    return f"onewifi/{component}:v{version}"
 
 
 def verify_and_tag_image(client, component: str, version: str, repository: str,
@@ -217,7 +217,7 @@ def verify_and_tag_image(client, component: str, version: str, repository: str,
             and labels.get(COMPONENT) != component:
         raise mdd_update.UpdateError(f"Release {component} image has the wrong component label")
     if component == "engine" and "socks5" not in str(
-            labels.get("io.mdd-sim-gateway.egress-transports") or "").split(","):
+            labels.get("io.onewifi.egress-transports") or "").split(","):
         raise mdd_update.UpdateError("Release Engine image lacks the container egress capability")
     repository_name, tag = target.rsplit(":", 1)
     if not image.tag(repository_name, tag):
@@ -246,7 +246,7 @@ def wait_container(client, name: str, image_id: str, timeout: int = 180) -> None
 
 # Only what the Docker CLI itself needs. Compose interpolates ${VAR:-default} from its own
 # environment, and this helper runs in the Control image, whose ENV includes
-# MDD_HTTP_PORT=8443 — the port Control listens on *inside* its container. The Compose
+# ONEWIFI_HTTP_PORT=8443 — the port Control listens on *inside* its container. The Compose
 # file uses the same name for the *host* port, so an inherited environment published the
 # web console on host port 8443: on a NAS where that port belongs to another service the
 # update and its rollback both failed, and elsewhere the console would silently have moved.
@@ -269,7 +269,7 @@ def compose_location(compose: Path) -> tuple[Path, Path]:
     was sent for container "undefined", and the operator had to clean up over SSH. The
     launcher also mounts the data directory at its own host path; use it when present.
     """
-    host = os.environ.get("MDD_HOST_DATA", "").strip()
+    host = os.environ.get("ONEWIFI_HOST_DATA", "").strip()
     if host.startswith("/") and (Path(host) / compose.name).is_file():
         return Path(host) / compose.name, Path(host)
     return compose, compose.parent
@@ -291,9 +291,9 @@ def settle_services(client, services) -> None:
     lets Compose find only stopped containers, which it replaces without killing anything.
     """
     for service in services:
-        name = f"mdd-sim-gateway-{service}"
+        name = f"onewifi-{service}"
         found = client.containers.list(all=True, filters={"label": [
-            "com.docker.compose.project=mdd-sim-gateway",
+            "com.docker.compose.project=onewifi",
             f"com.docker.compose.service={service}"]})
         for container in found:
             if container.name != name:
@@ -330,7 +330,7 @@ def compose_up(compose: Path, wait, client=None) -> None:
     to an image whose own grace period is still the short one.
     """
     compose_file, project_dir = compose_location(compose)
-    command = ["docker", "compose", "-p", "mdd-sim-gateway", "-f", str(compose_file),
+    command = ["docker", "compose", "-p", "onewifi", "-f", str(compose_file),
                "--project-directory", str(project_dir),
                "up", "-d", "--no-build", "--force-recreate", "--no-deps"]
     environment = compose_environment()
@@ -371,18 +371,18 @@ def docker_root_free_bytes(client) -> int:
 
 def recreate_engine(client, name: str) -> None:
     """Ask the freshly started Control container to recreate one previously running line."""
-    prefix = "mdd-sim-gateway-engine-"
+    prefix = "onewifi-engine-"
     iid = name.removeprefix(prefix)
     if name == iid or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", iid):
         raise mdd_update.UpdateError(f"invalid managed Engine name: {name}")
-    control = client.containers.get("mdd-sim-gateway-control")
+    control = client.containers.get("onewifi-control")
     command = [
         "python", "-c",
         ("import os,sys; from app import config as cfg, engine; "
          "i=cfg.get_instance(sys.argv[1]); "
          "assert i is not None, 'saved line is missing'; "
          "engine.start(i, cfg.get_settings(), "
-         "dev_mounts=os.environ.get('MDD_DEV_MOUNTS','') == '1', "
+         "dev_mounts=os.environ.get('ONEWIFI_DEV_MOUNTS','') == '1', "
          "reason='release_update')"),
         iid,
     ]
@@ -408,7 +408,7 @@ def roll_engines(client, target_image_id: str, status: mdd_update.Status) -> Non
         wait_container(client, name, target_image_id, timeout=240)
 
 
-RELAY_CONTAINER = "mdd-sim-gateway-relay"
+RELAY_CONTAINER = "onewifi-relay"
 
 
 def relay_mode(project: Path) -> bool:
@@ -425,7 +425,7 @@ def fetch_relay_image(base_url: str, version: str, arch: str, sums: Path, routes
     """Load this release's relay image beside the one in use. It is optional and outside the
     rollback transaction: failing leaves the relay on the image it runs, and the new Control
     moves it over once the image is here (or fetched from a registry)."""
-    name = f"mdd-sim-gateway-relay-v{version}-{arch}.tar.gz"
+    name = f"onewifi-relay-v{version}-{arch}.tar.gz"
     archive = staging / name
     try:
         active = mdd_update.fetch_release_asset(
@@ -480,11 +480,11 @@ def perform(project: Path, version: str, repository: str, network_path: Path,
         sizes = request_network.get("asset_sizes") if isinstance(
             request_network.get("asset_sizes"), dict) else {}
         arch = host_arch()
-        names = {component: f"mdd-sim-gateway-{component}-v{version}-{arch}.tar.gz"
+        names = {component: f"onewifi-{component}-v{version}-{arch}.tar.gz"
                  for component in COMPONENTS}
         needed = list(names.values())
         if relay_mode(project):
-            needed.append(f"mdd-sim-gateway-relay-v{version}-{arch}.tar.gz")
+            needed.append(f"onewifi-relay-v{version}-{arch}.tar.gz")
         staging_needed, store_needed = space_required(sizes, needed)
         staging_free = shutil.disk_usage(project / "update").free
         if staging_free < staging_needed:
@@ -499,7 +499,7 @@ def perform(project: Path, version: str, repository: str, network_path: Path,
                 "not enough Docker image-store space for a transactional container update: "
                 f"needs {_gib(store_needed)}, {_gib(store_free)} free")
         old_base_ids = {
-            component: client.containers.get(f"mdd-sim-gateway-{component}").image.id
+            component: client.containers.get(f"onewifi-{component}").image.id
             for component in BASE_COMPONENTS
         }
         # Only lines which are running at the start of the transaction belong in the rollout.
@@ -566,7 +566,7 @@ def perform(project: Path, version: str, repository: str, network_path: Path,
 
         status.publish("running", "reloading", backup=saved.get("name", ""))
         def wait_new(component):
-            wait_container(client, f"mdd-sim-gateway-{component}", image_ids[component],
+            wait_container(client, f"onewifi-{component}", image_ids[component],
                            timeout=WAIT_SECONDS.get(component, 180))
 
         compose_up(compose, wait_new, client)
@@ -597,7 +597,7 @@ def perform(project: Path, version: str, repository: str, network_path: Path,
                 status.publish("running", "rollback", error=str(exc)[:1000])
                 shutil.copy2(compose_backup, compose)
                 def wait_old(component):
-                    wait_container(client, f"mdd-sim-gateway-{component}",
+                    wait_container(client, f"onewifi-{component}",
                                    old_base_ids[component],
                                    timeout=WAIT_SECONDS.get(component, 180))
 

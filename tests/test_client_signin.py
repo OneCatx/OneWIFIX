@@ -49,7 +49,7 @@ class ClientSignInTests(unittest.TestCase):
             headers.append((b"authorization", f"Bearer {token}".encode()))
         if browser:
             headers.append((b"cookie", f"{auth.SESSION_COOKIE}={self.cookie}".encode()))
-            headers.append((b"x-mdd-csrf-token", self.csrf.encode()))
+            headers.append((b"x-onewifi-csrf-token", self.csrf.encode()))
         scope = {"type": "http", "method": method, "path": target.path,
                  "raw_path": target.path.encode(),
                  "query_string": target.query.encode(), "headers": headers, "client": ("192.0.2.1", 1234),

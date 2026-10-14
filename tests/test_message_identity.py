@@ -11,7 +11,7 @@ class TempStore:
     def __enter__(self):
         self.temp = tempfile.TemporaryDirectory()
         root = Path(self.temp.name)
-        self.db = root / "mdd-sim-gateway.sqlite"
+        self.db = root / "onewifi.sqlite"
         self.patch = patch.multiple(store, DATA_DIR=str(root), DB_PATH=str(self.db),
                                     PREVIOUS_DB_PATH=str(root / "vowifi.sqlite"))
         self.patch.start()
@@ -336,7 +336,7 @@ class UpgradeStoragePolicyTests(unittest.TestCase):
         self.assertEqual(self.run_with(None, {}), (False, []), "new installation")
         self.assertEqual(self.run_with(4, {}), (False, []), "already on this version")
         self.assertEqual(self.run_with(0, {"cellular_sms_storage": "delete"}), (False, []))
-        self.assertEqual(self.run_with(0, {}, {"MDD_CELLULAR_SMS_STORAGE": "delete"}),
+        self.assertEqual(self.run_with(0, {}, {"ONEWIFI_CELLULAR_SMS_STORAGE": "delete"}),
                          (False, []))
 
     def test_schema_version_is_read_without_creating_the_database(self):

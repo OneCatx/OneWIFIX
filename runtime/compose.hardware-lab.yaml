@@ -1,6 +1,6 @@
 services:
   hardware:
-    image: mdd-sim-gateway/hardware:dev
+    image: onewifi/hardware:dev
     container_name: mdd-hardware-lab
     network_mode: host
     read_only: true

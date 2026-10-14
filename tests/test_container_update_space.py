@@ -17,10 +17,10 @@ from host import mdd_update
 
 MB = 1000 * 1000
 # The v1.13.0-rc1 arm64 archives.
-RC1_ARM64 = {"mdd-sim-gateway-control-v1.13.0-rc1-arm64.tar.gz": 131 * MB,
-             "mdd-sim-gateway-hardware-v1.13.0-rc1-arm64.tar.gz": 139 * MB,
-             "mdd-sim-gateway-egress-v1.13.0-rc1-arm64.tar.gz": 82 * MB,
-             "mdd-sim-gateway-engine-v1.13.0-rc1-arm64.tar.gz": 152 * MB}
+RC1_ARM64 = {"onewifi-control-v1.13.0-rc1-arm64.tar.gz": 131 * MB,
+             "onewifi-hardware-v1.13.0-rc1-arm64.tar.gz": 139 * MB,
+             "onewifi-egress-v1.13.0-rc1-arm64.tar.gz": 82 * MB,
+             "onewifi-engine-v1.13.0-rc1-arm64.tar.gz": 152 * MB}
 
 
 class SpaceRequiredTests(unittest.TestCase):
@@ -52,7 +52,7 @@ class SpaceRequiredTests(unittest.TestCase):
                              return_value=SimpleNamespace(free=staging_free)), \
                 patch.object(cu.docker, "from_env", return_value=Mock()), \
                 patch.object(cu, "docker_root_free_bytes", return_value=store_free or 0):
-            cu.perform(project, "1.13.0-rc1", "MddIdd/mdd-sim-gateway", network, Mock(phase="x"))
+            cu.perform(project, "1.13.0-rc1", "OneCatx/OneWIFIX", network, Mock(phase="x"))
 
     def test_a_refusal_says_how_much_is_needed_and_free(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -99,14 +99,14 @@ class PruneTests(unittest.TestCase):
         return client
 
     def test_only_releases_older_than_the_rollback_go(self):
-        repo = "ghcr.io/mddidd/mdd-sim-gateway"
+        repo = "ghcr.io/onecatx/onewifi"
         images = [
             image("new-engine", f"{repo}-engine:v1.13.0"),
             image("old-engine", f"{repo}-engine:v1.12.0"),         # the rollback
             image("rc-engine", f"{repo}-engine:v1.12.0-rc11"),     # superseded
-            image("rc-control", "mdd-sim-gateway/control:v1.12.0-rc11", managed=False),
-            image("host-engine", "mdd-sim-gateway/engine:latest",
-                  "mdd-sim-gateway/engine-base:trusted"),           # host-install alias
+            image("rc-control", "onewifi/control:v1.12.0-rc11", managed=False),
+            image("host-engine", "onewifi/engine:latest",
+                  "onewifi/engine-base:trusted"),           # host-install alias
             image("in-use", f"{repo}-hardware:v1.11.0"),             # a container uses it
             image("someone-else", "postgres:16", managed=False),      # not ours
         ]
@@ -117,7 +117,7 @@ class PruneTests(unittest.TestCase):
                          ["rc-engine", "rc-control"])
 
     def test_a_failure_never_fails_the_update(self):
-        client = self.client([image("rc", "mdd-sim-gateway/control:v1")])
+        client = self.client([image("rc", "onewifi/control:v1")])
         client.images.remove.side_effect = RuntimeError("image is being used")
         self.assertEqual(cu.prune_superseded_images(client, set()), 0)
 

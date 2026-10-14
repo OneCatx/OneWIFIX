@@ -4,13 +4,22 @@ All notable changes follow Keep a Changelog and Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- Public product text is unified on OneWIFI: README (zh/en), logo lockup, social preview,
+  WebUI logo, Push notification branding, system name, installer output, license headers and
+  the issue templates. Historical release notes for already-shipped versions keep their
+  original text.
+- The SIP User-Agent default now matches the product name (OneWIFI) instead of the historical
+  MDD-Sim-Gateway fallback.
+
 ## [1.14.0] - 2026-10-14
 
 The automatic update channels remain unchanged until the release is explicitly approved.
 
 ### Added
 
-- MDD now exposes capability-scoped mobile adapters for device status, SMS/MMS, eSIM, typed
+- OneWIFI now exposes capability-scoped mobile adapters for device status, SMS/MMS, eSIM, typed
   settings, pairing, Live Activity receipts, and VoIP endpoint ownership without creating a second
   gateway.
 - Native APNs SMS and VoIP provider settings are kept separate, with masked credentials and
@@ -20,7 +29,7 @@ The automatic update channels remain unchanged until the release is explicitly a
 
 - Reader and eSIM operations require live ICCID proof and refreshed line association; stale or
   unknown identity fails closed instead of returning a false callable line.
-- Call callbacks retain the exact MDD engine call ID, and SMS/MMS outcomes preserve unknown
+- Call callbacks retain the exact OneWIFI engine call ID, and SMS/MMS outcomes preserve unknown
   delivery state instead of inventing delivery counts.
 - AT&T and Three HK profiles report explicit unsupported IMS/security contracts rather than
   enabling incomplete carrier defaults.
@@ -179,8 +188,8 @@ The automatic update channel stays on 1.9.5.
   processes, each shrunk to 1600 px as soon as it is decoded and kept that way while the
   message is written, so editing the text re-encodes without decoding again. A decode starts
   only when its cost, estimated from the header, fits the budget: several at once where there
-  is memory (up to `MDD_MMS_CONVERT_WORKERS`, default the CPUs), one after another where there
-  is not. A JPEG too large to decode whole within `MDD_MMS_CONVERT_MEMORY` (default: worked
+  is memory (up to `ONEWIFI_MMS_CONVERT_WORKERS`, default the CPUs), one after another where there
+  is not. A JPEG too large to decode whole within `ONEWIFI_MMS_CONVERT_MEMORY` (default: worked
   out from the control container's `mem_limit`) is sent smaller and marked so in the composer;
   a HEIC that large is refused with the reason. A worker that runs out of memory anyway is the
   one the kernel stops, not the control plane. Uploads over 1 MB are spooled under the data
@@ -237,7 +246,7 @@ The automatic update channel stays on 1.9.5.
   from the manager's store, so the forward is gone; nothing that was visible changes.
 - On the container stack, the browser softphone had no audio on a line behind a country exit.
   Such a line is only on the internal Engine network, and Docker publishes no port there, so its
-  RTP ports were never reachable. Control now runs a small `mdd-sim-gateway-rtp-forward`
+  RTP ports were never reachable. Control now runs a small `onewifi-rtp-forward`
   container from its own image that publishes those ranges and relays UDP to the line. The
   Engine's networks and routes are unchanged, so nothing it sends can bypass the exit. A line
   created before this version is forwarded once it is rebuilt (an update does that).
@@ -371,7 +380,7 @@ First release with the full-container deployment. The automatic update channel s
   version gets `settings.cellular_sms_storage: keep` written into its configuration on first
   start, so nothing on the modem changes by itself; new installations default to `delete`.
   To opt in, set `cellular_sms_storage` to `delete` (or `when_full`) under `settings`, or
-  `MDD_CELLULAR_SMS_STORAGE` in the control service environment when the setting is absent,
+  `ONEWIFI_CELLULAR_SMS_STORAGE` in the control service environment when the setting is absent,
   and restart the control service. Anything still stored on the modem is imported first and
   then removed.
 - **The history database is migrated in place, including deletions.** Duplicate inbound
@@ -401,7 +410,7 @@ First release with the full-container deployment. The automatic update channel s
   owns: the installer adds a udev rule releasing the port ModemManager classifies as a Quectel
   module's secondary AT port (the primary one and QMI stay with ModemManager, and a module with
   a single AT port is left alone), and the gateway finds that port on each modem by itself (or
-  takes `MDD_MMS_AT_PORT`). A 100 KB MMS then uploads in about three seconds, and lines on
+  takes `ONEWIFI_MMS_AT_PORT`). A 100 KB MMS then uploads in about three seconds, and lines on
   different modems send and download in parallel. Without it only retrievals go over the modem, because ModemManager
   relays the module's upload command at about 100 bytes a second -- slow enough for the MMSC
   proxy to give up, and each chunk counts toward ModemManager's limit of consecutive timeouts
@@ -430,7 +439,7 @@ First release with the full-container deployment. The automatic update channel s
   SMS objects, so its storage (23 slots on a typical module, a few more on the SIM) filled up and
   the modem then stopped accepting texts altogether. An object is now deleted once its message
   is safely in the database -- checked again right before deleting, so a message that was not
-  imported can never be removed. `MDD_CELLULAR_SMS_STORAGE` (or `settings.cellular_sms_storage`)
+  imported can never be removed. `ONEWIFI_CELLULAR_SMS_STORAGE` (or `settings.cellular_sms_storage`)
   selects `delete` (default for new installations), `when_full` (keep objects, remove the
   oldest imported ones only when fewer than three slots remain) or `keep` (written for upgraded
   installations; see Upgrade notes).
@@ -570,7 +579,7 @@ First release with the full-container deployment. The automatic update channel s
   set that modem's cellular-data switch, and nothing kept the result from carrying the
   default route -- which would send the VoWiFi tunnel authenticating that very SIM out
   through the SIM's own carrier. Profiles written by earlier versions are corrected in
-  place. Set `MDD_MODEM_ALLOW_DEFAULT_ROUTE=1` where the modem genuinely is the only uplink.
+  place. Set `ONEWIFI_MODEM_ALLOW_DEFAULT_ROUTE=1` where the modem genuinely is the only uplink.
 - A cellular profile left behind by an earlier version is secured even when cellular data is
   simply switched off. Every data path is gated on the ModemManager backend being up, so the
   state an operator reaches by turning cellular data off -- backend stood down, profile left
@@ -797,7 +806,7 @@ First release with the full-container deployment. The automatic update channel s
   on UDP 500/4500 and never queries a resolver, while port 53 is among the most intercepted and
   rewritten ports there is. STUN probes now run interleaved with DNS ones on ports nobody
   rewrites, each with its own SOCKS5 association, and any single answer passes the exit. Both
-  lists are configurable (`MDD_UDP_PROBE_TARGETS`, `MDD_UDP_STUN_TARGETS`), and a failure names
+  lists are configurable (`ONEWIFI_UDP_PROBE_TARGETS`, `ONEWIFI_UDP_STUN_TARGETS`), and a failure names
   every probe tried with what each one did.
 
 - Xray becoming unavailable now fails only the exits it carries. Moving REALITY onto Xray made
@@ -857,8 +866,8 @@ First release with the full-container deployment. The automatic update channel s
   newer Xray build could answer Xray clients while sing-box failed the handshake with
   "reality verification failed" — a version skew the gateway no longer sits in the middle of.
   Nodes sing-box handles correctly are untouched. The pinned Xray version stays on the newest
-  release upstream marks stable; `MDD_XRAY_VERSION` may now be overridden together with
-  `MDD_XRAY_SHA256_AMD64`/`_ARM64` for an operator who must match a prerelease server.
+  release upstream marks stable; `ONEWIFI_XRAY_VERSION` may now be overridden together with
+  `ONEWIFI_XRAY_SHA256_AMD64`/`_ARM64` for an operator who must match a prerelease server.
 
 ### Fixed
 

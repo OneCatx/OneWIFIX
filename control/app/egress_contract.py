@@ -6,7 +6,7 @@ import re
 
 VERSION = 1
 MAX_AGE = 15
-ENGINE_LABEL = "io.mdd-sim-gateway.egress-transports"
+ENGINE_LABEL = "io.onewifi.egress-transports"
 
 
 def proxy_fingerprint(proxy):

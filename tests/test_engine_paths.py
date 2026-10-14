@@ -25,10 +25,10 @@ class EnginePathTests(unittest.TestCase):
         from unittest.mock import Mock
         client = Mock()
         client.images.get.return_value.attrs = {"Config": {"Labels": {}}}
-        with patch.object(engine, "ENGINE_NETWORK", "mdd-control"), \
+        with patch.object(engine, "ENGINE_NETWORK", "onewifi-control"), \
                 patch.object(engine, "_client", return_value=client), \
                 patch.object(engine.egress, "ensure_line", return_value={
-                    "transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}), \
+                    "transport": "socks5", "proxy_url": "socks5://onewifi-egress:22157"}), \
                 patch.object(engine.cfg, "write_instance_json") as write:
             with self.assertRaisesRegex(engine.egress.EgressError, "rebuild required"):
                 engine.start({"id": "sim1"}, {})
@@ -47,10 +47,10 @@ class EnginePathTests(unittest.TestCase):
         client.images.get.side_effect = [
             engine.docker.errors.ImageNotFound("absent"), fetched]
 
-        with patch.object(engine, "IMAGE", "ghcr.io/owner/mdd-sim-gateway-engine:v1"):
+        with patch.object(engine, "IMAGE", "ghcr.io/owner/onewifi-engine:v1"):
             self.assertIs(engine.ensure_image(client), fetched)
 
-        client.images.pull.assert_called_once_with("ghcr.io/owner/mdd-sim-gateway-engine:v1")
+        client.images.pull.assert_called_once_with("ghcr.io/owner/onewifi-engine:v1")
 
     def test_a_present_image_is_never_re_fetched(self):
         engine = self.engine_module()
@@ -58,13 +58,13 @@ class EnginePathTests(unittest.TestCase):
         client = Mock()
         client.images.get.return_value = SimpleNamespace(id="sha256:local", attrs={})
 
-        with patch.object(engine, "IMAGE", "ghcr.io/owner/mdd-sim-gateway-engine:v1"):
+        with patch.object(engine, "IMAGE", "ghcr.io/owner/onewifi-engine:v1"):
             engine.ensure_image(client)
 
         client.images.pull.assert_not_called()
 
     def test_a_locally_built_tag_is_not_looked_for_in_a_registry(self):
-        """`mdd-sim-gateway/engine` is what a host-assisted install builds. Pulling it
+        """`onewifi/engine` is what a host-assisted install builds. Pulling it
         would ask Docker Hub for a repository that does not exist, replacing a clear
         "the image was never built" with a confusing registry error."""
         engine = self.engine_module()
@@ -72,7 +72,7 @@ class EnginePathTests(unittest.TestCase):
         client = Mock()
         client.images.get.side_effect = engine.docker.errors.ImageNotFound("absent")
 
-        with patch.object(engine, "IMAGE", "mdd-sim-gateway/engine"):
+        with patch.object(engine, "IMAGE", "onewifi/engine"):
             with self.assertRaises(engine.docker.errors.ImageNotFound):
                 engine.ensure_image(client)
 
@@ -88,18 +88,18 @@ class EnginePathTests(unittest.TestCase):
         client.containers.run.return_value = SimpleNamespace(id="new", name="engine")
         with tempfile.TemporaryDirectory() as temp, \
                 patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-control"), \
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-control"), \
                 patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
                 patch.object(engine, "_clear_runtime_state"), \
                 patch.object(engine.egress, "resolve_ipv4_via_socks",
                              return_value="198.51.100.10"), \
                 patch.object(engine.egress, "ensure_line", return_value={
-                    "transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}), \
+                    "transport": "socks5", "proxy_url": "socks5://onewifi-egress:22157"}), \
                 patch.object(engine.cfg, "write_instance_json") as write:
             engine.start({"id": "sim1"}, {})
         self.assertEqual(client.containers.run.call_args.args[0], "sha256:verified")
         self.assertEqual(client.containers.run.call_args.kwargs["environment"]["SWU_EGRESS_PROXY"],
-                         "socks5://mdd-egress:22157")
+                         "socks5://onewifi-egress:22157")
         self.assertEqual(client.containers.run.call_args.kwargs["sysctls"][
             "net.ipv6.conf.all.disable_ipv6"], "0")
         self.assertEqual(client.containers.run.call_args.kwargs["sysctls"][
@@ -117,17 +117,17 @@ class EnginePathTests(unittest.TestCase):
         client.containers.run.return_value = SimpleNamespace(id="new", name="engine")
         with tempfile.TemporaryDirectory() as temp, \
                 patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-control"), \
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-control"), \
                 patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
                 patch.object(engine, "_clear_runtime_state"), \
                 patch.object(engine.egress, "resolve_ipv4_via_socks",
                              return_value="198.51.100.10") as resolve, \
                 patch.object(engine.egress, "ensure_line", return_value={
-                    "transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}), \
+                    "transport": "socks5", "proxy_url": "socks5://onewifi-egress:22157"}), \
                 patch.object(engine.cfg, "write_instance_json"):
             engine.start({"id": "sim1", "mcc": "262", "mnc": "02"}, {})
         self.assertEqual(resolve.call_args.args[:2],
-                         ("socks5://mdd-egress:22157",
+                         ("socks5://onewifi-egress:22157",
                           "epdg.epc.mnc002.mcc262.pub.3gppnetwork.org"))
         self.assertEqual(resolve.call_args.kwargs["client_subnet"], "109.192.0.0/24")
 
@@ -141,13 +141,13 @@ class EnginePathTests(unittest.TestCase):
         client.containers.run.return_value = SimpleNamespace(id="new", name="engine")
         with tempfile.TemporaryDirectory() as temp, \
                 patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-control"), \
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-control"), \
                 patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
                 patch.object(engine, "_clear_runtime_state"), \
                 patch.object(engine.egress, "resolve_ipv4_via_socks",
                              return_value="198.51.100.10") as resolve, \
                 patch.object(engine.egress, "ensure_line", return_value={
-                    "transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}), \
+                    "transport": "socks5", "proxy_url": "socks5://onewifi-egress:22157"}), \
                 patch.object(engine.cfg, "write_instance_json"):
             engine.start({"id": "sim1", "mcc": "262", "mnc": "02",
                           "epdg": "custom.example.net"}, {})
@@ -163,13 +163,13 @@ class EnginePathTests(unittest.TestCase):
         client.containers.run.return_value = SimpleNamespace(id="new", name="engine")
         with tempfile.TemporaryDirectory() as temp, \
                 patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-control"), \
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-control"), \
                 patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
                 patch.object(engine, "_clear_runtime_state"), \
                 patch.object(engine.egress, "resolve_ipv4_via_socks",
                              return_value="198.51.100.10") as resolve, \
                 patch.object(engine.egress, "ensure_line", return_value={
-                    "transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}), \
+                    "transport": "socks5", "proxy_url": "socks5://onewifi-egress:22157"}), \
                 patch.object(engine.cfg, "write_instance_json"):
             engine.start({"id": "sim1", "mcc": "310", "mnc": "280"}, {})
         self.assertEqual(resolve.call_args.kwargs["client_subnet"], "")
@@ -182,7 +182,7 @@ class EnginePathTests(unittest.TestCase):
         client.containers.run.return_value = SimpleNamespace(id="new", name="engine")
         with tempfile.TemporaryDirectory() as temp, \
                 patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-control"), \
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-control"), \
                 patch.object(engine, "HOST_PCSCD_DIR", "/volume1/mdd/run/pcscd"), \
                 patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
                 patch.object(engine, "_clear_runtime_state"), \
@@ -190,7 +190,7 @@ class EnginePathTests(unittest.TestCase):
                 patch.object(engine.cfg, "write_instance_json"):
             engine.start({"id": "sim1"}, {})
         options = client.containers.run.call_args.kwargs
-        self.assertEqual(options["network"], "mdd-control")
+        self.assertEqual(options["network"], "onewifi-control")
         self.assertEqual(options["volumes"]["/volume1/mdd/run/pcscd"]["bind"], "/run/pcscd")
 
     def test_named_pcsc_volume_reaches_dynamic_engine(self):
@@ -201,14 +201,14 @@ class EnginePathTests(unittest.TestCase):
         client.containers.run.return_value = SimpleNamespace(id="new", name="engine")
         with tempfile.TemporaryDirectory() as temp, \
                 patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "PCSCD_VOLUME", "mdd-sim-gateway-pcscd"), \
+                patch.object(engine, "PCSCD_VOLUME", "onewifi-pcscd"), \
                 patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
                 patch.object(engine, "_clear_runtime_state"), \
                 patch.object(engine.egress, "ensure_line"), \
                 patch.object(engine.cfg, "write_instance_json"):
             engine.start({"id": "sim1"}, {})
         volumes = client.containers.run.call_args.kwargs["volumes"]
-        self.assertEqual(volumes["mdd-sim-gateway-pcscd"],
+        self.assertEqual(volumes["onewifi-pcscd"],
                          {"bind": "/run/pcscd", "mode": "rw"})
 
     def test_explicit_direct_line_joins_the_configured_uplink(self):
@@ -221,14 +221,14 @@ class EnginePathTests(unittest.TestCase):
         uplink = client.networks.get.return_value
         with tempfile.TemporaryDirectory() as temp, \
                 patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-engine"), \
-                patch.object(engine, "DIRECT_NETWORK", "mdd-uplink"), \
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-engine"), \
+                patch.object(engine, "DIRECT_NETWORK", "onewifi-uplink"), \
                 patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
                 patch.object(engine, "_clear_runtime_state"), \
                 patch.object(engine.egress, "ensure_line", return_value={}), \
                 patch.object(engine.cfg, "write_instance_json"):
             engine.start({"id": "sim1"}, {})
-        self.assertIn(call("mdd-uplink"), client.networks.get.call_args_list)
+        self.assertIn(call("onewifi-uplink"), client.networks.get.call_args_list)
         uplink.connect.assert_called_once_with(container)
 
     def test_proxy_line_never_joins_direct_uplink(self):
@@ -242,18 +242,18 @@ class EnginePathTests(unittest.TestCase):
         client.containers.run.return_value = SimpleNamespace(id="new", name="engine")
         with tempfile.TemporaryDirectory() as temp, \
                 patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-engine"), \
-                patch.object(engine, "DIRECT_NETWORK", "mdd-uplink"), \
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-engine"), \
+                patch.object(engine, "DIRECT_NETWORK", "onewifi-uplink"), \
                 patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
                 patch.object(engine, "_clear_runtime_state"), \
                 patch.object(engine.egress, "resolve_ipv4_via_socks",
                              return_value="198.51.100.10"), \
                 patch.object(engine.egress, "ensure_line", return_value={
-                    "transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}), \
+                    "transport": "socks5", "proxy_url": "socks5://onewifi-egress:22157"}), \
                 patch.object(engine.cfg, "write_instance_json"):
             engine.start({"id": "sim1"}, {})
         # The Engine network is looked up (is it internal?), the uplink never.
-        self.assertNotIn(call("mdd-uplink"), client.networks.get.call_args_list)
+        self.assertNotIn(call("onewifi-uplink"), client.networks.get.call_args_list)
         client.networks.get.return_value.connect.assert_not_called()
 
     def test_proxy_dns_failure_keeps_existing_engine(self):
@@ -264,12 +264,12 @@ class EnginePathTests(unittest.TestCase):
             id="sha256:verified", attrs={"Config": {"Labels": {
                 engine.ENGINE_LABEL: "socks5"}}})
         with patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-engine"), \
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-engine"), \
                 patch.object(engine.egress, "resolve_ipv4_via_socks",
                              side_effect=engine.egress.EgressError(
                                  "ePDG DNS resolution failed through country exit")), \
                 patch.object(engine.egress, "ensure_line", return_value={
-                    "transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}), \
+                    "transport": "socks5", "proxy_url": "socks5://onewifi-egress:22157"}), \
                 patch.object(engine.cfg, "write_instance_json") as write:
             with self.assertRaisesRegex(engine.egress.EgressError, "DNS resolution failed"):
                 engine.start({"id": "sim1", "mcc": "310", "mnc": "240"}, {})
@@ -292,9 +292,9 @@ class EnginePathTests(unittest.TestCase):
         client.containers.get.return_value = SimpleNamespace(
             status="running", id="engine", attrs={"NetworkSettings": {"Networks": {
                 "unrelated": {"IPAddress": "192.0.2.2"},
-                "mdd-control": {"IPAddress": "198.51.100.2"}}}})
+                "onewifi-control": {"IPAddress": "198.51.100.2"}}}})
         with patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-control"):
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-control"):
             self.assertEqual(engine.container_ip("sim1"), "198.51.100.2")
         with patch.object(engine, "_client", return_value=client), \
                 patch.object(engine, "ENGINE_NETWORK", "missing"):
@@ -564,7 +564,7 @@ class DiagnosticCaptureTests(unittest.TestCase):
 
     def test_late_capture_never_removes_a_replacement_container(self):
         engine = EnginePathTests.engine_module()
-        current = SimpleNamespace(id="new", name="mdd-sim-gateway-engine-1",
+        current = SimpleNamespace(id="new", name="onewifi-engine-1",
                                   attrs={"Config": {"Labels": {
                                       engine.MANAGED_LABEL: "true"}}})
         current.remove = lambda force: self.fail("replacement container was removed")

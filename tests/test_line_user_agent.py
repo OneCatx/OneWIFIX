@@ -38,7 +38,7 @@ class RenderedUserAgentTests(unittest.TestCase):
     def test_a_line_without_an_override_still_identifies_as_the_product(self):
         rendered = config.render_instance_json(instance(), {})
 
-        self.assertEqual(rendered["sip"]["user_agent"], "MDD-Sim-Gateway")
+        self.assertEqual(rendered["sip"]["user_agent"], "OneWIFI")
 
     def test_an_explicit_user_agent_reaches_the_engine(self):
         rendered = config.render_instance_json(
@@ -52,7 +52,7 @@ class RenderedUserAgentTests(unittest.TestCase):
         # without identifying itself at all.
         rendered = config.render_instance_json(instance(user_agent="   "), {})
 
-        self.assertEqual(rendered["sip"]["user_agent"], "MDD-Sim-Gateway")
+        self.assertEqual(rendered["sip"]["user_agent"], "OneWIFI")
 
 
 class UserAgentSanitisingTests(unittest.TestCase):
@@ -132,7 +132,7 @@ class EngineFallbackTests(unittest.TestCase):
             "sip": {"webrtc": {"enable": True, "password": "test-password"}},
         })
 
-        self.assertEqual(ctx["user_agent"], "MDD-Sim-Gateway")
+        self.assertEqual(ctx["user_agent"], "OneWIFI")
 
     def test_the_engine_honours_and_sanitises_an_override(self):
         render = engine_render()

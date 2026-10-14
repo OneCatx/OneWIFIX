@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve, extname, sep } from 'node:path'
 
 const dist = resolve(import.meta.dirname, '..', 'dist')
-const port = Number(process.env.MDD_VISUAL_PORT || 5180)
+const port = Number(process.env.ONEWIFI_VISUAL_PORT || 5180)
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.ttf': 'font/ttf', '.txt': 'text/plain' }
 const visualSettings = {
   webhook: { enabled: false, url: '' }, telegram: { enabled: false }, pushplus: { enabled: false }, feishu: { channels: [] },

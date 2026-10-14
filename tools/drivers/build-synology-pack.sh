@@ -15,7 +15,7 @@ repo=$(cd "$(dirname "$0")/../.." && pwd)
 manifest="$repo/runtime/synology-v1000-7.4-modules.json"
 pack_src="$repo/drivers/packs/synology-ds1621plus-dsm7.4.1"
 out=$(mkdir -p "${1:-dist}" && cd "${1:-dist}" && pwd)
-cache=${MDD_DRIVER_CACHE:-$repo/.driver-cache}
+cache=${ONEWIFI_DRIVER_CACHE:-$repo/.driver-cache}
 mkdir -p "$cache"
 
 j() { python3 -c "import json,sys; d=json.load(open('$manifest')); print(eval(sys.argv[1]))" "$1"; }
@@ -77,8 +77,8 @@ python3 - "$manifest" "$stage/compatibility.env" <<'PY'
 import json, shlex, sys
 m = json.load(open(sys.argv[1])); c = m["compatibility"]
 open(sys.argv[2], "w").write("".join(f"{k}={shlex.quote(v)}\n" for k, v in (
-    ("MDD_ARCH", c["architecture"]), ("MDD_KERNEL", c["kernel_release"]),
-    ("MDD_DSM", c["dsm"]), ("MDD_PLATFORM_MARKER", m["pack"]["platform_marker"]))))
+    ("ONEWIFI_ARCH", c["architecture"]), ("ONEWIFI_KERNEL", c["kernel_release"]),
+    ("ONEWIFI_DSM", c["dsm"]), ("ONEWIFI_PLATFORM_MARKER", m["pack"]["platform_marker"]))))
 PY
 cp "$manifest" "$stage/manifest.json"
 cp "$repo/runtime/synology-load-modules.sh" "$stage/loader.sh"

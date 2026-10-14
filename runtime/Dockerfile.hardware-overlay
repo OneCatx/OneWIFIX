@@ -1,7 +1,7 @@
-ARG BASE_IMAGE=mdd-sim-gateway/hardware:dev
+ARG BASE_IMAGE=onewifi/hardware:dev
 FROM ${BASE_IMAGE}
 
-ARG MDD_VERSION=dev
+ARG ONEWIFI_VERSION=dev
 ARG DEBIAN_MIRROR=
 ARG DEBIAN_SECURITY_MIRROR=
 # The same NetworkManager rule as Dockerfile.hardware, which explains it.
@@ -32,8 +32,8 @@ COPY runtime/hardware.py /app/runtime/hardware.py
 COPY host/modem_probe.py /app/host/modem_probe.py
 COPY host/vpcd_modem_bridge.py /app/host/vpcd_modem_bridge.py
 
-LABEL io.mdd-sim-gateway.component="hardware" \
-      io.mdd-sim-gateway.managed="true" \
-      io.mdd-sim-gateway.experimental="true" \
-      io.mdd-sim-gateway.cellular="networkmanager" \
-      org.opencontainers.image.version="${MDD_VERSION}"
+LABEL io.onewifi.component="hardware" \
+      io.onewifi.managed="true" \
+      io.onewifi.experimental="true" \
+      io.onewifi.cellular="networkmanager" \
+      org.opencontainers.image.version="${ONEWIFI_VERSION}"

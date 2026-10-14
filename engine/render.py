@@ -3,7 +3,7 @@
 render.py - Render /config/instance.json into Asterisk configs + the SWu launch env.
 
 Reads the per-SIM instance descriptor (written by the manager, or hand-authored for
-bring-up), fills the Jinja2 templates in /opt/mdd-sim-gateway/templates, and writes the final
+bring-up), fills the Jinja2 templates in /opt/onewifi/templates, and writes the final
 config files. Also derives values (NAI, realm, ePDG FQDN) and computes the container
 source IP used as the SWu tunnel local address.
 
@@ -31,8 +31,8 @@ def env_value(value) -> str:
 
 from jinja2 import Environment, FileSystemLoader
 
-TPL_DIR = os.environ.get("MDD_TPL", "/opt/mdd-sim-gateway/templates")
-CFG_PATH = os.environ.get("MDD_INSTANCE", "/config/instance.json")
+TPL_DIR = os.environ.get("ONEWIFI_TPL", "/opt/onewifi/templates")
+CFG_PATH = os.environ.get("ONEWIFI_INSTANCE", "/config/instance.json")
 
 
 def _default_gateway_ipv4():
@@ -251,9 +251,9 @@ def build_context(cfg):
     nai = f"0{imsi}@nai.epc.mnc{mnc}.mcc{mcc}.3gppnetwork.org"
     # P-CSCF: explicit config wins; else a discovered address exported by entrypoint.
     pcscf = cfg.get("pcscf", "")
-    if not pcscf and os.path.exists("/run/mdd-sim-gateway/pcscf"):
+    if not pcscf and os.path.exists("/run/onewifi/pcscf"):
         try:
-            pcscf = open("/run/mdd-sim-gateway/pcscf").read().strip()
+            pcscf = open("/run/onewifi/pcscf").read().strip()
         except Exception:
             pcscf = ""
     sip = cfg.get("sip", {})
@@ -436,7 +436,7 @@ def main():
                 print(f"[render] sound {name} -> {sounds_dst}")
 
     # Export env for keeper / ami_usim / swu_ike
-    env_path = os.environ.get("MDD_ENV", "/run/mdd-sim-gateway/engine.env")
+    env_path = os.environ.get("ONEWIFI_ENV", "/run/onewifi/engine.env")
     os.makedirs(os.path.dirname(env_path), exist_ok=True)
     # Relay media mode: the entrypoint loads one of these before Asterisk starts, the nftables
     # ruleset when the kernel takes it and the iptables-legacy one otherwise.
@@ -459,12 +459,12 @@ def main():
         put("USIM_READER", cfg.get("reader", "imsi:" + ctx["imsi"]))
         put("PIN_USIM_READER", cfg.get("pin_reader", cfg.get("reader", "imsi:" + ctx["imsi"])))
         put("USIM_ICCID", cfg.get("iccid", ""))
-        put("MDD_ID", ctx["id"])
+        put("ONEWIFI_ID", ctx["id"])
         put("MANAGER_URL", ctx["manager_url"])
         put("MANAGER_EVENT_TOKEN", cfg.get("manager_event_token", ""))
         if ctx["media_relay"]:
-            put("MDD_MEDIA_MODE", "relay")
-            put("MDD_MEDIA_IF", ctx["media_if"])
+            put("ONEWIFI_MEDIA_MODE", "relay")
+            put("ONEWIFI_MEDIA_IF", ctx["media_if"])
         # SWu (python IKEv2/IPsec) launch params — consumed by entrypoint.sh to start
         # swu_ike.py. Reader is addressed by index for swu_ike's smartcard path; source is the
         # container IP; ePDG FQDN is resolved by swu_ike.

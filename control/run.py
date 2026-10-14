@@ -3,12 +3,12 @@
 run.py - Launch the control surface over HTTPS.
 
 Uses the configured TLS cert/key if present, otherwise auto-generates a self-signed
-cert (stored under $MDD_DATA/certs). Runs the FastAPI app with uvicorn.
+cert (stored under $ONEWIFI_DATA/certs). Runs the FastAPI app with uvicorn.
 
 Env:
-  MDD_DATA      data dir (default ./data)
-  MDD_HTTP_PORT override listen port (default from config.settings.http_port)
-  MDD_BIND      override bind address (default from config.settings.bind)
+  ONEWIFI_DATA      data dir (default ./data)
+  ONEWIFI_HTTP_PORT override listen port (default from config.settings.http_port)
+  ONEWIFI_BIND      override bind address (default from config.settings.bind)
 """
 import datetime
 import ipaddress
@@ -48,7 +48,7 @@ def _self_signed(cert_path, key_path):
     # Include the host LAN IP the WebUI/softphone actually connect to (the container's own
     # hostname resolves to the docker-bridge IP, not the routable host IP). The browser softphone
     # rides the same origin, so this is the only certificate a browser has to trust.
-    adv = os.environ.get("MDD_ADVERTISE_ADDR", "").strip()
+    adv = os.environ.get("ONEWIFI_ADVERTISE_ADDR", "").strip()
     if adv:
         try:
             san.append(x509.IPAddress(ipaddress.ip_address(adv)))
@@ -83,8 +83,8 @@ def main():
 
     settings = cfg.get_settings()
     tls = settings.get("tls", {})
-    port = int(os.environ.get("MDD_HTTP_PORT", settings.get("http_port", 8443)))
-    bind = os.environ.get("MDD_BIND", settings.get("bind", "0.0.0.0"))
+    port = int(os.environ.get("ONEWIFI_HTTP_PORT", settings.get("http_port", 8443)))
+    bind = os.environ.get("ONEWIFI_BIND", settings.get("bind", "0.0.0.0"))
 
     configured_cert = _runtime_path(tls.get("cert_path"))
     configured_key = _runtime_path(tls.get("key_path"))

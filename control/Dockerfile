@@ -1,6 +1,6 @@
 # MDD Sim Gateway control-plane image: FastAPI manager + React WebUI, in one container.
 #
-# Build context = repo ROOT (build with: docker build -f control/Dockerfile -t mdd-sim-gateway/control .)
+# Build context = repo ROOT (build with: docker build -f control/Dockerfile -t onewifi/control .)
 # Multi-arch (amd64/arm64) and fully from source: the WebUI is compiled in stage 1, pcsc-lite
 # and the Python deps in stage 2 — no Node or Python toolchain needed on the host. Stage 3 is
 # the shipped image: it inherits NONE of the build toolchain, only the compiled artifacts
@@ -100,7 +100,7 @@ RUN pip install --no-cache-dir --prefix=/usr/local --root=/python-deps -r /tmp/r
 
 # ---------- stage 3: python runtime ----------
 FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
-ARG MDD_VERSION=dev
+ARG ONEWIFI_VERSION=dev
 # Self-built pcsc-lite runtime library (see stage 2) + the prebuilt python site-packages.
 COPY --from=deps /pcsc-runtime/ /
 COPY --from=deps /python-deps/usr/local/ /usr/local/
@@ -126,16 +126,16 @@ COPY host/mdd_container_update.py /app/host/mdd_container_update.py
 COPY VERSION /app/VERSION
 COPY --from=webui /webui/dist /app/webui/dist
 
-# Defaults; the installer overrides MDD_DATA/MDD_HOST_DATA/MDD_ADVERTISE_ADDR/port.
-ENV MDD_WEBUI=/app/webui/dist \
-    MDD_DATA=/data \
-    MDD_HTTP_PORT=8443 \
+# Defaults; the installer overrides ONEWIFI_DATA/ONEWIFI_HOST_DATA/ONEWIFI_ADVERTISE_ADDR/port.
+ENV ONEWIFI_WEBUI=/app/webui/dist \
+    ONEWIFI_DATA=/data \
+    ONEWIFI_HTTP_PORT=8443 \
     PYTHONUNBUFFERED=1
 
 EXPOSE 8443
-LABEL io.mdd-sim-gateway.managed="true" \
-      io.mdd-sim-gateway.component="control" \
-      org.opencontainers.image.version="${MDD_VERSION}" \
+LABEL io.onewifi.managed="true" \
+      io.onewifi.component="control" \
+      org.opencontainers.image.version="${ONEWIFI_VERSION}" \
       org.opencontainers.image.title="MDD Sim Gateway control plane"
 # Each check is a docker exec that starts a fresh Python: on a Raspberry Pi the three
 # containers' checks cost about a fifth of a core at 10 s. The first check now comes

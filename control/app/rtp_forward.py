@@ -27,15 +27,15 @@ import time
 
 log = logging.getLogger("mdd.rtp_forward")
 
-CONTAINER = "mdd-sim-gateway-rtp-forward"
-MANAGED_LABEL = "io.mdd-sim-gateway.managed"
-COMPONENT_LABEL = "io.mdd-sim-gateway.component"
-CONFIG_LABEL = "io.mdd-sim-gateway.rtp-forward-config"
+CONTAINER = "onewifi-rtp-forward"
+MANAGED_LABEL = "io.onewifi.managed"
+COMPONENT_LABEL = "io.onewifi.component"
+CONFIG_LABEL = "io.onewifi.rtp-forward-config"
 # The ranges a running forwarder publishes, so a stopped line keeps its range across passes.
-MAP_LABEL = "io.mdd-sim-gateway.rtp-forward-map"
+MAP_LABEL = "io.onewifi.rtp-forward-map"
 # Carried by an Engine whose RTP range this forwarder publishes: "<first>-<last>".
-FORWARD_LABEL = "io.mdd-sim-gateway.rtp-forward"
-ENV_MAP = "MDD_RTP_FORWARD"
+FORWARD_LABEL = "io.onewifi.rtp-forward"
+ENV_MAP = "ONEWIFI_RTP_FORWARD"
 
 # A flow is one browser address on one port. Browsers use one per call leg; the cap only
 # keeps a stray sender from making the forwarder open sockets without end.
@@ -81,7 +81,7 @@ def fingerprint(mapping: list[dict], image_id: str, network: str) -> str:
 
 def _own_image(client):
     """The image this Control runs, so the forwarder needs nothing fetched."""
-    name = os.environ.get("MDD_CONTROL_CONTAINER", "mdd-sim-gateway-control")
+    name = os.environ.get("ONEWIFI_CONTROL_CONTAINER", "onewifi-control")
     return client.containers.get(name).image
 
 

@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 def current() -> str:
-    override = os.environ.get("MDD_VERSION", "").strip()
+    override = os.environ.get("ONEWIFI_VERSION", "").strip()
     if override:
         return override.removeprefix("v")
     for candidate in (

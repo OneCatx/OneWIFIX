@@ -1,4 +1,4 @@
-# MDD Sim Gateway modem drivers — Synology DS1621+, DSM 7.4.1-90080
+# OneWIFI modem drivers — Synology DS1621+, DSM 7.4.1-90080
 
 This pack adds the five kernel modules the DS1621+ kernel lacks for Quectel EC25-class modems:
 `mii`, `cdc-wdm`, `qmi_wwan`, `usb_wwan` and `option`. It is only for **DS1621+ (v1000),
@@ -14,7 +14,7 @@ sudo sh install.sh
 ```
 
 Verify the tarball against the Release `SHA256SUMS` first. The installer copies the modules to
-`/usr/local/lib/mdd-sim-gateway-modules`, installs a boot hook in `/usr/local/etc/rc.d`, and loads
+`/usr/local/lib/onewifi-modules`, installs a boot hook in `/usr/local/etc/rc.d`, and loads
 the modules. At every boot the hook checks the architecture, kernel, DSM build, platform and every
 module checksum again, and loads nothing if any of them changed (for example after a DSM update).
 Re-running the installer is harmless.

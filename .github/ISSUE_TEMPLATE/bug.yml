@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible MDD Sim Gateway problem without subscriber data.
+description: Report a reproducible OneWIFI problem without subscriber data.
 title: "[Bug] "
 labels: [bug]
 body:

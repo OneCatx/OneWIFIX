@@ -430,7 +430,7 @@ class StoreBackedTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         root = Path(self.temp.name)
         self.patch = patch.multiple(store, DATA_DIR=str(root),
-                                    DB_PATH=str(root / "mdd-sim-gateway.sqlite"),
+                                    DB_PATH=str(root / "onewifi.sqlite"),
                                     PREVIOUS_DB_PATH=str(root / "vowifi.sqlite"))
         self.patch.start()
         store.init()
@@ -514,7 +514,7 @@ class LegacyTrackingMigrationTests(unittest.TestCase):
     def test_bound_local_markers_move_onto_their_messages(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            db = root / "mdd-sim-gateway.sqlite"
+            db = root / "onewifi.sqlite"
             import sqlite3
             with sqlite3.connect(db) as c:
                 c.executescript("""

@@ -1,6 +1,6 @@
 # Third-party software notices
 
-This list covers the material dependencies intentionally used by MDD Sim Gateway 1.0.0. Transitive package notices remain available in their corresponding package distributions.
+This list covers the material dependencies intentionally used by OneWIFI 1.0.0. Transitive package notices remain available in their corresponding package distributions.
 
 | Component | Use | License | Source |
 |---|---|---|---|
@@ -38,9 +38,9 @@ unmodified and sourced from the same upstream font used by Clash Verge Rev.
 
 ## Retained upstream notice: pagecat/vowifi_gateway (MIT)
 
-MDD Sim Gateway is a derivative work of
+OneWIFI is a derivative work of
 [pagecat/vowifi_gateway](https://github.com/pagecat/vowifi_gateway), which contributes the VoWiFi
-engine and the overall control-plane, engine and WebUI architecture. MDD Sim Gateway adds 4G
+engine and the overall control-plane, engine and WebUI architecture. OneWIFI adds 4G
 cellular data and SMS, per-country network egress routing, unified device management and automatic
 provisioning, failover and a test suite. The combined work is distributed under GPL-3.0-only as
 permitted by the MIT license; the original copyright and permission notice is retained below as
@@ -72,7 +72,7 @@ SOFTWARE.
 
 ## Files that are not GPL-3.0-only
 
-MDD Sim Gateway defaults to GPL-3.0-only, but some files are derivative works of
+OneWIFI defaults to GPL-3.0-only, but some files are derivative works of
 upstream projects and keep the upstream license instead. A derivative of GPL-2.0-only code
 cannot be relicensed to GPL-3.0, so these are tracked explicitly:
 
@@ -100,4 +100,4 @@ by `install.sh` and loaded by pcscd as a separate component. `host/vpcd_modem_br
 original GPL-3.0-only code that speaks the VPCD wire protocol to it; no vsmartcard code is copied
 into this repository.
 
-MDD does not copy sing-box or lpac binaries into this source repository. The installer fetches pinned upstream releases/source and verifies published or reviewed SHA-256 values where a binary is downloaded. Full license texts and copyright notices are included in those upstream distributions.
+OneWIFI does not copy sing-box or lpac binaries into this source repository. The installer fetches pinned upstream releases/source and verifies published or reviewed SHA-256 values where a binary is downloaded. Full license texts and copyright notices are included in those upstream distributions.

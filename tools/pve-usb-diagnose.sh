@@ -11,16 +11,16 @@
 # With no arguments the mode is detected from the presence of `qm`. Nothing is modified.
 #
 # Environment:
-#   MDD_USB_ID   modem USB id to look for            (default 2c7c:0125, the EC25 family)
-#   MDD_REDACT   set to 0 to keep long digit strings (default 1: mask IMSI/ICCID/IMEI-shaped runs)
+#   ONEWIFI_USB_ID   modem USB id to look for            (default 2c7c:0125, the EC25 family)
+#   ONEWIFI_REDACT   set to 0 to keep long digit strings (default 1: mask IMSI/ICCID/IMEI-shaped runs)
 
 set -u
 
 MODE="${1:-auto}"
 VMID="${2:-}"
 STAMP="$(date '+%Y%m%d-%H%M%S')"
-USB_ID="${MDD_USB_ID:-2c7c:0125}"
-REDACT="${MDD_REDACT:-1}"
+USB_ID="${ONEWIFI_USB_ID:-2c7c:0125}"
+REDACT="${ONEWIFI_REDACT:-1}"
 
 if [[ "$MODE" == "auto" ]]; then
   if command -v qm >/dev/null 2>&1; then
@@ -153,17 +153,17 @@ collect_guest() {
     "for d in /sys/bus/usb/devices/*; do [ -f \"\$d/idVendor\" ] || continue; [ \"\$(cat \"\$d/idVendor\" 2>/dev/null):\$(cat \"\$d/idProduct\" 2>/dev/null)\" = '$USB_ID' ] || continue; printf 'sysfs=%s authorized=%s product=%s\\n' \"\$d\" \"\$(cat \"\$d/authorized\" 2>/dev/null)\" \"\$(cat \"\$d/product\" 2>/dev/null)\"; find \"\$d\" -maxdepth 3 -type l -name driver -printf 'driver-link=%p -> %l\\n' 2>/dev/null; done"
 
   section "MDD and ModemManager service state"
-  run systemctl is-active mdd-sim-gateway-control.service mdd-sim-gateway-orchestrator.service ModemManager.service
-  run systemctl is-enabled mdd-sim-gateway-control.service mdd-sim-gateway-orchestrator.service ModemManager.service
+  run systemctl is-active onewifi-control.service onewifi-orchestrator.service ModemManager.service
+  run systemctl is-enabled onewifi-control.service onewifi-orchestrator.service ModemManager.service
   run_shell "orchestrator ExecStart" \
-    "systemctl show mdd-sim-gateway-orchestrator.service -p ExecStart --no-pager"
+    "systemctl show onewifi-orchestrator.service -p ExecStart --no-pager"
 
   section "Recent guest USB kernel events"
   run_shell "dmesg -T | USB/modem/error filter | tail -250" \
     "dmesg -T | grep -Ei 'usb|xhci|ttyUSB|ttyACM|cdc-wdm|option|qmi|${USB_ID%%:*}|disconnect|reset|device descriptor|error|fail' | tail -250"
 
   section "Recent orchestrator events"
-  run journalctl -u mdd-sim-gateway-orchestrator.service --since=-45min --no-pager -n 300
+  run journalctl -u onewifi-orchestrator.service --since=-45min --no-pager -n 300
 
   section "Live bridge and listener state"
   run_shell "bridge processes" "pgrep -af 'vpcd_modem_bridge|mdd_orchestrator' || true"
@@ -173,10 +173,10 @@ collect_guest() {
 
 umask 077
 {
-  printf '%s\n' 'MDD Sim Gateway USB passthrough diagnostic report'
+  printf '%s\n' 'OneWIFI USB passthrough diagnostic report'
   printf '%s\n' 'This script performed read-only checks and made no system changes.'
   if [[ "$REDACT" == "0" ]]; then
-    printf '%s\n' 'WARNING: MDD_REDACT=0 -- subscriber identifiers are NOT masked in this report.'
+    printf '%s\n' 'WARNING: ONEWIFI_REDACT=0 -- subscriber identifiers are NOT masked in this report.'
   fi
   if [[ "$MODE" == "host" ]]; then
     if ! command -v qm >/dev/null 2>&1; then

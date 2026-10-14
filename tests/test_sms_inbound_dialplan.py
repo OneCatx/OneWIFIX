@@ -42,10 +42,10 @@ class InboundSmsTests(unittest.TestCase):
 
     def test_engine_call_id_is_sent_to_manager_and_each_sip_branch(self):
         inbound = section(self.dialplan, "volte_ims")
-        self.assertIn("Set(_MDD_CALL_ID=${CHANNEL(uniqueid)})", inbound)
-        self.assertIn('notify.py call_in "${CALLERID(num)}" "${MDD_CALL_ID}"', inbound)
+        self.assertIn("Set(_ONEWIFI_CALL_ID=${CHANNEL(uniqueid)})", inbound)
+        self.assertIn('notify.py call_in "${CALLERID(num)}" "${ONEWIFI_CALL_ID}"', inbound)
         self.assertIn('b(mdd-inbound-headers^s^1)', inbound)
-        self.assertIn('PJSIP_HEADER(add,X-MDD-Call-ID)=${MDD_CALL_ID}',
+        self.assertIn('PJSIP_HEADER(add,X-OneWIFI-Call-ID)=${ONEWIFI_CALL_ID}',
                       section(self.dialplan, "mdd-inbound-headers"))
 
     def test_late_answer_pickup_is_line_local_and_marked_only_on_called_leg(self):
@@ -53,10 +53,10 @@ class InboundSmsTests(unittest.TestCase):
         self.assertIn("exten => _mddpickup-.,1", pickup)
         self.assertIn("Pickup(${PICKUP_CALL_ID}@PICKUPMARK)", pickup)
         self.assertIn("U(mdd-inbound-answer)", self.dialplan)
-        self.assertIn('notify.py call_answer "${MDD_CALL_ID}"', self.dialplan)
-        self.assertIn("Set(MDD_OUTBOUND_CALL=1)", pickup)
-        self.assertIn('ExecIf($["${MDD_OUTBOUND_CALL}"="1"]?TrySystem(', pickup)
-        self.assertIn("Set(PICKUPMARK=${MDD_CALL_ID})",
+        self.assertIn('notify.py call_answer "${ONEWIFI_CALL_ID}"', self.dialplan)
+        self.assertIn("Set(ONEWIFI_OUTBOUND_CALL=1)", pickup)
+        self.assertIn('ExecIf($["${ONEWIFI_OUTBOUND_CALL}"="1"]?TrySystem(', pickup)
+        self.assertIn("Set(PICKUPMARK=${ONEWIFI_CALL_ID})",
                       section(self.dialplan, "mdd-inbound-headers"))
         self.assertIn("app_directed_pickup.so", (ROOT / "engine" / "asterisk-keep-modules.txt").read_text(encoding="utf-8"))
 

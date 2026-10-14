@@ -32,7 +32,7 @@ class PveBindScriptTests(unittest.TestCase):
             "qm",
             """#!/usr/bin/env bash
 if [[ "$1" == status ]]; then echo 'status: stopped'; exit 0; fi
-if [[ "$1" == config ]]; then cat "$MDD_PVE_CONFIG_ROOT/$2.conf"; exit 0; fi
+if [[ "$1" == config ]]; then cat "$ONEWIFI_PVE_CONFIG_ROOT/$2.conf"; exit 0; fi
 exit 1
 """,
         )
@@ -64,10 +64,10 @@ exit 1
         env.update(
             {
                 "PATH": f"{self.bin}:{env['PATH']}",
-                "MDD_PVE_SYS_USB_ROOT": str(self.sys_usb),
-                "MDD_PVE_CONFIG_ROOT": str(self.configs),
-                "MDD_PVE_USB_DEV_ROOT": str(self.usb_dev),
-                "MDD_PVE_PROC_ROOT": str(self.proc),
+                "ONEWIFI_PVE_SYS_USB_ROOT": str(self.sys_usb),
+                "ONEWIFI_PVE_CONFIG_ROOT": str(self.configs),
+                "ONEWIFI_PVE_USB_DEV_ROOT": str(self.usb_dev),
+                "ONEWIFI_PVE_PROC_ROOT": str(self.proc),
             }
         )
         return subprocess.run(

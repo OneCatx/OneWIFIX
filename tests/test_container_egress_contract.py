@@ -15,9 +15,9 @@ class ContractTests(unittest.TestCase):
         self.state = {"version": 1, "transport": "socks5", "enabled": True,
                       "updated_at": time.time(), "config_fingerprint": proxy_fingerprint(self.proxy),
                       "exits": {"gb": {"ready": True, "mode": "manual", "transport": "socks5",
-                                       "proxy_host": "mdd-egress", "proxy_port": 22157}}}
+                                       "proxy_host": "onewifi-egress", "proxy_port": 22157}}}
         self.inst = {"id": "sim1", "proxy_country": "gb"}
-        self.env = patch.dict(os.environ, {"MDD_EGRESS_TRANSPORT": "socks5"})
+        self.env = patch.dict(os.environ, {"ONEWIFI_EGRESS_TRANSPORT": "socks5"})
         self.env.start()
         self.addCleanup(self.env.stop)
 
@@ -29,7 +29,7 @@ class ContractTests(unittest.TestCase):
 
     def test_matching_country_returns_internal_endpoint_not_upstream_credentials(self):
         result = self.ensure()
-        self.assertEqual(result["proxy_url"], "socks5://mdd-egress:22157")
+        self.assertEqual(result["proxy_url"], "socks5://onewifi-egress:22157")
 
     def test_stale_future_nan_missing_or_wrong_contract_cannot_start(self):
         for field, value in (("updated_at", time.time() - 16), ("updated_at", time.time() + 30),
@@ -60,7 +60,7 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(self.ensure()["transport"], "direct")
 
     def test_invalid_transport_fails_even_when_proxy_disabled(self):
-        with patch.dict(os.environ, {"MDD_EGRESS_TRANSPORT": "socks"}), \
+        with patch.dict(os.environ, {"ONEWIFI_EGRESS_TRANSPORT": "socks"}), \
                 patch.object(egress, "publish") as publish:
             with self.assertRaises(egress.EgressError):
                 egress.ensure_line(self.inst, {})

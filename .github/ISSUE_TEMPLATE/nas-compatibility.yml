@@ -69,7 +69,7 @@ body:
     id: result
     attributes:
       label: Functions tested and result
-      description: Include the exact MDD version and results for discovery, reader, VoWiFi, 4G, SMS, calls or eSIM as applicable.
+      description: Include the exact OneWIFI version and results for discovery, reader, VoWiFi, 4G, SMS, calls or eSIM as applicable.
     validations:
       required: true
   - type: checkboxes

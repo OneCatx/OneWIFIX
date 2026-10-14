@@ -19,7 +19,7 @@ class _Recorder(http.server.BaseHTTPRequestHandler):
         body = self.rfile.read(length)
         type(self).hits.append({
             "path": self.path,
-            "token": self.headers.get("X-MDD-Engine-Token"),
+            "token": self.headers.get("X-OneWIFI-Engine-Token"),
             "payload": json.loads(body or b"{}"),
         })
         self.send_response(204)
@@ -42,7 +42,7 @@ class NotifyUrllibFallbackTests(unittest.TestCase):
 
     def _run(self, argv, env_extra, block_requests=False):
         env = {"MANAGER_URL": self.url, "MANAGER_EVENT_TOKEN": "tok123",
-               "MDD_ENV": "/nonexistent", **env_extra}
+               "ONEWIFI_ENV": "/nonexistent", **env_extra}
         with patch.dict(os.environ, env, clear=True), \
              patch.object(sys, "argv", argv):
             if block_requests:

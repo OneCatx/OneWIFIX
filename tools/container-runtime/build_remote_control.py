@@ -23,8 +23,8 @@ def main():
     parser.add_argument("--host", required=True)
     parser.add_argument("--port", type=int, default=22)
     parser.add_argument("--identity", required=True)
-    parser.add_argument("--base-image", default="mdd-sim-gateway/control:v1.11.0")
-    parser.add_argument("--tag", default="mdd-sim-gateway/control:dev")
+    parser.add_argument("--base-image", default="onewifi/control:v1.11.0")
+    parser.add_argument("--tag", default="onewifi/control:dev")
     parser.add_argument("--version", default="dev")
     args = parser.parse_args()
 
@@ -45,7 +45,7 @@ def main():
             archive.add(ROOT / name, arcname=name, filter=include)
     build = ["sudo", "-n", "/usr/local/bin/docker", "build", "--network", "bridge",
              "--build-arg", "BASE_IMAGE=" + base,
-             "--build-arg", "MDD_VERSION=" + args.version,
+             "--build-arg", "ONEWIFI_VERSION=" + args.version,
              "-f", "runtime/Dockerfile.control-overlay", "-t", args.tag, "-"]
     subprocess.run(ssh + [shlex.join(build)], input=payload.getvalue(), check=True)
 

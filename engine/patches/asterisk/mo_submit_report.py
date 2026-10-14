@@ -35,7 +35,7 @@ SENTINEL = (
     " * message WE submitted — through ack_ref, which otherwise carries the reference an\n"
     " * inbound RP-DATA has to be acknowledged with. A reference is never negative, and -1 is\n"
     " * already taken to mean \"nothing to acknowledge\". */\n"
-    "#define MDD_RP_SUBMIT_REPORT (-2)\n"
+    "#define ONEWIFI_RP_SUBMIT_REPORT (-2)\n"
     "\n"
 )
 
@@ -52,13 +52,13 @@ REPORT_BRANCH = (
     "\tcase 0x03:\n"
     "\t\t/* " + MARKER + ": RP-ACK, the SMSC accepted a message we submitted. One\n"
     "\t\t * arrives per submitted segment, so this stays at debug level. */\n"
-    "\t\t*ack_ref = MDD_RP_SUBMIT_REPORT;\n"
+    "\t\t*ack_ref = ONEWIFI_RP_SUBMIT_REPORT;\n"
     '\t\tast_log(LOG_DEBUG, "SMS submit report: RP-ACK, reference %d.\\n", buf[1] & 0xff);\n'
     "\t\treturn;\n"
     "\tcase 0x05:\n"
     "\t\t/* " + MARKER + ": RP-ERROR, the SMSC refused a message we submitted. The RP\n"
     "\t\t * cause (octet 3, bit 8 is the extension flag) is the only statement of why. */\n"
-    "\t\t*ack_ref = MDD_RP_SUBMIT_REPORT;\n"
+    "\t\t*ack_ref = ONEWIFI_RP_SUBMIT_REPORT;\n"
     '\t\tast_log(LOG_WARNING, "SMS submit report: RP-ERROR, reference %d, RP cause %d.\\n",\n'
     "\t\t\tbuf[1] & 0xff, (len >= 4) ? (buf[3] & 0x7f) : -1);\n"
     "\t\treturn;\n"
@@ -85,7 +85,7 @@ STOP_REPORT = (
     "\t * TPDU, so the messaging core would file one empty inbound SMS per submitted segment.\n"
     "\t * The hex dump parse_rpdata logged is what the control plane reads to turn the stored\n"
     "\t * message from 'sent' into 'delivered' or 'failed'. */\n"
-    "\tif (ack_ref == MDD_RP_SUBMIT_REPORT) {\n"
+    "\tif (ack_ref == ONEWIFI_RP_SUBMIT_REPORT) {\n"
     "\t\tsend_response(rdata, PJSIP_SC_OK, NULL, NULL);\n"
     "\t\tast_msg_destroy(msg);\n"
     "\t\treturn PJ_TRUE;\n"

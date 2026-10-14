@@ -49,8 +49,8 @@ SIGN_IN_PATHS = frozenset({"/api/auth/setup", "/api/auth/login", "/api/auth/clie
 PUBLIC_PATHS = SIGN_IN_PATHS | {"/api/auth/status"}
 ENGINE_EVENT_PATH = "/api/engine/event"
 MUTATING_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
-CSRF_HEADER = "x-mdd-csrf-token"
-ENGINE_TOKEN_HEADER = "x-mdd-engine-token"
+CSRF_HEADER = "x-onewifi-csrf-token"
+ENGINE_TOKEN_HEADER = "x-onewifi-engine-token"
 
 # WebSocket close codes. 4401: the credential is missing, expired or revoked -- sign in again.
 # 4403: this caller may not open this socket, or the page is not one the gateway serves;

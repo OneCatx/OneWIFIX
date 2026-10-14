@@ -26,7 +26,7 @@ class RuntimeRegistryTests(unittest.IsolatedAsyncioTestCase):
 
         await registry.handle_event({
             "Action": "die", "id": "old",
-            "Actor": {"Attributes": {"name": "mdd-sim-gateway-engine-7"}},
+            "Actor": {"Attributes": {"name": "onewifi-engine-7"}},
         })
 
         runtime = await registry.get("7")
@@ -44,7 +44,7 @@ class RuntimeRegistryTests(unittest.IsolatedAsyncioTestCase):
 
         await registry.handle_event({
             "Action": "start", "id": "new",
-            "Actor": {"Attributes": {"name": "mdd-sim-gateway-engine-2"}},
+            "Actor": {"Attributes": {"name": "onewifi-engine-2"}},
         })
 
         self.assertEqual((await registry.get("2"))["container_id"], "new")

@@ -12,10 +12,10 @@ VID="2c7c"
 PID="0125"
 APPLY=0
 VMID=""
-SYS_USB_ROOT="${MDD_PVE_SYS_USB_ROOT:-/sys/bus/usb/devices}"
-PVE_CONFIG_ROOT="${MDD_PVE_CONFIG_ROOT:-/etc/pve/qemu-server}"
-USB_DEV_ROOT="${MDD_PVE_USB_DEV_ROOT:-/dev/bus/usb}"
-PROC_ROOT="${MDD_PVE_PROC_ROOT:-/proc}"
+SYS_USB_ROOT="${ONEWIFI_PVE_SYS_USB_ROOT:-/sys/bus/usb/devices}"
+PVE_CONFIG_ROOT="${ONEWIFI_PVE_CONFIG_ROOT:-/etc/pve/qemu-server}"
+USB_DEV_ROOT="${ONEWIFI_PVE_USB_DEV_ROOT:-/dev/bus/usb}"
+PROC_ROOT="${ONEWIFI_PVE_PROC_ROOT:-/proc}"
 
 usage() {
   cat <<'EOF'

@@ -176,11 +176,11 @@ SUPPORT_BUNDLE_MAX_BYTES = 10 * 1024 * 1024
 # still measured and pruned below; this budget keeps that fallback exceptional.
 SUPPORT_BUNDLE_CONTENT_BYTES = 8 * 1024 * 1024
 
-_MDD_IMAGE_PREFIXES = ("mdd-sim-gateway/", "ghcr.io/mddidd/mdd-sim-gateway-")
+_ONEWIFI_IMAGE_PREFIXES = ("onewifi/", "ghcr.io/onecatx/onewifi-")
 _CURRENT_IMAGE_TAGS = {
-    "mdd-sim-gateway/engine:latest",
-    "mdd-sim-gateway/control:latest",
-    "mdd-sim-gateway/engine-base:trusted",
+    "onewifi/engine:latest",
+    "onewifi/control:latest",
+    "onewifi/engine-base:trusted",
 }
 
 
@@ -188,8 +188,8 @@ def _managed_image(image) -> bool:
     tags = [str(tag) for tag in (getattr(image, "tags", None) or [])]
     attrs = getattr(image, "attrs", None) or {}
     labels = ((attrs.get("Config") or {}).get("Labels") or {})
-    return labels.get("io.mdd-sim-gateway.managed") == "true" or any(
-        tag.startswith(_MDD_IMAGE_PREFIXES) for tag in tags)
+    return labels.get("io.onewifi.managed") == "true" or any(
+        tag.startswith(_ONEWIFI_IMAGE_PREFIXES) for tag in tags)
 
 
 def _image_layer_bytes(report: dict) -> int:
@@ -442,7 +442,7 @@ _CONTAINER_RESTART_SECONDS = 180
 
 
 def container_stack_enabled() -> bool:
-    return os.environ.get("MDD_CONTAINER_STACK", "").strip().lower() in {
+    return os.environ.get("ONEWIFI_CONTAINER_STACK", "").strip().lower() in {
         "1", "true", "yes", "on"}
 
 
@@ -546,10 +546,10 @@ def launch_container_update() -> dict:
         _write_private_json(status_path, result)
         request_path.unlink(missing_ok=True)
         return {"ok": False, **result}
-    host_data = os.environ.get("MDD_HOST_DATA", "").strip()
+    host_data = os.environ.get("ONEWIFI_HOST_DATA", "").strip()
     if not host_data.startswith("/") or ":" in host_data:
         result = {"state": "failed", "phase": "launch",
-                  "error": "MDD_HOST_DATA must be an absolute host path",
+                  "error": "ONEWIFI_HOST_DATA must be an absolute host path",
                   "updated_at": int(time.time())}
         _write_private_json(status_path, result)
         request_path.unlink(missing_ok=True)
@@ -572,11 +572,11 @@ def launch_container_update() -> dict:
     client = None
     try:
         client = docker.from_env()
-        control_name = os.environ.get("MDD_CONTROL_CONTAINER", "mdd-sim-gateway-control")
+        control_name = os.environ.get("ONEWIFI_CONTROL_CONTAINER", "onewifi-control")
         control = client.containers.get(control_name)
         labels = (control.attrs.get("Config") or {}).get("Labels") or {}
-        if labels.get("io.mdd-sim-gateway.managed") != "true" \
-                or labels.get("io.mdd-sim-gateway.component") != "control":
+        if labels.get("io.onewifi.managed") != "true" \
+                or labels.get("io.onewifi.component") != "control":
             raise RuntimeError("refusing to launch an updater from an unowned Control container")
         command = ["/app/host/mdd_container_update.py", "--data", "/data",
                    "--version", version, "--repository", repository,
@@ -589,14 +589,14 @@ def launch_container_update() -> dict:
             # mdd_container_update.compose_location).
             volumes=[f"{host_data}:/data:rw", f"{host_data}:{host_data}:rw",
                      "/var/run/docker.sock:/var/run/docker.sock:rw"],
-            environment={"MDD_DATA": "/data", "MDD_HOST_DATA": host_data,
+            environment={"ONEWIFI_DATA": "/data", "ONEWIFI_HOST_DATA": host_data,
                          "PYTHONDONTWRITEBYTECODE": "1"},
-            labels={"io.mdd-sim-gateway.managed": "true",
-                    "io.mdd-sim-gateway.component": "update-helper"},
-            name=f"mdd-sim-gateway-update-{time.time_ns()}",
-            network=os.environ.get("MDD_ENGINE_DIRECT_NETWORK", "mdd-sim-gateway-uplink"))
+            labels={"io.onewifi.managed": "true",
+                    "io.onewifi.component": "update-helper"},
+            name=f"onewifi-update-{time.time_ns()}",
+            network=os.environ.get("ONEWIFI_ENGINE_DIRECT_NETWORK", "onewifi-uplink"))
         engine_network = client.networks.get(
-            os.environ.get("MDD_ENGINE_NETWORK", "mdd-sim-gateway-engine"))
+            os.environ.get("ONEWIFI_ENGINE_NETWORK", "onewifi-engine"))
         engine_network.connect(helper)
         helper.start()
         request_path.unlink(missing_ok=True)
@@ -677,9 +677,9 @@ def perform_container_service_restart(scope: str, client=None) -> dict:
     own_client = client is None
     docker_client = client
     names = {
-        "control": os.environ.get("MDD_CONTROL_CONTAINER", "mdd-sim-gateway-control"),
-        "hardware": os.environ.get("MDD_HARDWARE_CONTAINER", "mdd-sim-gateway-hardware"),
-        "egress": os.environ.get("MDD_EGRESS_CONTAINER", "mdd-sim-gateway-egress"),
+        "control": os.environ.get("ONEWIFI_CONTROL_CONTAINER", "onewifi-control"),
+        "hardware": os.environ.get("ONEWIFI_HARDWARE_CONTAINER", "onewifi-hardware"),
+        "egress": os.environ.get("ONEWIFI_EGRESS_CONTAINER", "onewifi-egress"),
     }
     order = ["control"] if scope == "control" else ["egress", "hardware", "control"]
     try:
@@ -689,8 +689,8 @@ def perform_container_service_restart(scope: str, client=None) -> dict:
         for component in order:
             container = docker_client.containers.get(names[component])
             labels = (container.attrs.get("Config") or {}).get("Labels") or {}
-            if (labels.get("io.mdd-sim-gateway.managed") != "true"
-                    or labels.get("io.mdd-sim-gateway.component") != component):
+            if (labels.get("io.onewifi.managed") != "true"
+                    or labels.get("io.onewifi.component") != component):
                 raise RuntimeError(f"refusing to restart unowned {component} container")
             containers.append((component, container))
         control_container = next(container for component, container in containers
@@ -713,8 +713,8 @@ def perform_container_service_restart(scope: str, client=None) -> dict:
             "client=docker.from_env()\n"
             f"target=client.containers.get({target_name})\n"
             "labels=(target.attrs.get('Config') or {}).get('Labels') or {}\n"
-            "assert labels.get('io.mdd-sim-gateway.managed') == 'true'\n"
-            "assert labels.get('io.mdd-sim-gateway.component') == 'control'\n"
+            "assert labels.get('io.onewifi.managed') == 'true'\n"
+            "assert labels.get('io.onewifi.component') == 'control'\n"
             "target.restart(timeout=30)\n")
         docker_client.containers.run(
             # docker-py shell-splits a string command before sending it to the daemon.
@@ -723,9 +723,9 @@ def perform_container_service_restart(scope: str, client=None) -> dict:
             detach=True, auto_remove=True, network_mode="none",
             healthcheck={"test": ["NONE"]},
             volumes={"/var/run/docker.sock": {"bind": "/var/run/docker.sock", "mode": "rw"}},
-            labels={"io.mdd-sim-gateway.managed": "true",
-                    "io.mdd-sim-gateway.component": "restart-helper"},
-            name=f"mdd-sim-gateway-restart-{time.time_ns()}")
+            labels={"io.onewifi.managed": "true",
+                    "io.onewifi.component": "restart-helper"},
+            name=f"onewifi-restart-{time.time_ns()}")
         return running
     except Exception as exc:  # noqa: Docker exposes several backend-specific exception types
         result = {**running, "state": "failed", "error_code": "restart.error.failed",

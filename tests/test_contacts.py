@@ -258,7 +258,7 @@ class _BookTest(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         root = Path(self.temp.name)
         self.patch = patch.multiple(store, DATA_DIR=str(root),
-                                    DB_PATH=str(root / "mdd-sim-gateway.sqlite"),
+                                    DB_PATH=str(root / "onewifi.sqlite"),
                                     PREVIOUS_DB_PATH=str(root / "vowifi.sqlite"))
         self.patch.start()
         store.init()

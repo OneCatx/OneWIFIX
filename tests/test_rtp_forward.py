@@ -24,7 +24,7 @@ def engine_container(iid, span=None):
     labels = {rtp_forward.MANAGED_LABEL: "true", rtp_forward.COMPONENT_LABEL: "engine"}
     if span:
         labels[rtp_forward.FORWARD_LABEL] = span
-    return container(f"mdd-sim-gateway-engine-{iid}", labels)
+    return container(f"onewifi-engine-{iid}", labels)
 
 
 def forwarder(mapping):
@@ -54,42 +54,42 @@ class Client:
 
 
 class PlanTests(unittest.TestCase):
-    CONFIGURED = {"mdd-sim-gateway-engine-1", "mdd-sim-gateway-engine-2"}
+    CONFIGURED = {"onewifi-engine-1", "onewifi-engine-2"}
 
     def test_engines_with_the_label_are_forwarded(self):
         client = Client([engine_container(1, "30000-30011"), engine_container(2)])
         self.assertEqual(rtp_forward.plan(client, self.CONFIGURED), [
-            {"target": "mdd-sim-gateway-engine-1", "first": 30000, "last": 30011}])
+            {"target": "onewifi-engine-1", "first": 30000, "last": 30011}])
 
     def test_a_stopped_line_keeps_its_range_so_the_others_keep_their_calls(self):
-        kept = {"target": "mdd-sim-gateway-engine-2", "first": 30012, "last": 30023}
+        kept = {"target": "onewifi-engine-2", "first": 30012, "last": 30023}
         client = Client([engine_container(1, "30000-30011")], current=forwarder([kept]))
         self.assertIn(kept, rtp_forward.plan(client, self.CONFIGURED))
 
     def test_a_deleted_line_or_one_no_longer_behind_an_exit_lets_go(self):
-        gone = {"target": "mdd-sim-gateway-engine-9", "first": 30100, "last": 30111}
-        direct_now = {"target": "mdd-sim-gateway-engine-2", "first": 30012, "last": 30023}
+        gone = {"target": "onewifi-engine-9", "first": 30100, "last": 30111}
+        direct_now = {"target": "onewifi-engine-2", "first": 30012, "last": 30023}
         client = Client([engine_container(1, "30000-30011"), engine_container(2)],
                         current=forwarder([gone, direct_now]))
         self.assertEqual([entry["target"] for entry in rtp_forward.plan(client, self.CONFIGURED)],
-                         ["mdd-sim-gateway-engine-1"])
+                         ["onewifi-engine-1"])
 
     def test_exclude_frees_a_range_before_its_engine_publishes_it(self):
         client = Client([engine_container(1, "30000-30011")])
         self.assertEqual(rtp_forward.plan(client, self.CONFIGURED,
-                                          exclude="mdd-sim-gateway-engine-1"), [])
+                                          exclude="onewifi-engine-1"), [])
 
     def test_bad_or_overlapping_ranges_are_not_forwarded(self):
         client = Client([engine_container(1, "30000-30011"), engine_container(2, "30005-30020"),
                          engine_container(3, "80-90"), engine_container(4, "x")])
         self.assertEqual([entry["target"] for entry in rtp_forward.plan(client, set())],
-                         ["mdd-sim-gateway-engine-1"])
+                         ["onewifi-engine-1"])
 
 
 class ReconcileTests(unittest.TestCase):
     def test_the_forwarder_publishes_the_ranges_with_nothing_else(self):
         client = Client([engine_container(1, "30000-30001")])
-        rtp_forward.reconcile(client, "mdd-sim-gateway-engine", set())
+        rtp_forward.reconcile(client, "onewifi-engine", set())
         kwargs = client.containers.create.call_args.kwargs
         self.assertEqual(client.containers.create.call_args.args, ("sha256:control",))
         self.assertEqual(kwargs["ports"], {"30000/udp": 30000, "30001/udp": 30001})
@@ -99,21 +99,21 @@ class ReconcileTests(unittest.TestCase):
         self.assertTrue(kwargs["read_only"])
         self.assertEqual(kwargs["healthcheck"], {"test": ["NONE"]})
         self.assertEqual(json.loads(kwargs["environment"][rtp_forward.ENV_MAP]), [
-            {"target": "mdd-sim-gateway-engine-1", "first": 30000, "last": 30001}])
-        client.networks.get.assert_called_once_with("mdd-sim-gateway-engine")
+            {"target": "onewifi-engine-1", "first": 30000, "last": 30001}])
+        client.networks.get.assert_called_once_with("onewifi-engine")
         client.networks.get.return_value.connect.assert_called_once_with(client.created)
         client.created.start.assert_called_once_with()
 
     def test_an_unchanged_forwarder_is_left_running(self):
-        mapping = [{"target": "mdd-sim-gateway-engine-1", "first": 30000, "last": 30001}]
+        mapping = [{"target": "onewifi-engine-1", "first": 30000, "last": 30001}]
         current = container(rtp_forward.CONTAINER, {
             rtp_forward.MANAGED_LABEL: "true",
             rtp_forward.MAP_LABEL: json.dumps(mapping),
             rtp_forward.CONFIG_LABEL: rtp_forward.fingerprint(
-                mapping, "sha256:control", "mdd-sim-gateway-engine")})
+                mapping, "sha256:control", "onewifi-engine")})
         current.remove = Mock()
         client = Client([engine_container(1, "30000-30001")], current=current)
-        rtp_forward.reconcile(client, "mdd-sim-gateway-engine", set())
+        rtp_forward.reconcile(client, "onewifi-engine", set())
         current.remove.assert_not_called()
         client.containers.create.assert_not_called()
 
@@ -121,7 +121,7 @@ class ReconcileTests(unittest.TestCase):
         current = forwarder([])
         current.remove = Mock()
         client = Client([engine_container(1)], current=current)
-        rtp_forward.reconcile(client, "mdd-sim-gateway-engine", set())
+        rtp_forward.reconcile(client, "onewifi-engine", set())
         current.remove.assert_called_once_with(force=True, v=True)
         client.containers.create.assert_not_called()
 
@@ -130,7 +130,7 @@ class ReconcileTests(unittest.TestCase):
         current.remove = Mock()
         client = Client([engine_container(1, "30000-30001")], current=current)
         with self.assertRaises(RuntimeError):
-            rtp_forward.reconcile(client, "mdd-sim-gateway-engine", set())
+            rtp_forward.reconcile(client, "onewifi-engine", set())
         current.remove.assert_not_called()
 
 
@@ -147,8 +147,8 @@ class EngineStartTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp, \
                 patch.dict(engine._internal_networks, clear=True), \
                 patch.object(engine, "_client", return_value=client), \
-                patch.object(engine, "ENGINE_NETWORK", "mdd-sim-gateway-engine"), \
-                patch.object(engine, "DIRECT_NETWORK", "mdd-sim-gateway-uplink"), \
+                patch.object(engine, "ENGINE_NETWORK", "onewifi-engine"), \
+                patch.object(engine, "DIRECT_NETWORK", "onewifi-uplink"), \
                 patch.object(engine, "_instance_paths", return_value=(temp, temp)), \
                 patch.object(engine, "_clear_runtime_state"), \
                 patch.object(engine.media, "engine_attachment", return_value=media_attachment), \
@@ -159,7 +159,7 @@ class EngineStartTests(unittest.TestCase):
             engine.start({"id": "1", "ports": {"rtp_start": 30000, "rtp_end": 30011}}, {})
         return client.containers.run.call_args.kwargs, reconcile
 
-    SOCKS = {"transport": "socks5", "proxy_url": "socks5://mdd-egress:22157"}
+    SOCKS = {"transport": "socks5", "proxy_url": "socks5://onewifi-egress:22157"}
 
     def test_a_line_behind_an_exit_is_forwarded_instead_of_publishing(self):
         options, reconcile = self.start(self.SOCKS)
@@ -173,7 +173,7 @@ class EngineStartTests(unittest.TestCase):
         self.assertIn("30000/udp", options["ports"])
         self.assertNotIn(rtp_forward.FORWARD_LABEL, options["labels"])
         reconcile.assert_called_once_with(unittest.mock.ANY,
-                                          exclude="mdd-sim-gateway-engine-1")
+                                          exclude="onewifi-engine-1")
 
     def test_an_engine_network_that_is_not_internal_publishes_as_before(self):
         options, _reconcile = self.start(self.SOCKS, internal=False)
@@ -210,14 +210,14 @@ class ForwarderTests(unittest.TestCase):
             real = socket.getaddrinfo
 
             def resolve(host, *args, **kwargs):
-                if host == "mdd-sim-gateway-engine-1":
+                if host == "onewifi-engine-1":
                     return [(socket.AF_INET, socket.SOCK_DGRAM, 17, "",
                              ("127.0.0.1", engine_port))]
                 return real(host, *args, **kwargs)
 
             with patch("socket.getaddrinfo", side_effect=resolve):
                 task = loop.create_task(rtp_forward.serve(
-                    [{"target": "mdd-sim-gateway-engine-1", "first": port, "last": port}],
+                    [{"target": "onewifi-engine-1", "first": port, "last": port}],
                     host="127.0.0.1"))
                 await asyncio.sleep(0.1)
                 browsers = []
@@ -249,7 +249,7 @@ class ForwarderTests(unittest.TestCase):
         self.assertEqual(len(set(seen_sources)), 2)
 
     def test_a_port_opens_no_more_than_its_share_of_flows(self):
-        outside = rtp_forward._Outside(30000, "mdd-sim-gateway-engine-1")
+        outside = rtp_forward._Outside(30000, "onewifi-engine-1")
         outside.transport = Mock()
         with patch.object(rtp_forward._Flow, "open", new=Mock(return_value=None)), \
                 patch("asyncio.get_running_loop") as loop:

@@ -4,7 +4,7 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 
 These unified diffs modify [LudovicRousseau/CCID](https://github.com/LudovicRousseau/CCID),
 which is LGPL-2.1-or-later. As derivative works of CCID they carry CCID's license, not the
-GPL-3.0-only default of MDD Sim Gateway. `install.sh` applies them to a pinned CCID source
+GPL-3.0-only default of OneWIFI. `install.sh` applies them to a pinned CCID source
 tarball and builds the driver on the host; the resulting driver is a separate component
 loaded by pcscd.
 

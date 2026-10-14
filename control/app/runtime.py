@@ -93,7 +93,7 @@ class RuntimeRegistry:
         actor = event.get("Actor") or {}
         attrs = actor.get("Attributes") or {}
         name = str(attrs.get("name") or "")
-        prefix = "mdd-sim-gateway-engine-"
+        prefix = "onewifi-engine-"
         if not name.startswith(prefix):
             return
         iid = name[len(prefix):]

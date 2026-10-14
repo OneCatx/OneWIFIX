@@ -38,7 +38,7 @@ class InstallTunMtuTests(unittest.TestCase):
         docker.chmod(docker.stat().st_mode | stat.S_IEXEC)
         script = "\n".join([
             'warn() { echo "warn: $*"; }',
-            'CONTROL_NAME=mdd-sim-gateway-control',
+            'CONTROL_NAME=onewifi-control',
             shell_function("control_tun_mtu"),
             "control_tun_mtu",
         ])
@@ -47,15 +47,15 @@ class InstallTunMtuTests(unittest.TestCase):
                               env={**environ, "PATH": f"{self.bin}:{environ['PATH']}", **env})
 
     def test_the_installers_environment_wins(self):
-        out = self.tun_mtu("MDD_DATA=/data;SWU_TUN_MTU=1280", SWU_TUN_MTU="1300")
+        out = self.tun_mtu("ONEWIFI_DATA=/data;SWU_TUN_MTU=1280", SWU_TUN_MTU="1300")
         self.assertEqual(out.stdout, "1300")
 
     def test_the_replaced_container_keeps_its_value(self):
-        out = self.tun_mtu("MDD_DATA=/data;SWU_TUN_MTU=1280;PATH=/usr/bin")
+        out = self.tun_mtu("ONEWIFI_DATA=/data;SWU_TUN_MTU=1280;PATH=/usr/bin")
         self.assertEqual(out.stdout, "1280")
 
     def test_nothing_set_leaves_the_engine_default(self):
-        self.assertEqual(self.tun_mtu("MDD_DATA=/data").stdout, "")
+        self.assertEqual(self.tun_mtu("ONEWIFI_DATA=/data").stdout, "")
         self.assertEqual(self.tun_mtu(None).stdout, "")
 
     def test_a_non_numeric_value_is_ignored_and_reported_aside(self):

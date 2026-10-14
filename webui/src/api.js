@@ -6,7 +6,7 @@ export function setCsrf(token) { csrfToken = token || '' }
 
 async function j(method, path, body) {
   const opt = { method, headers: {} }
-  if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) opt.headers['X-MDD-CSRF-Token'] = csrfToken
+  if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) opt.headers['X-OneWIFI-CSRF-Token'] = csrfToken
   if (body !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body) }
   const r = await fetch(base + path, opt)
   const text = await r.text()
@@ -30,7 +30,7 @@ async function j(method, path, body) {
 // set a Content-Type header itself -- the browser needs to add the multipart boundary.
 async function form(method, path, formData) {
   const opt = { method, headers: {}, body: formData }
-  if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) opt.headers['X-MDD-CSRF-Token'] = csrfToken
+  if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) opt.headers['X-OneWIFI-CSRF-Token'] = csrfToken
   const r = await fetch(base + path, opt)
   const text = await r.text()
   let data

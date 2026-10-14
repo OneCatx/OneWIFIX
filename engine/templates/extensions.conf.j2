@@ -19,10 +19,10 @@ exten => {{ any_extension }},1,NoOp(Incoming call from ${CALLERID(num)})
 same => n,Set(CALLPEER=${CALLERID(num)})
 ; Engine-generated inbound channel identity, not an untrusted caller number or a forked SIP
 ; dialog Call-ID. The inherited variable reaches each called contact's pre-dial handler.
-same => n,Set(_MDD_CALL_ID=${CHANNEL(uniqueid)})
+same => n,Set(_ONEWIFI_CALL_ID=${CHANNEL(uniqueid)})
 same => n,Progress()
 same => n,Set(FILE(/logs/calls.txt,,,a)=IN call from ${CALLERID(num)} at ${STRFTIME(${EPOCH},,%Y-%m-%d %H:%M:%S)})
-same => n,TrySystem(/usr/local/bin/notify.py call_in "${CALLERID(num)}" "${MDD_CALL_ID}" &)
+same => n,TrySystem(/usr/local/bin/notify.py call_in "${CALLERID(num)}" "${ONEWIFI_CALL_ID}" &)
 same => n,WaitForPrecondition(10,2000)
 same => n,Ringing()
 {% if dialstr %}
@@ -79,16 +79,16 @@ exten => t,1,Hangup()
 ; the call log. Hangup() terminates the ordinary 'h' routine so no fall-through happens; Return()
 ; is invalid here because this special extension was not entered through Gosub().
 exten => h,1,Gosub(hangup-by,s,1)
-same => n,TrySystem(/usr/local/bin/notify.py call_result in "${CALLPEER}" "${DIALSTATUS}" "${HANGUPCAUSE}" "${GOSUB_RETVAL}" "${MDD_CALL_ID}" &)
+same => n,TrySystem(/usr/local/bin/notify.py call_result in "${CALLPEER}" "${DIALSTATUS}" "${HANGUPCAUSE}" "${GOSUB_RETVAL}" "${ONEWIFI_CALL_ID}" &)
 same => n,Hangup()
 
 [mdd-inbound-headers]
-exten => s,1,Set(PJSIP_HEADER(add,X-MDD-Call-ID)=${MDD_CALL_ID})
-same => n,Set(PICKUPMARK=${MDD_CALL_ID})
+exten => s,1,Set(PJSIP_HEADER(add,X-OneWIFI-Call-ID)=${ONEWIFI_CALL_ID})
+same => n,Set(PICKUPMARK=${ONEWIFI_CALL_ID})
 same => n,Return()
 
 [mdd-inbound-answer]
-exten => s,1,TrySystem(/usr/local/bin/notify.py call_answer "${MDD_CALL_ID}" &)
+exten => s,1,TrySystem(/usr/local/bin/notify.py call_answer "${ONEWIFI_CALL_ID}" &)
 same => n,Return()
 
 {% if vm_enabled %}
@@ -153,7 +153,7 @@ same => n(bad_pickup),Hangup()
 ; #225#) reach the carrier's IMS, which is what decides their meaning. h/i/t are pure letters
 ; and still cannot match.
 exten => _[+0-9*#].,1,NoOp(Outgoing call to ${EXTEN} from ${CALLERID(num)})
-same => n,Set(MDD_OUTBOUND_CALL=1)
+same => n,Set(ONEWIFI_OUTBOUND_CALL=1)
 same => n,Set(CALLPEER=${EXTEN})
 same => n,Set(FILE(/logs/calls.txt,,,a)=OUT call to ${EXTEN} at ${STRFTIME(${EPOCH},,%Y-%m-%d %H:%M:%S)})
 ; Quote ${EXTEN}: TrySystem runs this through a shell, where '#' starting a word begins a
@@ -208,7 +208,7 @@ same => n,Hangup()
 exten => h,1,Set(ST=${IF($["${REALSTATUS}" != ""]?${REALSTATUS}:${DIALSTATUS})})
 same => n,Set(CS=${IF($["${REALCAUSE}" != ""]?${REALCAUSE}:${HANGUPCAUSE})})
 same => n,Gosub(hangup-by,s,1)
-same => n,ExecIf($["${MDD_OUTBOUND_CALL}"="1"]?TrySystem(/usr/local/bin/notify.py call_result out "${CALLPEER}" "${ST}" "${CS}" "${GOSUB_RETVAL}" "${CHANNEL(uniqueid)}" &))
+same => n,ExecIf($["${ONEWIFI_OUTBOUND_CALL}"="1"]?TrySystem(/usr/local/bin/notify.py call_result out "${CALLPEER}" "${ST}" "${CS}" "${GOSUB_RETVAL}" "${CHANNEL(uniqueid)}" &))
 same => n,Hangup()
 
 [hangup-by]

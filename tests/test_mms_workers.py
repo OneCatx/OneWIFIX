@@ -99,7 +99,7 @@ class PoolTests(unittest.TestCase):
         _fitted, problem, _summary = fit([{"name": "IMG_1.HEIC", "content_type": "image/heic",
                                            "data": TINY_HEIC}])
         self.assertIn("IMG_1.HEIC", problem)
-        self.assertIn("MDD_MMS_CONVERT_MEMORY", problem)
+        self.assertIn("ONEWIFI_MMS_CONVERT_MEMORY", problem)
 
     def test_a_jpeg_too_large_to_decode_whole_is_decoded_smaller_and_says_so(self):
         data = photo(3000, 2000, quality=95)
@@ -138,13 +138,13 @@ class PoolTests(unittest.TestCase):
 
 class SettingsTests(unittest.TestCase):
     def test_workers_and_memory_can_be_set(self):
-        with patch.dict(os.environ, {"MDD_MMS_CONVERT_WORKERS": "3",
-                                     "MDD_MMS_CONVERT_MEMORY": "200"}):
+        with patch.dict(os.environ, {"ONEWIFI_MMS_CONVERT_WORKERS": "3",
+                                     "ONEWIFI_MMS_CONVERT_MEMORY": "200"}):
             pool = mms_workers.Pool()
         self.assertEqual((pool.workers, pool.budget()), (3, 200 * MB))
 
     def test_by_default_workers_follow_the_cpus_and_memory_the_limit(self):
-        with patch.dict(os.environ, {"MDD_MMS_CONVERT_WORKERS": "", "MDD_MMS_CONVERT_MEMORY": ""}), \
+        with patch.dict(os.environ, {"ONEWIFI_MMS_CONVERT_WORKERS": "", "ONEWIFI_MMS_CONVERT_MEMORY": ""}), \
                 patch.object(mms_workers, "default_workers", return_value=6), \
                 patch.object(mms_workers, "_memory_limit", return_value=(512 * MB, 130 * MB)):
             pool = mms_workers.Pool()

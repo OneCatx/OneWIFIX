@@ -34,7 +34,7 @@ from urllib.parse import urlsplit
 log = logging.getLogger("vowifi.mms")
 
 PROVIDER_DB = os.environ.get(
-    "MDD_MOBILE_BROADBAND_PROVIDER_INFO",
+    "ONEWIFI_MOBILE_BROADBAND_PROVIDER_INFO",
     "/usr/share/mobile-broadband-provider-info/serviceproviders.xml")
 TRANSPORTS = ("auto", "modem", "host")
 DEFAULT_MAX_SIZE = 300 * 1024
@@ -394,7 +394,7 @@ class SerialAtChannel:
             self._serial = None
 
 
-AT_PORT_ENV = "MDD_MMS_AT_PORT"
+AT_PORT_ENV = "ONEWIFI_MMS_AT_PORT"
 
 
 def find_at_port(modem_path: str, runner=subprocess.run, environ=os.environ) -> str | None:
@@ -402,7 +402,7 @@ def find_at_port(modem_path: str, runner=subprocess.run, environ=os.environ) -> 
 
     Set by a udev rule (ID_MM_PORT_IGNORE on the module's spare AT interface); the port must
     still carry an AT port type so the diagnostics port, which is ignored too, is never used.
-    MDD_MMS_AT_PORT names the device explicitly instead.
+    ONEWIFI_MMS_AT_PORT names the device explicitly instead.
     """
     explicit = str(environ.get(AT_PORT_ENV) or "").strip()
     if explicit:

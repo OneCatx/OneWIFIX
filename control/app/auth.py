@@ -1,12 +1,12 @@
 """Local administrator authentication for the management UI.
 
-Credentials are stored outside the source tree in ``$MDD_DATA/auth.json``. Passwords use
+Credentials are stored outside the source tree in ``$ONEWIFI_DATA/auth.json``. Passwords use
 stdlib scrypt with a per-install salt.
 
 Sessions survive a restart. They used to be memory-only, which reads as deliberate until you
 count the restarts: replacing an engine image, reloading and every self-update all restart the
 control plane, so an appliance that is otherwise untouched logs its administrator out several
-times a day. Only a hash of each token is written to ``$MDD_DATA/sessions.json``, so the file
+times a day. Only a hash of each token is written to ``$ONEWIFI_DATA/sessions.json``, so the file
 cannot be replayed as a cookie by anyone who reads it.
 """
 from __future__ import annotations

@@ -7,7 +7,7 @@ has 512 MB in all. Two things keep that from ever taking the control plane down:
 
 * **A budget.** Each decode is admitted only when its cost, estimated from the header before a
   byte is decoded, fits beside what is already running. A machine with the memory for it
-  decodes several pictures at once, up to MDD_MMS_CONVERT_WORKERS (default: the CPUs this
+  decodes several pictures at once, up to ONEWIFI_MMS_CONVERT_WORKERS (default: the CPUs this
   process may use); a small one runs a large picture alone, the others waiting their turn.
   What cannot fit even alone never starts -- mms_convert then decodes a JPEG at a smaller
   scale, and refuses anything else with the reason.
@@ -15,7 +15,7 @@ has 512 MB in all. Two things keep that from ever taking the control plane down:
   to be the first thing the kernel kills when memory runs out, so the price of a wrong
   estimate is one picture, not every line's control plane.
 
-The budget is MDD_MMS_CONVERT_MEMORY (MB) when set. Otherwise it is worked out whenever no
+The budget is ONEWIFI_MMS_CONVERT_MEMORY (MB) when set. Otherwise it is worked out whenever no
 worker is running: the memory limit of this process's cgroup -- the container's, or the
 systemd unit's, under cgroup v2 or the v1 that Synology DSM still mounts -- less what the
 control plane already uses and a reserve; with no limit, half of what the host has available.
@@ -252,8 +252,8 @@ class _Worker:
 
 class Pool:
     def __init__(self, workers: int | None = None, budget: int | None = None):
-        self.workers = workers or _env_int("MDD_MMS_CONVERT_WORKERS") or default_workers()
-        configured = _env_int("MDD_MMS_CONVERT_MEMORY")
+        self.workers = workers or _env_int("ONEWIFI_MMS_CONVERT_WORKERS") or default_workers()
+        configured = _env_int("ONEWIFI_MMS_CONVERT_MEMORY")
         self._fixed_budget = budget if budget is not None else (
             configured * MB if configured is not None else None)
         self._budget: int | None = None

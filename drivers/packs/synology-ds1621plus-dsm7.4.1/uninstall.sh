@@ -5,8 +5,8 @@ set -eu
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 export PATH
 [ "$(id -u)" = 0 ] || { echo "Run as root: sudo sh uninstall.sh" >&2; exit 1; }
-boot_hook=/usr/local/etc/rc.d/mdd-sim-gateway-modules.sh
+boot_hook=/usr/local/etc/rc.d/onewifi-modules.sh
 [ -x "$boot_hook" ] && "$boot_hook" stop || true
 rm -f "$boot_hook"
-rm -rf /usr/local/lib/mdd-sim-gateway-modules
+rm -rf /usr/local/lib/onewifi-modules
 echo "MDD cellular modules removed. Any still loaded are released at the next reboot."

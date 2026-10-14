@@ -49,7 +49,7 @@ class SwuProxyTransportTests(unittest.TestCase):
             setattr(app, name, ns[name].__get__(app))
         app.socket_type = ns["UDP"]
         app.timeout = 5
-        app.egress_proxy = "socks5://mdd-egress:22157"
+        app.egress_proxy = "socks5://onewifi-egress:22157"
         app.server_address = ("198.51.100.10", 500)
         app.server_address_nat = ("198.51.100.10", 4500)
         app.proxy_udp_overhead = 10
@@ -97,7 +97,7 @@ class SwuProxyTransportTests(unittest.TestCase):
     def test_engine_images_advertise_only_the_implemented_transport(self):
         for name in ("Dockerfile", "Dockerfile.overlay"):
             text = (ROOT / "engine" / name).read_text(encoding="utf-8")
-            self.assertIn('io.mdd-sim-gateway.egress-transports="socks5"', text)
+            self.assertIn('io.onewifi.egress-transports="socks5"', text)
             self.assertIn("COPY outer_transport.py", text)
 
     def test_proxy_forces_natt_after_ike_authentication(self):

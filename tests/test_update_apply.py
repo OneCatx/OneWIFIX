@@ -35,30 +35,30 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertIn("name: runtime-images-${{ matrix.arch }}", workflow)
         for kind in ("engine", "control", "hardware", "egress"):
             for arch in ("arm64", "amd64"):
-                asset = f'mdd-sim-gateway-{kind}-${{GITHUB_REF_NAME}}-{arch}.tar.gz'
+                asset = f'onewifi-{kind}-${{GITHUB_REF_NAME}}-{arch}.tar.gz'
                 # Embedded manifest, top-level sums, and gh release create.
                 self.assertEqual(workflow.count(f'"{asset}"'), 3, asset)
         self.assertIn('> "$root/engine/release-image.SHA256SUMS"', workflow)
         self.assertIn('for component in engine control hardware egress', workflow)
-        compose = 'mdd-sim-gateway-compose-${GITHUB_REF_NAME}.yaml'
+        compose = 'onewifi-compose-${GITHUB_REF_NAME}.yaml'
         self.assertEqual(workflow.count(f'"{compose}"'), 2)
         self.assertIn('sha256sum "$archive" \\\n            "$compose_asset"', workflow)
         self.assertIn('source = source.replace(marker, os.environ["GITHUB_REF_NAME"])', workflow)
-        self.assertIn('"/volume1/docker/mdd-sim-gateway"', workflow)
+        self.assertIn('"/volume1/docker/onewifi"', workflow)
         self.assertIn('"192.168.1.100"', workflow)
-        self.assertIn("! grep -F '${MDD_DATA_DIR'", workflow)
+        self.assertIn("! grep -F '${ONEWIFI_DATA_DIR'", workflow)
         self.assertIn('docker compose -f "$compose_asset" config --quiet', workflow)
 
     def test_runtime_images_carry_release_identity_and_ownership(self):
         root = Path(__file__).resolve().parent.parent
         for component in ("hardware", "egress"):
             dockerfile = (root / "runtime" / f"Dockerfile.{component}").read_text()
-            self.assertIn("ARG MDD_VERSION=dev", dockerfile)
-            self.assertIn(f'io.mdd-sim-gateway.component="{component}"'
+            self.assertIn("ARG ONEWIFI_VERSION=dev", dockerfile)
+            self.assertIn(f'io.onewifi.component="{component}"'
                           if component == "hardware"
-                          else f"io.mdd-sim-gateway.component={component}", dockerfile)
-            self.assertIn("io.mdd-sim-gateway.managed=", dockerfile)
-            self.assertIn('org.opencontainers.image.version="${MDD_VERSION}"', dockerfile)
+                          else f"io.onewifi.component={component}", dockerfile)
+            self.assertIn("io.onewifi.managed=", dockerfile)
+            self.assertIn('org.opencontainers.image.version="${ONEWIFI_VERSION}"', dockerfile)
 
 
 class RequestApplyTests(unittest.TestCase):
@@ -180,8 +180,8 @@ class UpdaterTests(unittest.TestCase):
             "-v /usr/local/bin/sing-box:/usr/local/bin/sing-box:ro", run_control)
         self.assertIn("-v /usr/local/bin/xray:/usr/local/bin/xray:ro", run_control)
         self.assertIn('-v "${REPO_DIR}/host:/app/host:ro"', run_control)
-        self.assertIn("-e MDD_SINGBOX_BIN=/usr/local/bin/sing-box", run_control)
-        self.assertIn("-e MDD_XRAY_BIN=/usr/local/bin/xray", run_control)
+        self.assertIn("-e ONEWIFI_SINGBOX_BIN=/usr/local/bin/sing-box", run_control)
+        self.assertIn("-e ONEWIFI_XRAY_BIN=/usr/local/bin/xray", run_control)
 
     def test_reload_reuses_satisfied_python_requirements_offline(self):
         installer = (Path(__file__).resolve().parent.parent / "install.sh").read_text(
@@ -195,7 +195,7 @@ class UpdaterTests(unittest.TestCase):
 
     def test_release_archive_checksum_is_required_and_verified(self):
         with tempfile.TemporaryDirectory() as tmp:
-            archive = Path(tmp, "mdd-sim-gateway-v9.9.9.tar.gz")
+            archive = Path(tmp, "onewifi-v9.9.9.tar.gz")
             archive.write_bytes(b"release")
             digest = hashlib.sha256(b"release").hexdigest()
             sums = Path(tmp, "SHA256SUMS")
@@ -320,8 +320,8 @@ class UpdaterTests(unittest.TestCase):
                 mdd_update.load_runtime_image(
                     Path(tmp, "hardware.tar.gz"), "9.9.9", "hardware")
         self.assertEqual(run.call_args_list[-1].args[0], [
-            "docker", "tag", "mdd-sim-gateway/hardware:previous",
-            "mdd-sim-gateway/hardware"])
+            "docker", "tag", "onewifi/hardware:previous",
+            "onewifi/hardware"])
 
     def test_release_engine_archive_is_loaded_and_identity_checked_before_install(self):
         runtime_fp, base_fp = "a" * 64, "b" * 64
@@ -338,10 +338,10 @@ class UpdaterTests(unittest.TestCase):
                 patch.object(mdd_update.subprocess, "run", return_value=inspected), \
                 patch.object(mdd_update.time, "sleep"):
             status = mdd_update.Status(Path(tmp, "status.json"), "9.9.9")
-            archive = Path(tmp, "mdd-sim-gateway-engine-v9.9.9-arm64.tar.gz")
+            archive = Path(tmp, "onewifi-engine-v9.9.9-arm64.tar.gz")
             image = mdd_update.load_release_engine(
                 archive, "9.9.9", runtime_fp, base_fp, status, Path(tmp, "engine.log"))
-        self.assertEqual(image, "ghcr.io/mddidd/mdd-sim-gateway-engine:v9.9.9")
+        self.assertEqual(image, "ghcr.io/onecatx/onewifi-engine:v9.9.9")
         self.assertEqual(popen.call_args.args[0],
                          ["docker", "load", "--input", str(archive)])
 
@@ -360,7 +360,7 @@ class UpdaterTests(unittest.TestCase):
             image = mdd_update.load_release_engine(
                 Path(tmp, "engine.tar.gz"), "9.9.9", runtime_fp, base_fp, None,
                 Path(tmp, "engine.log"))
-        self.assertEqual(image, "ghcr.io/mddidd/mdd-sim-gateway-engine:v9.9.9")
+        self.assertEqual(image, "ghcr.io/onecatx/onewifi-engine:v9.9.9")
 
     def test_release_engine_identity_mismatch_is_rejected(self):
         process = SimpleNamespace(returncode=0, poll=Mock(return_value=0))
@@ -381,7 +381,7 @@ class UpdaterTests(unittest.TestCase):
             manifest = repo / mdd_update.ENGINE_HANDOFF_MANIFEST
             manifest.parent.mkdir(parents=True)
             data.mkdir()
-            engine_name = "mdd-sim-gateway-engine-v9.9.9-arm64.tar.gz"
+            engine_name = "onewifi-engine-v9.9.9-arm64.tar.gz"
             payload = b"verified engine archive"
             manifest.write_text(
                 f"{hashlib.sha256(payload).hexdigest()}  {engine_name}\n",
@@ -401,7 +401,7 @@ class UpdaterTests(unittest.TestCase):
                     raise mdd_update.UpdateError("direct route stalled")
                 destination.write_bytes(payload)
 
-            distributed = "ghcr.io/mddidd/mdd-sim-gateway-engine:v9.9.9"
+            distributed = "ghcr.io/onecatx/onewifi-engine:v9.9.9"
             with patch.object(mdd_update.platform, "machine", return_value="aarch64"), \
                     patch.object(mdd_update, "download", side_effect=fake_download), \
                     patch.object(mdd_update.shutil, "disk_usage",
@@ -411,7 +411,7 @@ class UpdaterTests(unittest.TestCase):
                     patch.object(mdd_update, "load_release_engine",
                                  return_value=distributed) as load_engine:
                 actual = mdd_update.perform_engine_handoff(
-                    repo, data, "9.9.9", "MddIdd/mdd-sim-gateway", network)
+                    repo, data, "9.9.9", "OneCatx/OneWIFIX", network)
 
             self.assertEqual(actual, distributed)
             self.assertEqual(attempts, ["", proxy])
@@ -425,8 +425,8 @@ class UpdaterTests(unittest.TestCase):
             manifest = repo / mdd_update.ENGINE_HANDOFF_MANIFEST
             manifest.parent.mkdir(parents=True)
             data.mkdir()
-            engine_name = "mdd-sim-gateway-engine-v9.9.9-amd64.tar.gz"
-            control_name = "mdd-sim-gateway-control-v9.9.9-amd64.tar.gz"
+            engine_name = "onewifi-engine-v9.9.9-amd64.tar.gz"
+            control_name = "onewifi-control-v9.9.9-amd64.tar.gz"
             manifest.write_text(
                 f"{'a' * 64}  {engine_name}\n{'b' * 64}  {control_name}\n",
                 encoding="utf-8")
@@ -437,7 +437,7 @@ class UpdaterTests(unittest.TestCase):
                 destination.write_bytes(b"asset")
                 return active_route
 
-            distributed = "ghcr.io/mddidd/mdd-sim-gateway-engine:v9.9.9"
+            distributed = "ghcr.io/onecatx/onewifi-engine:v9.9.9"
             with patch.object(mdd_update.platform, "machine", return_value="x86_64"), \
                     patch.object(mdd_update, "fetch_release_asset",
                                  side_effect=fake_fetch), \
@@ -450,7 +450,7 @@ class UpdaterTests(unittest.TestCase):
                                  return_value=distributed) as load_engine, \
                     patch.object(mdd_update, "load_control_image") as load_control:
                 actual = mdd_update.perform_release_image_install(
-                    repo, data, "9.9.9", "MddIdd/mdd-sim-gateway", "docker")
+                    repo, data, "9.9.9", "OneCatx/OneWIFIX", "docker")
 
             self.assertEqual(actual, distributed)
             self.assertEqual(downloads, [engine_name, control_name])
@@ -468,7 +468,7 @@ class UpdaterTests(unittest.TestCase):
             manifest = repo / mdd_update.ENGINE_HANDOFF_MANIFEST
             manifest.parent.mkdir(parents=True)
             data.mkdir()
-            names = [f"mdd-sim-gateway-{component}-v9.9.9-amd64.tar.gz"
+            names = [f"onewifi-{component}-v9.9.9-amd64.tar.gz"
                      for component in ("engine", "control", "hardware", "egress")]
             manifest.write_text("".join(
                 f"{'a' * 64}  {name}\n" for name in names), encoding="utf-8")
@@ -491,7 +491,7 @@ class UpdaterTests(unittest.TestCase):
                     patch.object(mdd_update, "load_control_image") as load_control, \
                     patch.object(mdd_update, "load_runtime_image") as load_runtime:
                 mdd_update.perform_release_image_install(
-                    repo, data, "9.9.9", "MddIdd/mdd-sim-gateway", "container")
+                    repo, data, "9.9.9", "OneCatx/OneWIFIX", "container")
 
             self.assertEqual(downloads, names)
             load_control.assert_called_once()
@@ -505,7 +505,7 @@ class UpdaterTests(unittest.TestCase):
                 patch.object(mdd_update, "fetch_release_asset") as fetch:
             with self.assertRaises(mdd_update.UpdateError):
                 mdd_update.perform_release_image_install(
-                    Path(tmp), Path(tmp), "9.9.9", "MddIdd/mdd-sim-gateway", "local")
+                    Path(tmp), Path(tmp), "9.9.9", "OneCatx/OneWIFIX", "local")
         fetch.assert_not_called()
 
     def test_control_image_mismatch_restores_previous_tag(self):
@@ -519,8 +519,8 @@ class UpdaterTests(unittest.TestCase):
             with self.assertRaises(mdd_update.UpdateError):
                 mdd_update.load_control_image(Path(tmp, "control.tar.gz"), "9.9.9")
         self.assertEqual(run.call_args_list[-1].args[0], [
-            "docker", "tag", "mdd-sim-gateway/control:previous",
-            "mdd-sim-gateway/control"])
+            "docker", "tag", "onewifi/control:previous",
+            "onewifi/control"])
 
     def test_apply_tree_preserves_installation_state(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -531,7 +531,7 @@ class UpdaterTests(unittest.TestCase):
                 path = repo / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("old", encoding="utf-8")
-            (repo / ".env").write_text("MDD_PORT=9999", encoding="utf-8")
+            (repo / ".env").write_text("ONEWIFI_PORT=9999", encoding="utf-8")
             for relative in ["control/app/new.py", "webui/src/App.jsx", "README.md", "VERSION"]:
                 path = source / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -540,7 +540,7 @@ class UpdaterTests(unittest.TestCase):
             mdd_update.apply_tree(source, repo)
 
             self.assertEqual((repo / "data/auth.json").read_text(encoding="utf-8"), "old")
-            self.assertEqual((repo / ".env").read_text(encoding="utf-8"), "MDD_PORT=9999")
+            self.assertEqual((repo / ".env").read_text(encoding="utf-8"), "ONEWIFI_PORT=9999")
             self.assertEqual((repo / ".git/config").read_text(encoding="utf-8"), "old")
             self.assertEqual((repo / "control/.venv/bin/python").read_text(encoding="utf-8"), "old")
             self.assertTrue((repo / "webui/node_modules/pkg/index.js").exists())
@@ -567,7 +567,7 @@ class UpdaterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             repo, data, payload = base / "repo", base / "data", base / "payload"
-            source = payload / "mdd-sim-gateway-v9.9.9"
+            source = payload / "onewifi-v9.9.9"
             (source / "webui/dist").mkdir(parents=True)
             (source / "install.sh").write_text("#!/bin/sh\n", encoding="utf-8")
             (source / "VERSION").write_text("9.9.9\n", encoding="utf-8")
@@ -580,7 +580,7 @@ class UpdaterTests(unittest.TestCase):
             sums = base / "SHA256SUMS"
             sums.write_text(
                 f"{hashlib.sha256(archive.read_bytes()).hexdigest()}  "
-                "mdd-sim-gateway-v9.9.9.tar.gz\n", encoding="utf-8")
+                "onewifi-v9.9.9.tar.gz\n", encoding="utf-8")
             repo.mkdir()
             data.mkdir()
             (repo / "VERSION").write_text("1.3.4\n", encoding="utf-8")
@@ -592,7 +592,7 @@ class UpdaterTests(unittest.TestCase):
 
             with patch.object(mdd_update, "download", side_effect=fake_download), \
                     patch.object(mdd_update, "reload_services", return_value=0):
-                mdd_update.perform(repo, data, "9.9.9", "MddIdd/mdd-sim-gateway", status)
+                mdd_update.perform(repo, data, "9.9.9", "OneCatx/OneWIFIX", status)
 
             self.assertEqual((repo / "VERSION").read_text().strip(), "9.9.9")
             self.assertFalse((repo / "EDITION").exists())
@@ -610,7 +610,7 @@ class UpdaterTests(unittest.TestCase):
                 "9.9.9\n", encoding="utf-8")
             status = mdd_update.Status(data / "orchestrator/status.json", "9.9.9")
             runtime_fp, base_fp = "a" * 64, "b" * 64
-            distributed = "ghcr.io/mddidd/mdd-sim-gateway-engine:v9.9.9"
+            distributed = "ghcr.io/onecatx/onewifi-engine:v9.9.9"
             downloads = []
 
             def fake_download(url, destination, _env, _proxy="", **_kwargs):
@@ -632,13 +632,13 @@ class UpdaterTests(unittest.TestCase):
                     patch.object(mdd_update, "backup", return_value=base / "backup.tar.gz"), \
                     patch.object(mdd_update, "apply_tree"), \
                     patch.object(mdd_update, "reload_services", return_value=0) as reload:
-                mdd_update.perform(repo, data, "9.9.9", "MddIdd/mdd-sim-gateway", status)
+                mdd_update.perform(repo, data, "9.9.9", "OneCatx/OneWIFIX", status)
 
             command, _, env = reload.call_args.args[:3]
             self.assertEqual(command, ["sh", str(repo / "install.sh"), "reload"])
-            self.assertEqual(env["MDD_ENGINE_DISTRIBUTION_IMAGE"], distributed)
-            engine_name = "mdd-sim-gateway-engine-v9.9.9-arm64.tar.gz"
-            self.assertIn((f"https://github.com/MddIdd/mdd-sim-gateway/releases/download/"
+            self.assertEqual(env["ONEWIFI_ENGINE_DISTRIBUTION_IMAGE"], distributed)
+            engine_name = "onewifi-engine-v9.9.9-arm64.tar.gz"
+            self.assertIn((f"https://github.com/OneCatx/OneWIFIX/releases/download/"
                            f"v9.9.9/{engine_name}", engine_name, "engine_image"), downloads)
             self.assertEqual(load_engine.call_args.args[0].name, engine_name)
             self.assertTrue(any(call.args[0].name == engine_name
@@ -680,22 +680,22 @@ class UpdaterTests(unittest.TestCase):
                                  return_value="engine:v9.9.9") as load_engine, \
                     patch.object(mdd_update, "load_control_image") as load_control, \
                     patch.object(mdd_update, "reload_services", return_value=0) as reload:
-                mdd_update.perform(repo, data, "9.9.9", "MddIdd/mdd-sim-gateway", status)
+                mdd_update.perform(repo, data, "9.9.9", "OneCatx/OneWIFIX", status)
 
             command, _, env = reload.call_args.args[:3]
             self.assertEqual(command, ["sh", str(repo / "install.sh"), "reload"])
-            self.assertEqual(env["MDD_ENGINE_DISTRIBUTION_IMAGE"], "engine:v9.9.9")
-            self.assertEqual(env["MDD_REUSE_CONTROL_IMAGE"], "1")
-            self.assertEqual(env["MDD_PRUNE_BUILD_CACHE"], "1")
+            self.assertEqual(env["ONEWIFI_ENGINE_DISTRIBUTION_IMAGE"], "engine:v9.9.9")
+            self.assertEqual(env["ONEWIFI_REUSE_CONTROL_IMAGE"], "1")
+            self.assertEqual(env["ONEWIFI_PRUNE_BUILD_CACHE"], "1")
             self.assertEqual(downloads, [
-                "mdd-sim-gateway-v9.9.9.tar.gz", "SHA256SUMS",
-                "mdd-sim-gateway-engine-v9.9.9-amd64.tar.gz",
-                "mdd-sim-gateway-control-v9.9.9-amd64.tar.gz",
+                "onewifi-v9.9.9.tar.gz", "SHA256SUMS",
+                "onewifi-engine-v9.9.9-amd64.tar.gz",
+                "onewifi-control-v9.9.9-amd64.tar.gz",
             ])
             self.assertEqual(load_engine.call_args.args[0].name,
-                             "mdd-sim-gateway-engine-v9.9.9-amd64.tar.gz")
+                             "onewifi-engine-v9.9.9-amd64.tar.gz")
             self.assertEqual(load_control.call_args.args[0].name,
-                             "mdd-sim-gateway-control-v9.9.9-amd64.tar.gz")
+                             "onewifi-control-v9.9.9-amd64.tar.gz")
             self.assertEqual(
                 {call.args[2] for call in verify_file.call_args_list},
                 {"amd64 Engine image", "amd64 control image"})
@@ -704,7 +704,7 @@ class UpdaterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             status = mdd_update.Status(Path(tmp, "status.json"), "x")
             with self.assertRaises(mdd_update.UpdateError):
-                mdd_update.perform(Path(tmp), Path(tmp), "../evil", "MddIdd/mdd-sim-gateway", status)
+                mdd_update.perform(Path(tmp), Path(tmp), "../evil", "OneCatx/OneWIFIX", status)
             with self.assertRaises(mdd_update.UpdateError):
                 mdd_update.perform(Path(tmp), Path(tmp), "1.0.2", "MddIdd/x/../y", status)
 
@@ -739,7 +739,7 @@ class UpdaterTests(unittest.TestCase):
                     patch.object(mdd_update, "backup", return_value=base / "backup.tar.gz"), \
                     patch.object(mdd_update, "apply_tree"), \
                     patch.object(mdd_update, "reload_services", return_value=0):
-                mdd_update.perform(repo, data, "9.9.9", "MddIdd/mdd-sim-gateway", status,
+                mdd_update.perform(repo, data, "9.9.9", "OneCatx/OneWIFIX", status,
                                    routes=routes)
 
             self.assertEqual(attempts[0], "")
@@ -753,7 +753,7 @@ class OrchestratorUpdateTests(unittest.TestCase):
             root = data / "orchestrator"
             root.mkdir()
             (root / "update-request.json").write_text(json.dumps({
-                "version": "9.9.9", "repository": "MddIdd/mdd-sim-gateway",
+                "version": "9.9.9", "repository": "OneCatx/OneWIFIX",
                 "network": {"proxy_mode": "country", "proxy_country": "us"},
             }), encoding="utf-8")
             (root / "desired.json").write_text(json.dumps({"proxy": {
@@ -780,7 +780,7 @@ class OrchestratorUpdateTests(unittest.TestCase):
             root = data / "orchestrator"
             root.mkdir()
             (root / "update-request.json").write_text(json.dumps({
-                "version": "9.9.9", "repository": "MddIdd/mdd-sim-gateway",
+                "version": "9.9.9", "repository": "OneCatx/OneWIFIX",
                 "network": {"proxy_mode": "library", "proxy_profile_id": "primary"},
                 "asset_sizes": {"release.tar.gz": 1234, "../invalid": 999},
             }), encoding="utf-8")
@@ -829,7 +829,7 @@ class OrchestratorUpdateTests(unittest.TestCase):
 
     def test_restarting_the_control_plane_does_not_disturb_this_process(self):
         commands, status, pending = self._restart("control")
-        self.assertEqual(commands, [["systemctl", "restart", "mdd-sim-gateway-control"]])
+        self.assertEqual(commands, [["systemctl", "restart", "onewifi-control"]])
         self.assertEqual(status["state"], "success")
         self.assertFalse(pending)  # consumed, so a restart loop cannot replay it
         docker_commands, _, _ = self._restart("control", mode="docker")
@@ -840,7 +840,7 @@ class OrchestratorUpdateTests(unittest.TestCase):
         commands, status, _ = self._restart("services")
         self.assertEqual(commands[0][:2], ["systemctl", "reset-failed"])
         self.assertEqual(commands[-1][:3],
-                         ["systemd-run", "--unit", "mdd-sim-gateway-restart"])
+                         ["systemd-run", "--unit", "onewifi-restart"])
         self.assertTrue(commands[-1][-2].endswith("install.sh"))
         self.assertEqual(commands[-1][-1], "restart")
         # Completion cannot be published: install.sh restarts this very process.

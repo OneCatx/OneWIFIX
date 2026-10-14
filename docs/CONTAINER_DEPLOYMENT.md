@@ -16,7 +16,7 @@ Compose 只声明前三个基础服务。不要手工为每张 SIM 复制 Engine
 
 ## 1. 发布版本与准备条件
 
-只使用 GitHub Release 附带的 `mdd-sim-gateway-compose-vX.Y.Z.yaml`。该文件中的四个 GHCR
+只使用 GitHub Release 附带的 `onewifi-compose-vX.Y.Z.yaml`。该文件中的四个 GHCR
 镜像已经固定为相同版本，不使用 `latest`。如果某个 Release 没有这个文件，它就不支持正式
 全容器安装。
 
@@ -25,7 +25,7 @@ Compose 只声明前三个基础服务。不要手工为每张 SIM 复制 Engine
 - Docker Engine 和 Docker Compose v2；群晖使用官方 Container Manager；
 - amd64 或 arm64 主机；
 - 至少 6 GiB 可用空间，以便首次拉取和以后保留一代回滚镜像；
-- 一个只用于本项目的数据目录；群晖示例为 `/volume1/docker/mdd-sim-gateway`；
+- 一个只用于本项目的数据目录；群晖示例为 `/volume1/docker/onewifi`；
 - 一个未占用的 HTTPS 管理端口，默认 `10443`；
 - 宿主的固定 LAN 地址或局域网 DNS 名称；
 - USB 设备能出现在宿主 `/dev/bus/usb`。蜂窝模块还应生成串口、QMI/MBIM 和网卡节点。
@@ -75,16 +75,16 @@ sudo sh install.sh
 
 ## 3. 在 Synology Container Manager 创建项目
 
-1. 从项目 Release 下载 `mdd-sim-gateway-compose-vX.Y.Z.yaml`，并核对同一 Release 中
+1. 从项目 Release 下载 `onewifi-compose-vX.Y.Z.yaml`，并核对同一 Release 中
    `SHA256SUMS`。也可以在浏览器中打开文件后复制全部内容。
 2. 打开 **Container Manager → 项目 → 新增 → 创建 docker-compose.yml**。
-3. 项目名称填写 `mdd-sim-gateway`，粘贴 Release 中的 YAML。
+3. 项目名称填写 `onewifi`，粘贴 Release 中的 YAML。
 4. 将文件开头提示的 `192.168.1.100` 全部替换为这台 NAS 的固定 LAN 地址。
 5. 如果共享文件夹不是 `/volume1/docker`，替换 YAML 中的
-   `/volume1/docker/mdd-sim-gateway`。不要选择临时目录。
+   `/volume1/docker/onewifi`。不要选择临时目录。
 6. 默认映射为 `10443:8443`。如 `10443` 已占用，只修改 `ports` 左侧的宿主端口；容器内
    端口保持 `8443`。
-7. 如果代理订阅由 NAS 自身域名提供，把 `MDD_NAS_HOSTNAME` 的默认值改为该域名。它只让
+7. 如果代理订阅由 NAS 自身域名提供，把 `ONEWIFI_NAS_HOSTNAME` 的默认值改为该域名。它只让
    Egress 在容器内把这个域名解析到 Docker 宿主网关，不修改 NAS DNS 或默认路由。
 8. 保存并创建项目。Container Manager 会拉取 Control、Hardware、Egress；Engine 镜像会在
    第一条线路启动时由 Control 使用同一版本拉取。
@@ -93,7 +93,7 @@ sudo sh install.sh
 自动登记。命令启动后还需要执行一次：
 
 ```sh
-PROJ=mdd-sim-gateway
+PROJ=onewifi
 UUID=$(cat /proc/sys/kernel/random/uuid)
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S.%6NZ")
 CMDIR=/volume1/@appconf/ContainerManager/projects
@@ -106,7 +106,7 @@ sudo chmod 660 "$CMDIR/${UUID}.action.log"
 sudo chmod 444 "$CMDIR/${UUID}.lock"
 ```
 
-顶层 `name: mdd-sim-gateway`、注册文件中的 `name` 和 `share_path` 必须一致。刷新 DSM 页面后
+顶层 `name: onewifi`、注册文件中的 `name` 和 `share_path` 必须一致。刷新 DSM 页面后
 应能看到项目；若当前 DSM 版本仍缓存旧列表，请在维护窗口重启 Container Manager 套件。
 **DSM 7.4 实测套件重启会依次停止并重新启动全部容器项目**，不能在业务时段执行，也不能把它
 描述成无中断的界面刷新。通过 DSM 界面新建项目时由 Container Manager 自动完成登记，不需要
@@ -165,7 +165,7 @@ https://NAS_LAN_IP:10443/
 对应 UDP 流量。
 
 走国家出口（SOCKS）的线路只接在 internal 的 Engine 网络上，Docker 不会为它发布端口。
-这类线路的 RTP 由 Control 自动创建的 `mdd-sim-gateway-rtp-forward` 容器代为发布并转发：
+这类线路的 RTP 由 Control 自动创建的 `onewifi-rtp-forward` 容器代为发布并转发：
 它使用 Control 镜像，不需要额外下载；只转发 UDP，而且只把 Engine 的回包送回发起这路通话的
 浏览器地址，Engine 本身不会因此获得任何对外路由。没有走出口的线路时不会创建这个容器。
 
@@ -178,15 +178,15 @@ https://NAS_LAN_IP:10443/
 
 通话音频默认使用 direct 模式：每条线路各自发布 RTP 端口（见上文）。也可以切换到 relay
 模式，改由一个 coturn 中继容器统一转发媒体，此时不再有任何 Engine 发布端口。中继容器
-（`mdd-sim-gateway-relay`）和它使用的内部媒体网络（`mdd-sim-gateway-media`）都由 Control
+（`onewifi-relay`）和它使用的内部媒体网络（`onewifi-media`）都由 Control
 按需创建和管理，**不在 Compose 文件中**，`docker compose down`/`up` 不会影响它们。
 
 通过 SSH 在 Control 容器内切换：
 
 ```sh
-sudo docker exec -w /app/control mdd-sim-gateway-control python -m app.media status
-sudo docker exec -w /app/control mdd-sim-gateway-control python -m app.media direct
-sudo docker exec -w /app/control mdd-sim-gateway-control python -m app.media relay \
+sudo docker exec -w /app/control onewifi-control python -m app.media status
+sudo docker exec -w /app/control onewifi-control python -m app.media direct
+sudo docker exec -w /app/control onewifi-control python -m app.media relay \
     [--port N] [--bind ADDR] [--public-host HOST] [--public-port N]
 ```
 
@@ -268,32 +268,32 @@ Docker socket，不使用宿主 PID、网络或特权模式。更新期间不要
 - 手工安装的内核驱动独立于 Compose。卸载应用项目不会移除它们，需要单独卸载。
 
 Engine 容器由 Control 按线路动态创建，不属于 Compose 项目，删除项目不会带走它们，而且它们
-仍连接着 `mdd-sim-gateway-engine` 网络，会让网络删除报 “Resource is still in use”。通过 SSH
+仍连接着 `onewifi-engine` 网络，会让网络删除报 “Resource is still in use”。通过 SSH
 卸载时先删除 Engine，再删除项目：
 
 ```sh
-sudo docker ps -aq --filter "label=io.mdd-sim-gateway.component=engine" | xargs -r sudo docker rm -f
+sudo docker ps -aq --filter "label=io.onewifi.component=engine" | xargs -r sudo docker rm -f
 ```
 
 启用过 relay 模式时，中继容器和媒体网络同样不属于 Compose 项目，也要一并删除：
 
 ```sh
-sudo docker rm -f mdd-sim-gateway-relay
-sudo docker network rm mdd-sim-gateway-media
+sudo docker rm -f onewifi-relay
+sudo docker network rm onewifi-media
 ```
 
 不要手工删除仍被其他容器使用的 Docker 网络、卷或镜像。MDD 只管理带
-`io.mdd-sim-gateway.managed=true` 标签的资源。
+`io.onewifi.managed=true` 标签的资源。
 
 ## 9. 常见问题
 
 ### Hardware 不健康
 
 先确认 USB 设备已被宿主枚举，再按第 2 节的命令检查所需设备节点是否齐全；节点缺失即表示
-宿主缺少对应内核驱动。`docker logs mdd-sim-gateway-hardware` 会给出主管进程的失败原因。
+宿主缺少对应内核驱动。`docker logs onewifi-hardware` 会给出主管进程的失败原因。
 系统升级后必须按完整 build 和内核重新匹配驱动，不能强制加载旧驱动。
 
-### 重建项目后提示 “dependency failed to start: container mdd-sim-gateway-hardware is unhealthy”
+### 重建项目后提示 “dependency failed to start: container onewifi-hardware is unhealthy”
 
 新的 Hardware 会继承模块里残留的 QMI 会话，需要先重置模块并等待重新枚举，约一到两分钟，
 超过健康检查宽限期时 Control 会停在“已创建”。等 Hardware 变为健康后，
@@ -311,7 +311,7 @@ DSM 7.4 的 4.4 内核不支持 pids cgroup，Docker 会忽略 Compose 中的 `p
 
 ### 国家出口订阅在 NAS 浏览器能打开，Egress 却无法访问
 
-如果订阅 URL 使用 NAS 自己的公网域名，配置 `MDD_NAS_HOSTNAME` 为该域名，使其只在 Egress
+如果订阅 URL 使用 NAS 自己的公网域名，配置 `ONEWIFI_NAS_HOSTNAME` 为该域名，使其只在 Egress
 容器内指向宿主网关。不要把订阅 URL 改成容器 IP，也不要修改 NAS 全局 DNS。
 
 ### 4G 开启后担心影响 NAS 网络

@@ -50,7 +50,7 @@ class InstallMmsRuleTests(unittest.TestCase):
             *calls,
         ])
         env = {**os.environ, "PATH": f"{self.bin}:{os.environ['PATH']}",
-               "MDD_UDEV_RULES_DIR": str(rules_dir or self.rules)}
+               "ONEWIFI_UDEV_RULES_DIR": str(rules_dir or self.rules)}
         subprocess.run(["sh", "-c", script], check=True, env=env)
         return [line for line in self.log.read_text().splitlines() if line]
 

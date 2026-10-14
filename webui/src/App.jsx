@@ -279,7 +279,7 @@ export default function App() {
     contacts:<ContactsPage showToast={showToast}/>,
     settings:<SystemPage {...common}/>, diagnostics:<DiagnosticsPage {...common}/>,
   }[view]
-  const issueUrl = `${(systemMeta.repository_url || 'https://github.com/MddIdd/mdd-sim-gateway').replace(/\/$/, '')}/issues/new/choose`
+  const issueUrl = `${(systemMeta.repository_url || 'https://github.com/OneCatx/OneWIFIX').replace(/\/$/, '')}/issues/new/choose`
   const gatewayReachable = !initialLoading && !Object.values(loadErrors).some(Boolean) && !originRefused
   const navigate = key => { setView(key); setMenuOpen(false) }
   const mobileTabs = ['overview', 'devices', 'messages', 'keepalive']

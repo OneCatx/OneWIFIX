@@ -266,7 +266,7 @@ class ImageConverter:
             f"converting a {info.width}x{info.height} picture needs about "
             f"{(cost + mms_workers.WORKER_BYTES) // mms_workers.MB} MB, and this gateway has "
             f"{pool.budget() // mms_workers.MB} MB for it; send it as a JPEG or a smaller "
-            f"picture (the limit is MDD_MMS_CONVERT_MEMORY)")
+            f"picture (the limit is ONEWIFI_MMS_CONVERT_MEMORY)")
 
     def warm(self, content_type: str, data: bytes, digest: bytes | None = None) -> None:
         """Decode ahead of fit(), so the attachments of one message decode side by side

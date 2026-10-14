@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=mdd-sim-gateway/control:v1.13.0
+ARG BASE_IMAGE=onewifi/control:v1.13.0
 FROM ${BASE_IMAGE} AS pcsc-build
 
 ARG PCSC_VERSION=2.3.3
@@ -69,7 +69,7 @@ FROM ${BASE_IMAGE}
 
 ARG DEBIAN_MIRROR=
 ARG DEBIAN_SECURITY_MIRROR=
-ARG MDD_VERSION=dev
+ARG ONEWIFI_VERSION=dev
 
 WORKDIR /app
 COPY --from=pcsc-build /hardware-root/ /
@@ -105,9 +105,9 @@ RUN if [ -n "${DEBIAN_MIRROR}" ]; then \
         'unmanaged-devices=*,except:interface-name:ww*;except:interface-name:cdc-wdm*' \
         > /etc/NetworkManager/conf.d/90-mdd-cellular-only.conf
 
-LABEL io.mdd-sim-gateway.component="hardware" \
-      io.mdd-sim-gateway.managed="true" \
-      org.opencontainers.image.version="${MDD_VERSION}" \
+LABEL io.onewifi.component="hardware" \
+      io.onewifi.managed="true" \
+      org.opencontainers.image.version="${ONEWIFI_VERSION}" \
       org.opencontainers.image.title="MDD Sim Gateway hardware plane"
 
 # A start that inherits a stale QMI session resets the modem and waits for it to

@@ -11,7 +11,7 @@ class LineHistoryTests(unittest.TestCase):
         self._temp = tempfile.TemporaryDirectory()
         root = Path(self._temp.name)
         self._patch = patch.multiple(store, DATA_DIR=str(root),
-                                     DB_PATH=str(root / "mdd-sim-gateway.sqlite"),
+                                     DB_PATH=str(root / "onewifi.sqlite"),
                                      PREVIOUS_DB_PATH=str(root / "vowifi.sqlite"))
         self._patch.start()
         store.init()

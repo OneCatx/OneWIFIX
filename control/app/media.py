@@ -59,16 +59,16 @@ DIRECT = "direct"
 RELAY = "relay"
 MODES = (DIRECT, RELAY)
 
-NETWORK = os.environ.get("MDD_MEDIA_NETWORK", "mdd-sim-gateway-media")
-CONTAINER = "mdd-sim-gateway-relay"
-MANAGED_LABEL = "io.mdd-sim-gateway.managed"
-COMPONENT_LABEL = "io.mdd-sim-gateway.component"
-CONFIG_LABEL = "io.mdd-sim-gateway.relay-config"
+NETWORK = os.environ.get("ONEWIFI_MEDIA_NETWORK", "onewifi-media")
+CONTAINER = "onewifi-relay"
+MANAGED_LABEL = "io.onewifi.managed"
+COMPONENT_LABEL = "io.onewifi.component"
+CONFIG_LABEL = "io.onewifi.relay-config"
 # Carried by an engine container started in relay mode. An engine without it runs in direct
 # mode, which keeps every container created before this existed where it is. RELAY_PENDING marks
 # one started in relay mode without the media network (it could not be prepared): it matches
 # neither mode, so the control plane rebuilds it once the network can be had.
-MODE_LABEL = "io.mdd-sim-gateway.media-mode"
+MODE_LABEL = "io.onewifi.media-mode"
 RELAY_PENDING = "relay-pending"
 
 # The relay is the unmodified upstream coturn image, pinned by its multi-arch index digest so a
@@ -76,7 +76,7 @@ RELAY_PENDING = "relay-pending"
 # their registry under LOCAL_IMAGE's name (.github/workflows/release.yml reads it from here).
 UPSTREAM_IMAGE = ("coturn/coturn:4.17.2-alpine@sha256:"
                   "771a95d04cb97bbc5bfc672e5fdf455591c7d2b2a15f02bb9ceda3e27561695f")
-LOCAL_IMAGE = "mdd-sim-gateway/relay"
+LOCAL_IMAGE = "onewifi/relay"
 
 DEFAULT_PORT = 8478
 LISTEN_PORT = 3478                  # inside the relay container
@@ -85,7 +85,7 @@ LISTEN_PORT = 3478                  # inside the relay container
 RTP_PORTS = (10000, 10199)
 # The relay's own allocations, on the media network only; one call holds one.
 RELAY_PORTS = (49152, 49251)
-REALM = "mdd-sim-gateway"
+REALM = "onewifi"
 CREDENTIAL_TTL = 12 * 60 * 60
 HEALTH_TIMEOUT = 20
 
@@ -158,7 +158,7 @@ def mode(state: dict | None = None) -> str:
 
 def default_image() -> str:
     """The local tag the relay runs from. Every source below is the same upstream image."""
-    override = os.environ.get("MDD_RELAY_IMAGE", "").strip()
+    override = os.environ.get("ONEWIFI_RELAY_IMAGE", "").strip()
     if override:
         return override
     return f"{LOCAL_IMAGE}:v{VERSION}"
@@ -168,9 +168,9 @@ def image_sources(reference: str) -> list[str]:
     """Where a missing relay image may be fetched from, after the Release asset the installer
     and the container updater load (host/mdd_update.py): the copy each release pushes to its
     registry, then the upstream image itself. An override is fetched only as named."""
-    if reference != default_image() or os.environ.get("MDD_RELAY_IMAGE", "").strip():
+    if reference != default_image() or os.environ.get("ONEWIFI_RELAY_IMAGE", "").strip():
         return [reference]
-    return [f"ghcr.io/mddidd/mdd-sim-gateway-relay:v{VERSION}", UPSTREAM_IMAGE]
+    return [f"ghcr.io/onecatx/onewifi-relay:v{VERSION}", UPSTREAM_IMAGE]
 
 
 # ------------------------------------------------------------------ media network
@@ -281,16 +281,16 @@ def render_config(secret: str, subnet: ipaddress.IPv4Network,
 # than an environment variable `docker inspect` would show. It lives in the private data
 # directory; the file itself is world-readable so the relay's nobody user can read it through
 # the bind mount.
-RELAY_CONFIG_MOUNT = "/etc/mdd-relay/turnserver.conf"
+RELAY_CONFIG_MOUNT = "/etc/onewifi-relay/turnserver.conf"
 
 # Run by the stock image's sh before turnserver: adds what is only known once the container is
-# attached. relay-ip is its address on the media network (MDD_MEDIA_SUBNET), where allocations
+# attached. relay-ip is its address on the media network (ONEWIFI_MEDIA_SUBNET), where allocations
 # live; every other address becomes a listening-ip, so a client cannot use the relay to reach
 # the relay itself. Loopback serves the health check.
 ENTRYPOINT = r"""set -eu
-: "${MDD_MEDIA_SUBNET:?}"
-test -r /etc/mdd-relay/turnserver.conf
-addresses=$(ip -4 -o addr show | awk -v subnet="$MDD_MEDIA_SUBNET" '
+: "${ONEWIFI_MEDIA_SUBNET:?}"
+test -r /etc/onewifi-relay/turnserver.conf
+addresses=$(ip -4 -o addr show | awk -v subnet="$ONEWIFI_MEDIA_SUBNET" '
   function number(address,  part) {
     split(address, part, ".")
     return ((part[1] * 256 + part[2]) * 256 + part[3]) * 256 + part[4]
@@ -306,10 +306,10 @@ addresses=$(ip -4 -o addr show | awk -v subnet="$MDD_MEDIA_SUBNET" '
   }')
 case "$addresses" in
   *relay-ip=*) ;;
-  *) echo "mdd-relay: no address on the media network $MDD_MEDIA_SUBNET" >&2; exit 1 ;;
+  *) echo "onewifi-relay: no address on the media network $ONEWIFI_MEDIA_SUBNET" >&2; exit 1 ;;
 esac
 {
-  cat /etc/mdd-relay/turnserver.conf
+  cat /etc/onewifi-relay/turnserver.conf
   printf '%s\n' "$addresses"
   printf 'listening-ip=127.0.0.1\n'
 } > /tmp/turnserver.conf
@@ -380,7 +380,7 @@ def _container(client):
 
 def _config_paths() -> tuple[str, str]:
     """(path this process writes, path Docker mounts). They differ when the control plane runs
-    in a container: MDD_HOST_DATA names the data directory as the Docker host sees it."""
+    in a container: ONEWIFI_HOST_DATA names the data directory as the Docker host sees it."""
     from . import engine
     return (os.path.join(cfg.DATA_DIR, "media", "relay.conf"),
             os.path.join(engine.HOST_DATA_DIR, "media", "relay.conf"))
@@ -438,7 +438,7 @@ def ensure_relay(client, state: dict, network=None):
         network="bridge",
         ports={f"{LISTEN_PORT}/udp": publish, f"{LISTEN_PORT}/tcp": publish},
         entrypoint=["sh", "-c", ENTRYPOINT],
-        environment={"MDD_MEDIA_SUBNET": str(subnet)},
+        environment={"ONEWIFI_MEDIA_SUBNET": str(subnet)},
         volumes={host_path: {"bind": RELAY_CONFIG_MOUNT, "mode": "ro"}},
         # The image runs as nobody. Upstream's turnserver carries a file capability to bind
         # ports below 1024; the kernel refuses to execute it when that capability is outside
@@ -694,7 +694,7 @@ echo "filter=iptables-legacy"
 """
 
 
-PROBE_CONTAINER = "mdd-sim-gateway-media-probe"
+PROBE_CONTAINER = "onewifi-media-probe"
 
 
 def _remove_probe(client) -> None:
