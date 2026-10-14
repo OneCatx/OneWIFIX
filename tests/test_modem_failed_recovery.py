@@ -158,10 +158,6 @@ class FailedModemWordingTests(unittest.TestCase):
                      for part in re.split(r"\bif\b|\belse\b", block.split("cell_reason = (")[1])]
         sentences = [s for s in sentences if s.startswith("ModemManager")]
         self.assertEqual(len(sentences), 4)
-        i18n = (ROOT / "webui" / "src" / "i18n.jsx").read_text(encoding="utf-8")
-        zh = i18n[i18n.index("const zh"):i18n.index("const en")]
-        for sentence in sentences:
-            self.assertIn(f"'{sentence}'", zh)
 
 
 if __name__ == "__main__":

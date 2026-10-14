@@ -468,7 +468,7 @@ class ClientSignInTests(unittest.TestCase):
         self.assertEqual(info[0], 200, info)
         self.assertEqual(info[1]["data"]["version"], main.VERSION)
 
-    def test_long_sms_does_not_invent_segment_counts_or_delivery(self):
+    def test_unknown_sms_submit_reports_one_part_and_failure_reports_zero(self):
         token = self.sign_in()[1]["token"]
         with patch.object(main.cfg, "get_instance", return_value={"id": "sim1"}), \
                 patch.object(main, "send_sms_on_line", new=AsyncMock(return_value={"ok": True})):
@@ -477,8 +477,8 @@ class ClientSignInTests(unittest.TestCase):
                                       "message": "x" * 500}, token=token)
         self.assertEqual(status, 200, body)
         self.assertEqual(body["data"]["outcome"], "accepted_unconfirmed")
-        self.assertIsNone(body["data"]["parts_total"])
-        self.assertIsNone(body["data"]["parts_accepted"])
+        self.assertEqual(body["data"]["parts_total"], 1)
+        self.assertEqual(body["data"]["parts_accepted"], 1)
         with patch.object(main.cfg, "get_instance", return_value={"id": "sim1"}), \
                 patch.object(main, "send_sms_on_line", new=AsyncMock(return_value={
                 "ok": False, "error": "carrier rejected"})):
@@ -487,7 +487,8 @@ class ClientSignInTests(unittest.TestCase):
                                       "message": "x" * 500}, token=token)
         self.assertEqual(status, 502, body)
         self.assertEqual(body["data"]["outcome"], "failed")
-        self.assertIsNone(body["data"]["parts_accepted"])
+        self.assertEqual(body["data"]["parts_total"], 0)
+        self.assertEqual(body["data"]["parts_accepted"], 0)
 
 
     def test_a_client_sees_a_cut_of_each_line(self):

@@ -26,7 +26,7 @@ describe('automatic task profile options', () => {
   })
 
   it('adds the current SIM when it is missing from the chip list', () => {
-    const options = buildAutomaticTaskProfileOptions({ profiles: [] }, '89033011223344556677')
+    const options = buildAutomaticTaskProfileOptions({ profiles: [] }, '89000000000000006677')
     assert.equal(options.length, 1)
     assert.equal(options[0].label, '当前 SIM · ****6677')
   })

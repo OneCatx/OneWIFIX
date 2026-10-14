@@ -29,11 +29,11 @@ def _policy(**extra):
 
 class CardBackupTests(unittest.TestCase):
     def test_round_trip_keeps_settings_and_drops_secrets(self):
-        raw = backup.export_backup([_policy()], source="onewifi", device_imei="356938035643809")
+        raw = backup.export_backup([_policy()], source="onewifi", device_imei="350000000000001")
         self.assertLessEqual(len(raw), backup.MAX_BYTES)
         document = backup.parse_backup(raw)
         self.assertEqual(document["schema_version"], 1)
-        self.assertEqual(document["device_imei"], "356938035643809")
+        self.assertEqual(document["device_imei"], "350000000000001")
         card = document["cards"][0]
         self.assertEqual(card["apn"], "ims")
         self.assertEqual(card["voice_path"], "vowifi")
@@ -72,7 +72,7 @@ class CardBackupTests(unittest.TestCase):
 
     def test_restore_refuses_a_different_device_and_keeps_other_cards(self):
         document = backup.parse_backup(backup.export_backup(
-            [_policy()], device_imei="356938035643809"))
+            [_policy()], device_imei="350000000000001"))
         with self.assertRaises(backup.CardBackupError):
             backup.plan_restore(document, "000000000000000", {}, [])
         stored = {"8901": _policy(iccid="8901", apn="old")}
@@ -187,7 +187,7 @@ class CardPolicyViewTests(unittest.TestCase):
             {"894430000000002624": _policy(apn="ims", vowifi_enabled=False,
                                            custom_phone_number="+85290000000")},
             [{"id": "line", "iccid": "894430000000002624"},
-             {"id": "other", "iccid": "8901410321111111111"}],
+             {"id": "other", "iccid": "8900000000000000000"}],
             "894430000000002624")
         self.assertEqual(updates, [{
             "id": "line", "apn": "ims", "enabled": False,

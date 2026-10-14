@@ -136,8 +136,8 @@ describe('mapOnewifiDevice', () => {
         native_spn: 'Eskimo',
         home_carrier_name: 'Eskimo',
         sim_inserted: true,
-        iccid: '8965012411180720352',
-        imei: '353837385595390',
+        iccid: '8900000000000000352',
+        imei: '350000000005390',
       },
       vowifi_runtime: { phase: 'idle', sim_ready: false },
     })

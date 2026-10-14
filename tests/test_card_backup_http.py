@@ -90,7 +90,7 @@ class CardBackupHttpTests(unittest.TestCase):
         self.assertTrue(line["enabled"])
 
     def test_restore_refuses_a_different_device_imei(self):
-        status, exported = self.call("GET", "/api/settings/card-backup?device_imei=356938035643809")
+        status, exported = self.call("GET", "/api/settings/card-backup?device_imei=350000000000001")
         self.assertEqual(status, 200, exported)
         status, body = self.call(
             "POST", "/api/settings/card-backup/restore?device_imei=000000000000000", exported)

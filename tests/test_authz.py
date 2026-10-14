@@ -96,6 +96,7 @@ class AuthorizationTableTests(unittest.TestCase):
             ("POST", "/api/contacts/import"),
             ("PUT", "/api/contacts/12"),
             ("DELETE", "/api/contacts/12"),
+            ("POST", "/api/auth/logout"),
         ):
             with self.subTest(method=method, path=path):
                 self.assertTrue(authz.allowed(CLIENT, method, path))
@@ -114,7 +115,6 @@ class AuthorizationTableTests(unittest.TestCase):
             ("GET", "/api/auth/clients"),
             ("DELETE", "/api/auth/clients/4"),
             ("POST", "/api/auth/password"),
-            ("POST", "/api/auth/logout"),
             ("POST", "/api/engine/event"),
             ("GET", "/api/readers"),
             ("GET", "/api/system/update/check"),

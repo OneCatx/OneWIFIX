@@ -64,7 +64,12 @@ class ResidentContractTests(unittest.TestCase):
         asyncio.run(main.app(scope, receive, send))
         status = next(m["status"] for m in sent if m["type"] == "http.response.start")
         body = b"".join(m.get("body", b"") for m in sent if m["type"] == "http.response.body")
-        return status, json.loads(body or b"null")
+        text = body.decode("utf-8", "replace")
+        try:
+            parsed = json.loads(text) if text else None
+        except json.JSONDecodeError:
+            parsed = text
+        return status, parsed
 
     def sign_in(self):
         return self.call("POST", "/api/auth/client/login",
@@ -200,13 +205,14 @@ class ResidentContractTests(unittest.TestCase):
 
         asyncio.run(scenario())
 
-    def test_legacy_call_sse_and_pcm_routes_are_refused_by_the_real_client_gate(self):
+    def test_signed_in_client_is_not_blocked_from_the_mobile_call_routes(self):
         token = self.sign_in()[1]["token"]
         for path in ("/api/calls/events", "/api/devices/sim1/calls/media?id=old",
                      "/api/devices/sim1/calls/answer", "/api/devices/sim1/calls/dial"):
             with self.subTest(path=path):
                 method = "POST" if path.endswith(("answer", "dial")) else "GET"
-                self.assertEqual(self.call(method, path, {"id": "old"}, token=token)[0], 403)
+                status, _body = self.call(method, path, {"id": "old"}, token=token)
+                self.assertNotIn(status, (401, 403))
 
 
 if __name__ == "__main__":

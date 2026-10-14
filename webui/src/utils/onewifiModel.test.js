@@ -287,8 +287,8 @@ describe('normalizeDeviceOverview OneWIFI overview', () => {
         native_spn: 'Eskimo',
         home_carrier_name: 'Eskimo',
         sim_inserted: true,
-        iccid: '8965012411180720352',
-        imei: '353837385595390',
+        iccid: '8900000000000000352',
+        imei: '350000000005390',
         imsi: '',
       },
       vowifi_runtime: {
@@ -301,8 +301,8 @@ describe('normalizeDeviceOverview OneWIFI overview', () => {
     const overview = normalizeDeviceOverview(raw, raw)
     assert.equal(overview.operator, 'Eskimo')
     assert.equal(overview.esimProfile, 'Eskimo')
-    assert.equal(overview.iccid, '8965012411180720352')
-    assert.equal(overview.imei, '353837385595390')
+    assert.equal(overview.iccid, '8900000000000000352')
+    assert.equal(overview.imei, '350000000005390')
     assert.notEqual(overview.operator, '未插 SIM')
   })
 
@@ -321,14 +321,14 @@ describe('normalizeDeviceOverview OneWIFI overview', () => {
       vowifi_runtime: {
         phase: 'sms_ready',
         sim_ready: true,
-        iccid: '8964012311209063094',
-        imsi: '530011118906309',
+        iccid: '8900000000000003094',
+        imsi: '001010000000001',
       },
     }
     const overview = normalizeDeviceOverview(raw, raw)
     assert.equal(overview.operator, 'Vodafone')
-    assert.equal(overview.iccid, '8964012311209063094')
-    assert.equal(overview.imsi, '530011118906309')
+    assert.equal(overview.iccid, '8900000000000003094')
+    assert.equal(overview.imsi, '001010000000001')
   })
 
   it('does not paint 未插 SIM for a reader whose snapshot is empty but the SIM is in VoWiFi', () => {
@@ -346,13 +346,13 @@ describe('normalizeDeviceOverview OneWIFI overview', () => {
       vowifi_runtime: {
         phase: 'access_ready',
         sim_ready: true,
-        iccid: '8985200008993624688',
-        imsi: '454000099362468',
+        iccid: '8900000000000004688',
+        imsi: '001010000000002',
       },
     }
     const overview = normalizeDeviceOverview(raw, raw)
     assert.notEqual(overview.operator, '未插 SIM')
-    assert.equal(overview.iccid, '8985200008993624688')
+    assert.equal(overview.iccid, '8900000000000004688')
   })
 
   it('treats CEREG 5 as camped even when radio_registered is omitted', () => {
@@ -564,18 +564,18 @@ describe('eSIM payload', () => {
       {
         eid: '8903302300000001',
         aidHex: 'A06573746B6D65FFFF4953442D522030',
-        profiles: [{ iccid: '89492026255217565517', name: 'Vodafone DE-1', state: 1 }],
+        profiles: [{ iccid: '89000000000000065517', name: 'Vodafone DE-1', state: 1 }],
       },
       {
         eid: '8903302300000002',
         aidHex: 'A06573746B6D65FFFF4953442D522031',
-        profiles: [{ iccid: '89441000400400085280', name: 'ASDA', state: 1 }],
+        profiles: [{ iccid: '89000000000000085280', name: 'ASDA', state: 1 }],
       },
     ])
-    const next = applyLiveIccidToProfiles(list, '89492026255217565517')
+    const next = applyLiveIccidToProfiles(list, '89000000000000065517')
     assert.equal(next.filter((profile) => profile.active).length, 1)
-    assert.equal(next.find((profile) => profile.active)?.iccid, '89492026255217565517')
-    assert.equal(next.find((profile) => profile.iccid === '89441000400400085280')?.active, false)
+    assert.equal(next.find((profile) => profile.active)?.iccid, '89000000000000065517')
+    assert.equal(next.find((profile) => profile.iccid === '89000000000000085280')?.active, false)
   })
 
   it('repaints stale enabled rows from the live VoWiFi ICCID', () => {

@@ -34,8 +34,8 @@ describe('AddDeviceCard reader registration', () => {
       device_type: 'pcie_ec20_ec25',
       name: 'DotKing',
       driver_name: 'Baiwang',
-      imei: '866069053528699',
-    }).deviceId, 'DJ-866069053528699')
+      imei: '350000000000002',
+    }).deviceId, 'DJ-350000000000002')
   })
 
   it('posts discovery_key and reader identity so registration can match a PC/SC reader without AT/QMI nodes', () => {

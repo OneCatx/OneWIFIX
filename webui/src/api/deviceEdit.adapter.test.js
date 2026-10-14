@@ -224,8 +224,8 @@ describe('loadDeviceEditSnapshot', () => {
       if (String(url).includes('/overview')) {
         return jsonOk({
           id: 'dj-3',
-          modem: { iccid: '89492026255217565517' },
-          vowifi_runtime: { iccid: '89492026255217565517' },
+          modem: { iccid: '89000000000000065517' },
+          vowifi_runtime: { iccid: '89000000000000065517' },
         })
       }
       if (String(url).endsWith('/esim')) {
@@ -241,28 +241,28 @@ describe('loadDeviceEditSnapshot', () => {
               eid: '8903302300000001',
               aidHex: 'A06573746B6D65FFFF4953442D522030',
               profiles: [
-                { iccid: '89492026255217565517', name: 'Vodafone DE-1', state: 1, stateText: '已启用' },
+                { iccid: '89000000000000065517', name: 'Vodafone DE-1', state: 1, stateText: '已启用' },
               ],
             },
             {
               eid: '8903302300000002',
               aidHex: 'A06573746B6D65FFFF4953442D522031',
               profiles: [
-                { iccid: '89441000400400085280', name: 'ASDA Mobile UK eSIM', state: 1, stateText: '已启用' },
+                { iccid: '89000000000000085280', name: 'ASDA Mobile UK eSIM', state: 1, stateText: '已启用' },
               ],
             },
           ],
         })
       }
       if (String(url).includes('/cards/')) {
-        return jsonOk({ iccid: '89492026255217565517' })
+        return jsonOk({ iccid: '89000000000000065517' })
       }
       return jsonOk({})
     }
     const view = await loadDeviceEdit('dj-3')
     assert.equal(view.profiles.length, 2)
-    const live = view.profiles.find((profile) => profile.iccid === '89492026255217565517')
-    const leftover = view.profiles.find((profile) => profile.iccid === '89441000400400085280')
+    const live = view.profiles.find((profile) => profile.iccid === '89000000000000065517')
+    const leftover = view.profiles.find((profile) => profile.iccid === '89000000000000085280')
     assert.equal(live?.active, true)
     assert.equal(live?.stateText, '已启用')
     assert.equal(leftover?.active, false)
