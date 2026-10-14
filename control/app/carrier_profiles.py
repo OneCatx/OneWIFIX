@@ -11,41 +11,12 @@ from functools import lru_cache
 from pathlib import Path
 
 
-_UNSUPPORTED_FIELDS = {
-    # These are source-level capability names, not settings that this resolver is allowed to
-    # turn on.  Keeping the complete list visible makes a matched profile auditable while the
-    # operational gate below continues to withhold every automatic default until its consumer
-    # exists in the MDD engine contract.
-    "att-us": (
-        "ims.identity_profile", "ims.register_profile",
-        "ims.register_options.supported_header", "ims.register_options.allow_header",
-        "ims.register_options.include_accept_contact",
-        "ims.register_options.include_p_preferred_id",
-        "ims.register_options.p_visited_network_id",
-        "ims.register_options.pani",
-        "ims.register_options.cellular_network_info",
-        "ims.register_options.contact_order", "ims.register_options.contact_tags",
-        "ims.ipsec_encryption", "ims.ipsec_server_port",
-    ),
-    "three-hk": (
-        "ims.security", "ims.initial_authorization", "ims.eap_material_handoff",
-        "ims.disable_sec_agree", "ims.register_options.supported_header",
-        "ims.register_options.allow_header", "ims.register_options.include_accept_contact",
-        "ims.register_options.include_p_preferred_id", "ims.register_options.user_agent",
-        "ims.register_options.register_expires", "ims.pani_enabled",
-        "ims.direct_authorization",
-    ),
-}
-_BLOCKED_PROFILES = {"att-us", "three-hk"}
+_UNSUPPORTED_FIELDS = {}
+_BLOCKED_PROFILES = {"china-mainland", "estonia", "csl-hk"}
 _BLOCK_MESSAGES = {
-    "att-us": (
-        "AT&T requires paired public/private IMS identity and complete REGISTER/security "
-        "consumers; this engine contract cannot safely enable the profile."
-    ),
-    "three-hk": (
-        "Three HK requires a secure same-session EAP handoff, direct REGISTER Authorization, "
-        "and a true no-sec-agree consumer; this engine contract cannot safely enable the profile."
-    ),
+    "china-mainland": "Mainland China (+86) VoWiFi is not brought up.",
+    "estonia": "Estonia VoWiFi is not brought up.",
+    "csl-hk": "Hong Kong CSL VoWiFi is not brought up.",
 }
 
 
@@ -92,8 +63,9 @@ def _match(match: dict, identity: dict) -> tuple[int, str]:
         score += 100
         sources.append("hplmn")
     if match.get("mcc") or match.get("mnc"):
-        if (mcc, mnc) != (str(match.get("mcc", "")).strip(),
-                           str(match.get("mnc", "")).strip()):
+        want_mcc = str(match.get("mcc", "")).strip()
+        want_mnc = str(match.get("mnc", "")).strip()
+        if (want_mcc and mcc != want_mcc) or (want_mnc and mnc != want_mnc):
             return 0, ""
         score += 100
         sources.append("hplmn")

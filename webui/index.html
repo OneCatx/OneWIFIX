@@ -1,13 +1,185 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- viewport-fit=cover：允许内容延伸进 iOS 刘海/灵动岛区域，由 CSS safe-area 接管留白 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Android/iOS 系统级 UI 着色（状态栏 / Safari 标签栏），运行时由主题切换动态同步 -->
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#071723" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F2F7FB" />
+    <!-- 添加到主屏幕：Android（W3C manifest）+ iOS（apple-* 专属标签） -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="application-name" content="OneWIFI" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="OneWIFI" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <!-- 面板内大量 ICCID/端口等数字，禁用 iOS 自动识别为电话号码 -->
+    <meta name="format-detection" content="telephone=no" />
     <title>OneWIFI</title>
+    <style id="boot-critical">
+      html {
+        min-height: 100%;
+        font-family: 'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'HarmonyOS Sans SC', sans-serif;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: transparent;
+        font-family: inherit;
+      }
+
+      button, input, select, textarea {
+        font-family: inherit;
+      }
+
+      #app {
+        min-height: 100vh;
+      }
+
+      /* 经典皮肤先铺上游底色；OneWIFI 再盖上海蓝光晕和网格 */
+      html[data-theme='dark'] {
+        background-color: #070812;
+      }
+
+      html[data-theme='light'] {
+        background-color: #f2f0eb;
+      }
+
+      html[data-skin='onewifi'][data-theme='dark'] {
+        background-color: #071723;
+        background-image:
+          radial-gradient(560px 520px at calc(100% - 80px) -100px,
+                          rgba(22, 140, 255, 0.25), rgba(22, 140, 255, 0) 70%),
+          repeating-linear-gradient(0deg,  rgba(124, 185, 213, 0.16) 0 1px, transparent 1px 80px),
+          repeating-linear-gradient(90deg, rgba(124, 185, 213, 0.16) 0 1px, transparent 1px 80px);
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+      }
+
+      html[data-skin='onewifi'][data-theme='light'] {
+        background-color: #F2F7FB;
+        background-image:
+          radial-gradient(560px 520px at calc(100% - 80px) -100px,
+                          rgba(22, 140, 255, 0.12), rgba(22, 140, 255, 0) 70%),
+          repeating-linear-gradient(0deg,  rgba(122, 160, 184, 0.12) 0 1px, transparent 1px 80px),
+          repeating-linear-gradient(90deg, rgba(122, 160, 184, 0.12) 0 1px, transparent 1px 80px);
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+      }
+
+      .boot-shell {
+        box-sizing: border-box;
+        display: flex;
+        gap: 16px;
+        min-height: 100vh;
+        padding: 28px;
+      }
+
+      .boot-shell__aside {
+        flex: 0 0 196px;
+        border-radius: 18px;
+        background: rgba(18, 16, 40, 0.55);
+      }
+
+      .boot-shell__main {
+        flex: 1;
+        min-width: 0;
+        border-radius: 18px;
+        background: rgba(18, 16, 40, 0.32);
+      }
+
+      html[data-skin='onewifi'] .boot-shell__aside {
+        background: rgba(13, 41, 61, 0.55);
+      }
+
+      html[data-skin='onewifi'] .boot-shell__main {
+        background: rgba(13, 41, 61, 0.38);
+      }
+
+      html[data-theme='light'] .boot-shell__aside,
+      html[data-theme='light'] .boot-shell__main {
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      /* 移动端首帧骨架：侧栏变顶部横条，留白收紧并避开刘海安全区 */
+      @media (max-width: 900px) {
+        .boot-shell {
+          flex-direction: column;
+          gap: 10px;
+          padding: 12px;
+          padding-top: max(12px, env(safe-area-inset-top));
+        }
+
+        .boot-shell__aside {
+          flex: 0 0 64px;
+        }
+      }
+
+      /* iOS Safari 地址栏收展会改变 100vh，动态视口单位更稳 */
+      @supports (min-height: 100dvh) {
+        body,
+        #app {
+          min-height: 100dvh;
+        }
+
+        .boot-shell {
+          min-height: 100dvh;
+        }
+      }
+    </style>
+    <script src="/storage-migrate.js"></script>
+    <script>
+      (function () {
+        var keys = ['oneboard-theme-mode', 'onebord-theme-mode']
+        var mode = 'dark'
+        try {
+          for (var i = 0; i < keys.length; i += 1) {
+            var stored = localStorage.getItem(keys[i])
+            if (stored === 'light' || stored === 'dark' || stored === 'auto') {
+              mode = stored
+              break
+            }
+          }
+        } catch (e) {}
+        var theme = mode === 'auto'
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : mode
+        var skin = 'onewifi'
+        try {
+          var storedSkin = localStorage.getItem('oneboard-skin')
+          if (storedSkin === 'classic' || storedSkin === 'onewifi') skin = storedSkin
+        } catch (e) {}
+        var root = document.documentElement
+        root.setAttribute('data-theme', theme)
+        if (skin === 'onewifi') root.setAttribute('data-skin', 'onewifi')
+        else root.removeAttribute('data-skin')
+        root.style.colorScheme = theme
+        var palette = skin === 'classic'
+          ? { dark: '#070812', light: '#f2f0eb' }
+          : { dark: '#071723', light: '#F2F7FB' }
+        var metas = document.querySelectorAll('meta[name="theme-color"][media]')
+        for (var j = metas.length - 1; j >= 0; j -= 1) metas[j].parentNode.removeChild(metas[j])
+        var meta = document.querySelector('meta[name="theme-color"]')
+        if (!meta) {
+          meta = document.createElement('meta')
+          meta.setAttribute('name', 'theme-color')
+          document.head.appendChild(meta)
+        }
+        meta.setAttribute('content', palette[theme])
+      })()
+    </script>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="./src/main.jsx"></script>
+    <div id="app">
+      <div class="boot-shell" aria-hidden="true">
+        <div class="boot-shell__aside"></div>
+        <div class="boot-shell__main"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

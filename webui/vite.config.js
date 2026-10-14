@@ -1,23 +1,33 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import vue from '@vitejs/plugin-vue'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { createOnewifiDevProxy } from './server/onewifiDevProxy.js'
 
-const devApi = process.env.ONEWIFI_DEV_API || 'https://localhost:10443'
+const root = path.dirname(fileURLToPath(import.meta.url))
+const apiTarget = process.env.VITE_API_PROXY || process.env.ONEWIFI_DEV_API || 'https://127.0.0.1:10443'
 
-// The manager serves the built app and proxies /api + /ws on the same origin.
+function apiProxy() {
+  return createOnewifiDevProxy(apiTarget)
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  base: './',
-  build: {
-    outDir: 'dist', emptyOutDir: true,
-    rollupOptions: { output: { manualChunks: { react: ['react', 'react-dom'], sip: ['jssip'] } } },
-  },
-  // For local UI development, proxy API/WS to a running control plane. Defaults to
-  // localhost; override with ONEWIFI_DEV_API.
+  plugins: [vue()],
   server: {
+    host: true,
+    port: 5173,
     proxy: {
-      '/api': { target: devApi, changeOrigin: true, secure: false },
-      '/ws': { target: devApi.replace(/^http/, 'ws'), ws: true, secure: false },
+      '/api': apiProxy(),
     },
+  },
+  preview: {
+    host: true,
+    proxy: {
+      '/api': apiProxy(),
+    },
+  },
+  build: {
+    outDir: path.resolve(root, process.env.VITE_OUT_DIR || 'dist'),
+    emptyOutDir: true,
   },
 })

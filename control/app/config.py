@@ -20,7 +20,7 @@ from copy import deepcopy
 
 import yaml
 
-from . import brand, carrier_profiles
+from . import brand, card_backup, carrier_profiles
 
 DATA_DIR = os.environ.get("ONEWIFI_DATA", os.path.join(os.getcwd(), "data"))
 CONFIG_PATH = os.path.join(DATA_DIR, "config.yaml")
@@ -597,6 +597,9 @@ def load() -> dict:
             # the product never provisions standalone SIP accounts.
             (inst.setdefault("sip", {}))["external"] = []
         out["internal"] = data.get("internal", {})
+        remembered = card_backup.kept_policies(data.get("card_policies") or {})
+        if remembered:
+            out["card_policies"] = remembered
         _loaded = (file_key, deepcopy(out))
         return out
 
@@ -634,6 +637,21 @@ def update_settings(patch: dict) -> dict:
 
 def list_instances() -> list:
     return list(load()["instances"].values())
+
+
+def list_card_policies() -> dict:
+    return dict(load().get("card_policies") or {})
+
+
+def replace_card_policies(policies: dict) -> dict:
+    data = load()
+    remembered = card_backup.kept_policies(policies or {})
+    if remembered:
+        data["card_policies"] = remembered
+    else:
+        data.pop("card_policies", None)
+    save(data)
+    return remembered
 
 
 def get_instance(iid: str) -> dict | None:
@@ -842,9 +860,25 @@ def _upsert_instance_locked(inst: dict, unique_name: bool = False) -> dict:
     # edit look operational, unnecessarily rebuilding the running engine.
     inst = {k: v for k, v in inst.items() if k not in RUNTIME_ONLY_INSTANCE_FIELDS}
     existing = data["instances"].get(iid, {})
-    if not existing and len(data["instances"]) >= MAX_SIM_LINES:
+    if not existing:
+        iccid = str(inst.get("iccid") or "").strip()
+        remembered = (data.get("card_policies") or {}).get(iccid) or {}
+        if remembered:
+            if not str(inst.get("apn") or "").strip() and remembered.get("apn"):
+                inst["apn"] = remembered["apn"]
+            if not str(inst.get("msisdn") or "").strip() and remembered.get("custom_phone_number"):
+                inst["msisdn"] = remembered["custom_phone_number"]
+            if "enabled" not in inst:
+                inst["enabled"] = bool(remembered.get("vowifi_enabled", True))
+    developer = (data.get("settings") or {}).get("developer") or {}
+    try:
+        configured_limit = int(developer.get("device_limit") or MAX_SIM_LINES)
+    except (TypeError, ValueError):
+        configured_limit = MAX_SIM_LINES
+    line_limit = max(1, min(MAX_SIM_LINES, configured_limit))
+    if not existing and len(data["instances"]) >= line_limit:
         raise LineLimitError(
-            f"{brand.PRODUCT_NAME} supports at most {MAX_SIM_LINES} SIM lines")
+            f"{brand.PRODUCT_NAME} supports at most {line_limit} SIM lines")
     if "index" not in existing:
         inst["index"] = next_index(data)
     else:
@@ -1250,8 +1284,16 @@ def _render_instance_json(inst: dict, settings: dict) -> dict:
         "transport": carrier_ims.get("transport"),
         "ipsec_encryption": carrier_ims.get("ipsec_encryption"),
         "register_expires": carrier_ims.get("register_expires"),
+        "ims_public_realm": carrier_ims.get("public_realm"),
+        "ims_private_realm": carrier_ims.get("private_realm"),
+        "ims_sec_port_s": carrier_ims.get("ipsec_server_port"),
+        "pani": carrier_ims.get("pani"),
+        "access_type": carrier_ims.get("access_type"),
+        "security": carrier_ims.get("security"),
         "volte_o2_register": carrier["id"] == "o2-germany",
         "volte_ultra_contact": carrier["id"] == "ultra-mobile-us",
+        "volte_att_register": operational_carrier.get("id") == "att-us",
+        "volte_three_register": operational_carrier.get("id") == "three-hk",
     }
     for key, value in profile_sip.items():
         if value is not None and value != "" and explicit_sip.get(key) in (None, ""):
@@ -1367,6 +1409,11 @@ def _render_instance_json(inst: dict, settings: dict) -> dict:
             "register_expires": sip.get("register_expires") or 600000,
             "volte_o2_register": bool(sip.get("volte_o2_register", False)),
             "volte_ultra_contact": bool(sip.get("volte_ultra_contact", False)),
+            "volte_att_register": bool(sip.get("volte_att_register", False)),
+            "volte_three_register": bool(sip.get("volte_three_register", False)),
+            "ims_public_realm": sip.get("ims_public_realm") or "",
+            "ims_private_realm": sip.get("ims_private_realm") or "",
+            "ims_sec_port_s": sip.get("ims_sec_port_s") or "",
             "pani_enabled": sip.get("pani_enabled", True),
             # URI parameters added to the request URI of an outgoing call only (INVITE, not
             # SMS), for carriers that route a call only with them (T-Mobile US: user=phone).

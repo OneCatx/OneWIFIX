@@ -17,6 +17,79 @@ from panoramisk import Manager
 log = logging.getLogger("vowifi.ami")
 
 
+def parse_concise_channels(text: str) -> list[dict]:
+    """Rows from `core show channels concise`.
+
+    Asterisk prints channel, context, extension, priority, state, application, data,
+    caller id, account code, AMA flags, duration, bridge id, then uniqueid.
+    """
+    rows = []
+    for raw in str(text or "").splitlines():
+        parts = raw.strip().split("!")
+        if len(parts) < 13 or not parts[0]:
+            continue
+        rows.append({
+            "name": parts[0],
+            "context": parts[1],
+            "exten": parts[2],
+            "data": parts[6],
+            "bridge": parts[11],
+            "uniqueid": parts[12],
+        })
+    return rows
+
+
+def select_call_channels(rows, uniqueid: str = "", business_id: str = "") -> dict:
+    """The local leg and the IMS leg of one call.
+
+    A channel belongs to the call when its uniqueid matches, or when the handset id
+    appears in the channel name, extension, or application data. The IMS leg is the
+    `PJSIP/volte_ims` channel that shares that call's bridge. Another live call's
+    bridge is left out.
+    """
+    uniqueid = str(uniqueid or "")
+    business_id = str(business_id or "")
+    empty = {"local": "", "carrier": "", "bridge": ""}
+    if not uniqueid and not business_id:
+        return empty
+    matched = []
+    for row in rows or []:
+        named = business_id and (
+            business_id in row["name"] or row["exten"] == business_id
+            or business_id in row["data"])
+        if (uniqueid and row["uniqueid"] == uniqueid) or named:
+            matched.append(row)
+    if not matched:
+        return empty
+    bridge = ""
+    for row in matched:
+        if not row["bridge"]:
+            continue
+        peers = [item for item in rows if item["bridge"] == row["bridge"]]
+        if any(item["name"].startswith("PJSIP/volte_ims") for item in peers):
+            bridge = row["bridge"]
+            break
+    if not bridge:
+        bridge = next((row["bridge"] for row in matched if row["bridge"]), "")
+    peers = [item for item in rows if bridge and item["bridge"] == bridge]
+    carrier = next((item["name"] for item in peers if item["name"].startswith("PJSIP/volte_ims")), "")
+    local = next((row["name"] for row in matched
+                  if not row["name"].startswith("PJSIP/volte_ims")
+                  and (not bridge or row["bridge"] == bridge)), "")
+    if not local:
+        local = next((row["name"] for row in matched
+                      if not row["name"].startswith("PJSIP/volte_ims")), "")
+    return {"local": local, "carrier": carrier, "bridge": bridge}
+
+
+def target_channel(chosen: dict, purpose: str) -> str:
+    """DTMF goes to the IMS leg. Hangup uses that leg, or the local leg when it is the only one."""
+    chosen = chosen or {}
+    if purpose == "dtmf":
+        return str(chosen.get("carrier") or "")
+    return str(chosen.get("carrier") or chosen.get("local") or "")
+
+
 class AmiClient:
     # Hard bounds so a wedged AMI connection can never hang the status poller / API.
     CONNECT_TIMEOUT = 6.0    # login handshake
@@ -193,6 +266,106 @@ class AmiClient:
             }, timeout=12.0)
             msg = res[0] if isinstance(res, list) else res
             return {"ok": msg.get("Response") == "Success", "detail": msg.get("Message", "")}
+        except Exception as e:  # noqa
+            return {"ok": False, "error": repr(e)}
+
+    async def originate_handset(self, number: str, audio_id: str) -> dict:
+        """Bridge `number` on the IMS to the handset AudioSocket identified by `audio_id`."""
+        if not self.connected:
+            return {"ok": False, "error": "AMI not connected"}
+        try:
+            res = await self._action({
+                "Action": "Originate",
+                "Channel": f"Local/{audio_id}@handset-media/n",
+                "Exten": number,
+                "Context": "from-local",
+                "Priority": "1",
+                "CallerID": self.msisdn or "gateway",
+                "Async": "true",
+                # Inherited by the carrier leg. from-local also reads it from the Local name.
+                "Variable": f"__ONEWIFI_CALL_ID={audio_id}",
+            }, timeout=12.0)
+            msg = res[0] if isinstance(res, list) else res
+            return {"ok": msg.get("Response") == "Success", "detail": msg.get("Message", "")}
+        except Exception as e:  # noqa
+            return {"ok": False, "error": repr(e)}
+
+    async def _command_text(self, command: str) -> str:
+        res = await self._action({"Action": "Command", "Command": command}, timeout=3.0)
+        text = ""
+        for item in (res if isinstance(res, list) else [res]):
+            text += str(item.get("Output") or item.get("content") or "")
+        return text
+
+    async def channel_for_uniqueid(self, uniqueid: str) -> str:
+        if not self.connected or not uniqueid:
+            return ""
+        try:
+            text = await self._command_text("core show channels concise")
+        except Exception as exc:  # noqa
+            log.debug("channel list failed: %r", exc)
+            return ""
+        for line in text.splitlines():
+            parts = line.strip().split("!")
+            if len(parts) >= 13 and parts[12] == uniqueid:
+                return parts[0]
+        return ""
+
+    async def redirect(self, channel: str, context: str, exten: str) -> dict:
+        if not self.connected:
+            return {"ok": False, "error": "AMI not connected"}
+        try:
+            res = await self._action({
+                "Action": "Redirect",
+                "Channel": channel,
+                "Context": context,
+                "Exten": exten,
+                "Priority": "1",
+            })
+            msg = res[0] if isinstance(res, list) else res
+            return {"ok": msg.get("Response") == "Success", "detail": msg.get("Message", "")}
+        except Exception as e:  # noqa
+            return {"ok": False, "error": repr(e)}
+
+    async def channels_for_call(self, uniqueid: str = "", business_id: str = "") -> dict:
+        if not self.connected:
+            return {"ok": False, "error": "AMI not connected", "local": "", "carrier": ""}
+        try:
+            text = await self._command_text("core show channels concise")
+        except Exception as exc:  # noqa
+            return {"ok": False, "error": repr(exc), "local": "", "carrier": ""}
+        chosen = select_call_channels(parse_concise_channels(text), uniqueid, business_id)
+        chosen["ok"] = bool(chosen["local"] or chosen["carrier"])
+        if not chosen["ok"]:
+            chosen["error"] = "call is not active"
+        return chosen
+
+    async def play_dtmf(self, digit: str, channel: str = "") -> dict:
+        """Send one digit on the IMS leg of the named call."""
+        if not self.connected:
+            return {"ok": False, "error": "AMI not connected"}
+        if not channel:
+            return {"ok": False, "error": "dtmf_unavailable"}
+        try:
+            res = await self._action({
+                "Action": "PlayDTMF", "Channel": channel, "Digit": digit,
+            })
+            msg = res[0] if isinstance(res, list) else res
+            return {"ok": msg.get("Response") == "Success", "detail": msg.get("Message", "")}
+        except Exception as e:  # noqa
+            return {"ok": False, "error": repr(e)}
+
+    async def hangup_channel(self, channel: str) -> dict:
+        """Hang up one channel. This does not hang up the other calls on the line."""
+        if not self.connected:
+            return {"ok": False, "error": "AMI not connected"}
+        if not channel:
+            return {"ok": False, "error": "call is not active"}
+        try:
+            res = await self._action({"Action": "Hangup", "Channel": channel})
+            msg = res[0] if isinstance(res, list) else res
+            return {"ok": msg.get("Response") == "Success", "detail": msg.get("Message", ""),
+                    "channel": channel}
         except Exception as e:  # noqa
             return {"ok": False, "error": repr(e)}
 

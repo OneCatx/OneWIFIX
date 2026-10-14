@@ -18,6 +18,17 @@ import shlex
 import socket
 import subprocess
 import sys
+from urllib.parse import urlsplit
+
+
+def audiosocket_target(manager_url: str) -> tuple[str, int]:
+    """Where Asterisk sends handset audio: the same host it already uses to reach control.
+
+    The port stays off the published HTTPS mapping. On the compose network that host is
+    ``onewifi-control``; a native install uses ``host.docker.internal``.
+    """
+    host = urlsplit(str(manager_url or "")).hostname or "host.docker.internal"
+    return host, 8792
 
 
 def env_value(value) -> str:
@@ -257,6 +268,12 @@ def build_context(cfg):
         except Exception:
             pcscf = ""
     sip = cfg.get("sip", {})
+    public_realm = str(sip.get("ims_public_realm") or "").strip()
+    private_realm = str(sip.get("ims_private_realm") or "").strip()
+    if public_realm and all(ch.isalnum() or ch in ".-" for ch in public_realm):
+        realm = public_realm
+    if not (private_realm and all(ch.isalnum() or ch in ".-" for ch in private_realm)):
+        private_realm = realm
     carrier_ike = cfg.get("carrier_ike", {}) or {}
     webrtc = sip.get("webrtc", {}) or {}
     ami_secret = str(cfg.get("ami_secret") or "")
@@ -296,6 +313,7 @@ def build_context(cfg):
         "mnc": mnc,
         "imei": cfg.get("imei", ""),
         "realm": realm,
+        "private_realm": private_realm,
         "epdg": epdg,
         "carrier_profile": cfg.get("carrier_profile", "standard-3gpp"),
         "nai": nai,
@@ -319,12 +337,17 @@ def build_context(cfg):
         "ims_ipsec_encryption": (sip.get("ipsec_encryption")
                                  if sip.get("ipsec_encryption") in ("aes-cbc", "null") else "aes-cbc"),
         "ims_sec_port_c": 5062 if sip.get("ipsec_encryption") == "null" else None,
-        "ims_sec_port_s": 5063 if sip.get("ipsec_encryption") == "null" else None,
+        "ims_sec_port_s": (5063 if sip.get("ipsec_encryption") == "null"
+                           else (int(sip["ims_sec_port_s"])
+                                 if str(sip.get("ims_sec_port_s") or "").isdigit()
+                                 and 1 <= int(sip["ims_sec_port_s"]) <= 65535 else None)),
         "register_expires": (max(60, min(86400, int(sip["register_expires"])))
                              if sip.get("register_expires") else 600000),
         "volte_o2_register": bool(sip.get("volte_o2_register", False)),
         "volte_ultra_contact": bool(sip.get("volte_ultra_contact", False)),
         # Transparent product identity unless the line overrides it (carrier User-Agent
+        "volte_att_register": bool(sip.get("volte_att_register", False)),
+        "volte_three_register": bool(sip.get("volte_three_register", False)),
         # whitelists answer 403 to an unknown terminal). Blank/unset keeps the default.
         "user_agent": (profile_user_agent(sip["carrier_user_agent"])
                        if sip.get("carrier_user_agent")
@@ -340,6 +363,8 @@ def build_context(cfg):
         "ami_user": cfg.get("ami_user", "vowifi"),
         "ami_secret": ami_secret,
         "manager_url": cfg.get("manager_url", ""),
+        "audiosocket_host": audiosocket_target(cfg.get("manager_url", ""))[0],
+        "audiosocket_port": audiosocket_target(cfg.get("manager_url", ""))[1],
         "webrtc_enable": bool(webrtc.get("enable", True)),
         "webrtc_user": webrtc.get("username", "webrtc"),
         "webrtc_password": webrtc_password,
@@ -478,6 +503,7 @@ def main():
         put("SWU_IKE_PROPOSAL", carrier_ike.get("proposal", ""))
         put("SWU_EAP_ONLY", "1" if carrier_ike.get("advertise_eap_only", True) else "0")
         put("SWU_DNS_CLIENT_SUBNET", cfg.get("epdg_dns_client_subnet", ""))
+        put("SWU_EAP_DIRECT", "1" if ctx.get("volte_three_register") else "0")
         # IMEI / IMEISV for the ePDG DEVICE_IDENTITY response. imeisv falls back to a value
         # derived from the IMEI if the instance didn't carry one (hand-authored config).
         imei_digits = "".join(ch for ch in str(cfg.get("imei", "")) if ch.isdigit())

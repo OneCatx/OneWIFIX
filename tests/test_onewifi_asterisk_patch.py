@@ -57,11 +57,20 @@ class CarrierPatchTests(unittest.TestCase):
         registration, volte, header = initial
         self.assertIn('"registration", "volte_o2_register", "no"', registration)
         self.assertIn('"registration", "volte_ultra_contact", "no"', registration)
-        self.assertLess(registration.index("add_o2_register_headers(client_state, tdata))"),
+        self.assertLess(registration.index("add_o2_register_headers(client_state, tdata)"),
                         registration.index("status = pjsip_regc_send"))
-        self.assertIn("if (add_o2_register_headers(client_state, tdata)) {\n"
+        self.assertLess(registration.index("add_att_register_headers(client_state, tdata)"),
+                        registration.index("status = pjsip_regc_send"))
+        self.assertIn("if (add_o2_register_headers(client_state, tdata)\n"
+                      "\t\t\t|| add_att_register_headers(client_state, tdata)\n"
+                      "\t\t\t|| add_three_register_headers(client_state, tdata)) {\n"
                       "\t\tpjsip_tx_data_dec_ref(tdata);\n"
                       "\t\tpjsip_tx_data_dec_ref(tdata);\n", registration)
+        self.assertIn("Security-Client", registration)
+        self.assertIn("eap_direct.auth", registration)
+        self.assertIn('"path,sec-agree,gruu"', registration)
+        self.assertIn('P-Visited-Network-ID', registration)
+        self.assertIn('3102800000000', registration)
         self.assertIn('"path, gruu, outbound, sec-agree, 100rel, timer"', registration)
         self.assertIn('"P-Preferred-Identity", preferred', registration)
         self.assertIn('registration->receive_sms, registration->volte_ultra_contact', registration)

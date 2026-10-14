@@ -1,0 +1,191 @@
+name: Images (rk3568)
+
+# Day-to-day images for the RK3568 (aarch64). One job per component, arm64 only.
+# A push to main builds all five. workflow_dispatch can rebuild a single component.
+# Version tags still go through release.yml, which publishes both architectures and
+# the offline archive the existing updater expects.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      component:
+        description: Component to build
+        type: choice
+        default: all
+        options:
+          - all
+          - control
+          - engine
+          - hardware
+          - egress
+          - relay
+
+concurrency:
+  group: images-rk3568-${{ github.ref }}-${{ inputs.component || 'all' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  control:
+    name: control (arm64)
+    if: github.event_name == 'push' || inputs.component == 'all' || inputs.component == 'control'
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build and publish control
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          image="ghcr.io/$owner/onewifi-control"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build --pull \
+            --build-arg "ONEWIFI_VERSION=$(cat VERSION)" \
+            -f control/Dockerfile \
+            -t "$image:rk3568" \
+            -t "$image:rk3568-${GITHUB_SHA}" .
+          test "$(docker image inspect "$image:rk3568" --format '{{.Architecture}}')" = arm64
+          test "$(docker image inspect "$image:rk3568" --format '{{index .Config.Labels "io.onewifi.component"}}|{{index .Config.Labels "org.opencontainers.image.version"}}')" = \
+            "control|$(cat VERSION)"
+          docker run --rm --entrypoint sh "$image:rk3568" -c '
+            docker --version
+            docker compose version
+            test -f /app/host/mdd_update.py
+            test -f /app/webui/dist/index.html
+          '
+          docker push "$image:rk3568"
+          docker push "$image:rk3568-${GITHUB_SHA}"
+
+  engine:
+    name: engine (arm64)
+    if: github.event_name == 'push' || inputs.component == 'all' || inputs.component == 'engine'
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            machine: aarch64
+            modules: 129
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build and publish engine
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          image="ghcr.io/$owner/onewifi-engine"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          runtime_fp=$(sh tools/engine-fingerprint.sh runtime)
+          base_fp=$(sh tools/engine-fingerprint.sh base)
+          docker build --pull \
+            --build-arg "ONEWIFI_VERSION=$(cat VERSION)" \
+            --build-arg "RUNTIME_FP=$runtime_fp" \
+            --build-arg "BASE_FP=$base_fp" \
+            -t "$image:rk3568" \
+            -t "$image:rk3568-${GITHUB_SHA}" engine
+          docker run --rm --entrypoint /bin/bash "$image:rk3568" -lc '
+            set -e
+            actual_machine=$(uname -m)
+            module_count=$(find /usr/lib/asterisk/modules -name "*.so" | wc -l)
+            printf "Engine validation: architecture=%s modules=%s\n" "$actual_machine" "$module_count"
+            test "$actual_machine" = "${{ matrix.machine }}"
+            test "$module_count" -eq "${{ matrix.modules }}"
+            python3 -c "import Crypto, cryptography, jinja2, panoramisk, requests, serial, smartcard, socks, card"
+            asterisk -V
+          '
+          docker push "$image:rk3568"
+          docker push "$image:rk3568-${GITHUB_SHA}"
+
+  hardware:
+    name: hardware (arm64)
+    needs: control
+    if: |
+      always() &&
+      (github.event_name == 'push' || inputs.component == 'all' || inputs.component == 'hardware') &&
+      (needs.control.result == 'success' || needs.control.result == 'skipped')
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build and publish hardware
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          image="ghcr.io/$owner/onewifi-hardware"
+          base="ghcr.io/$owner/onewifi-control:rk3568-${GITHUB_SHA}"
+          if [ "${{ inputs.component }}" = "hardware" ]; then
+            base="ghcr.io/$owner/onewifi-control:rk3568"
+          fi
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build --pull \
+            --build-arg "ONEWIFI_VERSION=$(cat VERSION)" \
+            --build-arg "BASE_IMAGE=$base" \
+            -f runtime/Dockerfile.hardware \
+            -t "$image:rk3568" \
+            -t "$image:rk3568-${GITHUB_SHA}" .
+          identity=$(docker image inspect "$image:rk3568" --format \
+            '{{.Architecture}}|{{index .Config.Labels "io.onewifi.component"}}|{{index .Config.Labels "io.onewifi.managed"}}|{{index .Config.Labels "org.opencontainers.image.version"}}')
+          test "$identity" = "arm64|hardware|true|$(cat VERSION)"
+          docker push "$image:rk3568"
+          docker push "$image:rk3568-${GITHUB_SHA}"
+
+  egress:
+    name: egress (arm64)
+    if: github.event_name == 'push' || inputs.component == 'all' || inputs.component == 'egress'
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build and publish egress
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          image="ghcr.io/$owner/onewifi-egress"
+          python3 tools/container-runtime/prepare_egress_assets.py --arch arm64
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build --pull \
+            --build-arg "ONEWIFI_VERSION=$(cat VERSION)" \
+            --build-arg "TARGETARCH=arm64" \
+            -f runtime/Dockerfile.egress \
+            -t "$image:rk3568" \
+            -t "$image:rk3568-${GITHUB_SHA}" .
+          identity=$(docker image inspect "$image:rk3568" --format \
+            '{{.Architecture}}|{{index .Config.Labels "io.onewifi.component"}}|{{index .Config.Labels "io.onewifi.managed"}}|{{index .Config.Labels "org.opencontainers.image.version"}}')
+          test "$identity" = "arm64|egress|true|$(cat VERSION)"
+          docker push "$image:rk3568"
+          docker push "$image:rk3568-${GITHUB_SHA}"
+
+  relay:
+    name: relay (arm64)
+    if: github.event_name == 'push' || inputs.component == 'all' || inputs.component == 'relay'
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Mirror the pinned coturn image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          upstream=$(python3 -c "import re;print(''.join(re.search(r'UPSTREAM_IMAGE = \(([^)]*)\)', open('control/app/media.py').read()).group(1).replace('\"', '').split()))")
+          case "$upstream" in coturn/coturn:*@sha256:*) ;; *) echo "unexpected relay image: $upstream" >&2; exit 1 ;; esac
+          owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          image="ghcr.io/$owner/onewifi-relay"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker pull --platform linux/arm64 "$upstream"
+          docker tag "$upstream" "$image:rk3568"
+          docker tag "$upstream" "$image:rk3568-${GITHUB_SHA}"
+          test "$(docker image inspect "$image:rk3568" --format '{{.Architecture}}')" = arm64
+          docker run --rm --entrypoint sh "$image:rk3568" -c \
+            'command -v turnserver turnutils_stunclient ip awk >/dev/null'
+          docker push "$image:rk3568"
+          docker push "$image:rk3568-${GITHUB_SHA}"

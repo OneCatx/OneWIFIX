@@ -24,7 +24,7 @@ import time
 
 import docker
 
-from . import carrier_profiles, config as cfg, egress, media, rtp_forward, sysinfo
+from . import carrier_profiles, config as cfg, egress, media, rtp_forward, sysinfo, vowifi_mtu
 from .egress_contract import ENGINE_LABEL
 
 log = logging.getLogger("mdd.engine")
@@ -584,7 +584,7 @@ def start(inst: dict, settings: dict, dev_mounts: bool = False, reason: str = "r
         environment={
             "ONEWIFI_ID": iid,
             "SWU_LIVENESS_PERIOD": str(inst.get("liveness_period", 0)),
-            "SWU_TUN_MTU": os.environ.get("SWU_TUN_MTU", "1400"),
+            "SWU_TUN_MTU": vowifi_mtu.tunnel_mtu(settings),
             **proxy_environment,
             # How a new P-CSCF is pushed into Asterisk on reconnect: "restart" (default,
             # Asterisk-internal cold restart) or "reload" (the old path, which crashes — see

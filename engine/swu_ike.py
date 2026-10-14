@@ -4465,6 +4465,17 @@ class swu():
                                     else:
 
                                         self.RES, CK, IK = fromHex(res), fromHex(ck), fromHex(ik)
+                                        if os.environ.get("SWU_EAP_DIRECT") == "1":
+                                            try:
+                                                from eap_direct import publish_authorization
+                                                realm = ("ims.mnc" + self.mnc + ".mcc" + self.mcc
+                                                         + ".3gppnetwork.org")
+                                                publish_authorization(
+                                                    os.environ.get("ONEWIFI_RUNDIR", "/run/onewifi"),
+                                                    self.imsi + "@" + realm, realm,
+                                                    self.RES, RAND, AUTN)
+                                            except Exception:
+                                                swu_log("eap_direct handoff refused")
                                         self.KENCR, self.KAUT, self.MSK, self.EMSK, self.MK = self.eap_keys_calculation(CK,IK)
 
                                         # Calculate dynamic EAP payload with proper padding

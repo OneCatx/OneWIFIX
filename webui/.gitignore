@@ -1,0 +1,36 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.onebord
+.env
+.env.local
+.env.*.local
+
+# 构建产物与调试残留（不入库）
+release
+.restore-tmp
+tmp-*
+snippet-out.txt
+_config_snippet.txt
+_pg.txt
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

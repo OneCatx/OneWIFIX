@@ -1,0 +1,72 @@
+/**
+ * Soft Label Cards — 平铺信息行（无独立框，与深浅色共用布局）
+ */
+
+.soft-label-card {
+  display: grid;
+  grid-template-columns: minmax(72px, auto) 1fr;
+  gap: 4px 12px;
+  align-items: start;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.soft-label-card__title {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.soft-label-card__value {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--text-primary);
+  word-break: break-word;
+  text-align: right;
+}
+
+.soft-label-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.soft-label-stack .soft-label-card + .soft-label-card {
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.soft-label-card__value--mono {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.soft-label-card__sub {
+  grid-column: 2;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.soft-label-card__aux {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.soft-label-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.soft-label-card--danger .soft-label-card__value {
+  color: var(--danger, #f87171);
+}

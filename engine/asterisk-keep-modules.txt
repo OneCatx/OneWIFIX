@@ -37,6 +37,8 @@ app_stack.so                       # Return() — ends the h/hangup-handler rout
 app_system.so                      # TrySystem() — every notify.py hook (8 call sites)
 app_waitforprecondition.so         # WaitForPrecondition() — 3GPP preconditions, sysmocom fork
 app_senddtmf.so                    # registers the AMI PlayDTMF action; kept as DTMF insurance
+app_audiosocket.so                 # AudioSocket() — handset PCM, same IMS call, no second registration
+res_audiosocket.so                 # TCP framing for app_audiosocket (signed linear 8 kHz)
 # NoOp/Set/Progress/Ringing/GotoIf/Goto/Wait/Answer/Hangup are pbx_builtins (main binary),
 # and MessageSend lives in main/message.c — none of them is a loadable module.
 

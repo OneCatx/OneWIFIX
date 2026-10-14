@@ -22,7 +22,7 @@ import tempfile
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from contextlib import asynccontextmanager
 
@@ -35,12 +35,15 @@ from starlette import formparsers as starlette_formparsers
 from . import config as cfg
 from . import (store, engine, status as status_mod, sim, card, notify_push, lpa, auth,
                estkme, usbreader, egress, device_state, operations, update_check, cellular_sms,
+               esim_switch_progress, card_backup, sms_inbox, mobile_dto, device_discovery,
+               device_register, phone_compat,
                sysinfo, failover, carrier_id, allowance, cellular_call, sms_pdu, ussd, mms,
                mms_media, mms_staging, mms_transport, softphone_ws, modem_ims, vowifi_support,
                modem_voice, gate, line_offline, contacts, media, clients, authz,
-               mobile_notify, mobile_apns, mobile_pairing, mobile_settings)
+               mobile_notify, mobile_apns, mobile_pairing, mobile_settings, handset_audio,
+               carrier_profiles, phone_extras)
 from .version import VERSION
-from .ami import AmiClient
+from .ami import AmiClient, target_channel
 from .runtime import RuntimeRegistry
 
 STATUS_OK_GRACE_SECONDS = 20
@@ -389,6 +392,24 @@ def _ensure_card_draft(info: dict) -> dict | None:
     existing = _match_instance_by_iccid(iccid)
     if existing:
         return existing
+    claimed = device_register.claim_target(
+        cfg.list_instances(), str(info.get("name") or ""), str(info.get("reader_port") or ""))
+    if claimed:
+        identity = _modem_identity_for_reader(info.get("name")) or {}
+        mcc, mnc = str(info.get("mcc") or ""), str(info.get("mnc") or "")
+        return cfg.upsert_instance({
+            "id": str(claimed["id"]),
+            "provisioning_state": "draft",
+            "iccid": iccid,
+            "imsi": str(info.get("imsi") or ""),
+            "mcc": mcc,
+            "mnc": mnc,
+            **_carrier_identity_update(info),
+            "imei": claimed.get("imei") or identity.get("imei") or "",
+            "reader_index": int(info.get("index") or 0),
+            "reader_port": str(info.get("reader_port") or claimed.get("reader_port") or ""),
+            "smsc": str(info.get("smsc") or ""),
+        })
     identity = _modem_identity_for_reader(info.get("name")) or {}
     mcc, mnc = str(info.get("mcc") or ""), str(info.get("mnc") or "")
     try:
@@ -3053,6 +3074,13 @@ async def lifespan(app: FastAPI):
     mms_runner = asyncio.create_task(mms_worker())
     update_poller = asyncio.create_task(update_automation_poller())
     media_task = asyncio.create_task(media_supervisor())
+    phone_extras.capture_logs()
+    task_poller = asyncio.create_task(_automatic_task_poller())
+    try:
+        handset_server = await handset_audio.serve()
+    except OSError as exc:
+        handset_server = None
+        log.error("handset audio listener failed: %s", exc)
     for iid in recovered_modem_lines:
         asyncio.create_task(_auto_start_hotplugged_line(iid))
     yield
@@ -3064,10 +3092,14 @@ async def lifespan(app: FastAPI):
     mms_runner.cancel()
     update_poller.cancel()
     media_task.cancel()
+    task_poller.cancel()
+    if handset_server is not None:
+        handset_server.close()
+        await handset_server.wait_closed()
     # Reap the cancelled tasks (the monitor may be parked in a to_thread wait for up to
     # its timeout; awaiting keeps shutdown deterministic instead of leaking the error).
     await asyncio.gather(poller, monitor, sms_poller, host_poller,
-                         segment_reaper, mms_runner, update_poller, media_task,
+                         segment_reaper, mms_runner, update_poller, media_task, task_poller,
                          return_exceptions=True)
     await hub.runtime.close()
     for c in hub.ami.values():
@@ -3134,7 +3166,19 @@ def api_auth_login(body: dict, request: Request):
     if not result:
         raise HTTPException(401, "invalid username or password")
     token, csrf = result
-    response = JSONResponse({"ok": True, "authenticated": True, "csrf": csrf})
+    client, client_token = clients.register(
+        name="Phone", platform=_phone_platform(request),
+        capabilities=["manage_devices", "manage_esim", "manage_settings"])
+    expires = datetime.fromtimestamp(int(client["expires_at"]), tz=ZoneInfo("UTC")).strftime(
+        "%Y-%m-%dT%H:%M:%SZ")
+    response = JSONResponse({
+        "ok": True, "authenticated": True, "csrf": csrf,
+        "data": {
+            "status": "ok", "csrf_token": csrf, "csrf": csrf,
+            "session_token": client_token, "authenticated": True,
+            "expires_at": expires, "user": {"username": auth.username()},
+        },
+    })
     # The cookie has to outlive the session it names, or the browser discards a credential the
     # gateway would still have honoured.
     response.set_cookie(auth.SESSION_COOKIE, token,
@@ -3143,8 +3187,43 @@ def api_auth_login(body: dict, request: Request):
     return response
 
 
+def _phone_platform(request: Request) -> str:
+    agent = (request.headers.get("user-agent") or "").lower()
+    if "android" in agent:
+        return "android"
+    if "iphone" in agent or "ios" in agent:
+        return "ios"
+    return "other"
+
+
+@app.get("/api/auth/session")
+def api_auth_session(request: Request):
+    """Restore shape the phone reads after it presents its saved bearer."""
+    who = gate.current(request)
+    if who.kind not in ("admin", "client"):
+        raise HTTPException(401, "authentication required")
+    token = ""
+    expires = ""
+    if who.kind == "client" and who.client_id is not None:
+        token = gate.bearer_token(gate._headers(request.scope))
+        record = clients.get_public(who.client_id) or {}
+        if record.get("expires_at"):
+            expires = datetime.fromtimestamp(int(record["expires_at"]), tz=ZoneInfo("UTC")).strftime(
+                "%Y-%m-%dT%H:%M:%SZ")
+    return {"data": {
+        "status": "ok", "csrf_token": who.csrf, "csrf": who.csrf,
+        "session_token": token, "authenticated": True, "expires_at": expires,
+        "user": {"username": auth.username()},
+    }}
+
+
 @app.post("/api/auth/logout")
 def api_auth_logout(request: Request):
+    who = gate.current(request)
+    if who.kind == "client" and who.client_id is not None:
+        clients.revoke(who.client_id)
+        gate.revoke(who.credential)
+        return {"ok": True, "data": {"logged_out": True}}
     auth.logout(request.cookies.get(auth.SESSION_COOKIE))
     gate.revoke(gate.current(request).credential)
     response = JSONResponse({"ok": True})
@@ -3220,13 +3299,8 @@ def api_auth_client_revoke(client_id: int):
 
 def _audit_client(request: Request, settings: dict) -> str:
     peer = request.client.host if request.client else ""
-    if gate.trusted_proxy(peer, settings):
-        forwarded = request.headers.get("x-forwarded-for", "").split(",", 1)[0].strip()
-        try:
-            return str(ipaddress.ip_address(forwarded))
-        except ValueError:
-            pass
-    return peer
+    return phone_extras.effective_client(
+        peer, request.headers.get("x-forwarded-for", ""), settings)
 
 
 @app.middleware("http")
@@ -4771,11 +4845,17 @@ async def _unified_devices() -> list[dict]:
             flight_available = not is_native_reader and not serial_only
         result.append({
             "id": device_id, "device_type": "reader" if is_native_reader else "modem",
-            "name": (card_info.get("display_name") or card_info.get("name")
-                     or hardware_record.get("name") or "Smart-card reader"
+            "name": (device_state.resolve_device_name(
+                         hardware_record,
+                         card_info.get("display_name"), card_info.get("name"),
+                         hardware_record.get("name"),
+                         default="Smart-card reader")
                      if is_native_reader else
-                     assignment.get("name") or observed.get("name")
-                     or hardware_record.get("name") or "Cellular modem"),
+                     device_state.resolve_device_name(
+                         hardware_record,
+                         assignment.get("name"), observed.get("name"),
+                         hardware_record.get("name"),
+                         default="Cellular modem")),
             "present": device_present,
             "model": identity.get("model") or observed.get("model") or "",
             "firmware": identity.get("firmware") or observed.get("firmware") or "",
@@ -4786,14 +4866,17 @@ async def _unified_devices() -> list[dict]:
                             assignment.get("usb_path") or identity.get("usb_path")
                             or hardware_record.get("stable_path") or ""),
             "reader": card_info.get("name") or "", "instance_id": str(inst["id"]) if inst else None,
+            "esim_switch": esim_switch_progress.snapshot(str(card_info.get("name") or "")),
             "status": line_status,
             "logical_channels": logical_channels,
             "custom_model": (None if is_native_reader
                              else _custom_model_view(assignment, identity)),
+            "card_iccid": str(card_info.get("iccid") or ""),
             "sim": {"name": (((inst or {}).get("name")
                              or (cellular_view or {}).get("operator") or "SIM") if inst else ""),
                     "number": (inst or {}).get("msisdn") or "",
                     "present": bool(card_info.get("present")),
+                    "iccid": str(card_info.get("iccid") or ""),
                     "carrier": carrier},
             "cellular": cellular_view,
             "vowifi": {"epdg": (line_status or {}).get("detail") or "",
@@ -4843,6 +4926,37 @@ async def _unified_devices() -> list[dict]:
     return result
 
 
+def _register_discovered_device(body: dict) -> dict:
+    """Save one discovered reader or modem as a stopped draft. A live SIM is not required."""
+    config = {}
+    if isinstance(body, dict):
+        nested = body.get("config")
+        config = nested if isinstance(nested, dict) else body
+    try:
+        spec = device_register.draft(config)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    try:
+        existing = device_register.match(cfg.list_instances(), spec)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    if existing:
+        return {"data": {"id": str(existing["id"]), "name": existing.get("name") or "",
+                         "configured": True}}
+    try:
+        saved = cfg.upsert_instance(spec, unique_name=True)
+    except cfg.LineLimitError as exc:
+        raise HTTPException(409, str(exc)) from exc
+    egress.publish()
+    return {"data": {"id": str(saved["id"]), "name": saved.get("name") or spec["name"],
+                     "configured": True}}
+
+
+@app.post("/api/devices")
+def api_register_device(body: dict):
+    return _register_discovered_device(body)
+
+
 @app.get("/api/devices")
 async def api_devices():
     # Sessions are memory-only, so a sign-in usually follows a control-plane restart — right
@@ -4850,6 +4964,30 @@ async def api_devices():
     # in the list yet. `discovering` lets the UI say so instead of reporting a confident zero.
     return {"devices": await _unified_devices(), "discovering": not hub.scanned,
             "shared": device_state.status().get("shared") or {}}
+
+
+@app.get("/api/devices/discovered")
+def api_devices_discovered():
+    """Readers and USB modems that can be added, including ones already configured."""
+    readers = []
+    issue = ""
+    try:
+        readers = sim.list_readers()
+    except Exception as exc:
+        text = str(exc).lower()
+        issue = ("pcsc_driver_missing" if "driver" in text or "libusb" in text
+                 else "pcsc_service_unavailable")
+    cards = {}
+    for card in hub.cards_list():
+        if not isinstance(card, dict):
+            continue
+        name = str(card.get("name") or "")
+        if not name:
+            continue
+        cards[name] = {"reader": name, "instance_id": str(card.get("matched") or "")}
+    return {"data": {"devices": device_discovery.roster(
+        readers, reader_issue=issue, cards=cards,
+        instances=cfg.get_instances(), usb_candidates=_usb_candidates())}}
 
 
 # ------------------------------------------------------------ unrecognised USB modems
@@ -4991,6 +5129,27 @@ async def api_device_sim_reread(device_id: str):
         asyncio.create_task(_auto_start_hotplugged_line(iid))
     await hub.broadcast({"type": "cards", "cards": _client_cards()})
     return {"ok": True, "updated": filled, "completing": completing, "missing": missing}
+
+
+@app.patch("/api/devices/{device_id}")
+async def api_device_rename(device_id: str, body: dict):
+    """Save the physical device label. This does not rename the bound IMS line."""
+    if not isinstance(body, dict) or set(body) - {"name"}:
+        raise HTTPException(400, "only name can be changed")
+    try:
+        name = device_state.clean_device_name((body or {}).get("name"))
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    device = next((item for item in await _unified_devices() if item["id"] == device_id), None)
+    if not device:
+        raise HTTPException(404, "no such physical device")
+    current = device_state.hardware().get(device_id) or {}
+    device_state.set_hardware(device_id, {
+        "device_type": current.get("device_type") or device.get("device_type") or "",
+        "display_name": name,
+    })
+    await hub.broadcast({"type": "hardware", "device": device_id})
+    return {"ok": True, "id": device_id, "name": name}
 
 
 @app.put("/api/devices/{device_id}/hardware")
@@ -5332,6 +5491,172 @@ async def api_device_capabilities(device_id: str, body: dict):
 
 
 # ----------------------------- settings -----------------------------
+
+
+def _card_backup_body(payload: bytes) -> dict:
+    if len(payload) > card_backup.MAX_BYTES:
+        raise HTTPException(413, "card backup exceeds size limit")
+    try:
+        return card_backup.parse_backup(payload)
+    except card_backup.CardBackupError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@app.get("/api/settings/card-backup")
+def api_card_backup_export(device_imei: str = ""):
+    cards = card_backup.policies_for_export(cfg.list_card_policies(), cfg.list_instances())
+    if not cards:
+        raise HTTPException(404, "no card settings to export")
+    try:
+        raw = card_backup.export_backup(cards, device_imei=device_imei)
+    except card_backup.CardBackupError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return Response(content=raw, media_type="application/json",
+                    headers={"Content-Disposition": 'attachment; filename="card-backup.json"'})
+
+
+@app.post("/api/settings/card-backup/validate")
+async def api_card_backup_validate(request: Request):
+    document = _card_backup_body(await request.body())
+    return {"data": card_backup.preview(document)}
+
+
+@app.post("/api/settings/card-backup/restore")
+async def api_card_backup_restore(request: Request, device_imei: str = ""):
+    document = _card_backup_body(await request.body())
+    try:
+        policies, updates = card_backup.plan_restore(
+            document, device_imei, cfg.list_card_policies(), cfg.list_instances())
+    except card_backup.CardBackupError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    cfg.replace_card_policies(policies)
+    for update in updates:
+        cfg.upsert_instance(update)
+    return {"data": {"restored": len(document["cards"]), "applied": len(updates)}}
+
+
+def _card_policy_iccid(iccid: str) -> str:
+    if not re.fullmatch(r"\d{10,32}", str(iccid or "")):
+        raise HTTPException(400, "invalid iccid")
+    return str(iccid)
+
+
+def _card_policy_instance(iccid: str) -> dict | None:
+    return next((row for row in cfg.list_instances()
+                 if str(row.get("iccid") or "") == iccid), None)
+
+
+@app.get("/api/cards/{iccid}/policy")
+def api_card_policy(iccid: str):
+    iccid = _card_policy_iccid(iccid)
+    return {"data": card_backup.policy_view(
+        cfg.list_card_policies(), iccid, _card_policy_instance(iccid))}
+
+
+@app.put("/api/cards/{iccid}/policy")
+async def api_card_policy_save(iccid: str, request: Request):
+    iccid = _card_policy_iccid(iccid)
+    patch = await request.json()
+    if not isinstance(patch, dict):
+        raise HTTPException(400, "card policy must be an object")
+    try:
+        policies = card_backup.merge_policy(cfg.list_card_policies(), iccid, patch)
+    except card_backup.CardBackupError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    cfg.replace_card_policies(policies)
+    inst = _card_policy_instance(iccid)
+    update = card_backup.instance_update_from_patch(inst, policies[iccid], patch) if inst else None
+    if update:
+        cfg.upsert_instance(update)
+        inst = cfg.get_instance(str(inst["id"]))
+        device_state.set_desired(
+            str((inst or {}).get("reader") or update["id"]),
+            cellular_enabled=update.get("cellular_enabled"),
+            vowifi_enabled=update.get("enabled") if "enabled" in update else None,
+            flight_mode=update.get("flight_mode"))
+    return {"data": card_backup.policy_view(policies, iccid, inst)}
+
+
+def _apply_remembered_card_policy(iccid: str) -> None:
+    for update in card_backup.updates_for_iccid(
+            cfg.list_card_policies(), cfg.list_instances(), iccid):
+        cfg.upsert_instance(update)
+
+
+def _sms_line(device_id: str) -> dict:
+    inst = cfg.get_instance(str(device_id or ""))
+    if not inst:
+        raise HTTPException(404, "instance not found")
+    return inst
+
+
+def _sms_error(exc: sms_inbox.SmsInboxError) -> HTTPException:
+    return HTTPException(exc.status, str(exc))
+
+
+@app.get("/api/sms/contacts")
+def api_sms_contacts(request: Request, device_id: str = "", limit: int = 100):
+    return {"data": sms_inbox.list_contacts(
+        _owner(request), cfg.list_instances(), device_id, limit)}
+
+
+@app.get("/api/sms/thread")
+def api_sms_thread(request: Request, device_id: str, peer: str,
+                   before_id: int | None = None, limit: int = 100,
+                   iccid: str = "", imsi: str = ""):
+    try:
+        rows = sms_inbox.open_thread(
+            _owner(request), _sms_line(device_id), peer, before_id, limit, iccid, imsi)
+    except sms_inbox.SmsInboxError as exc:
+        raise _sms_error(exc) from exc
+    return {"data": [mobile_dto.sms_message(row) for row in rows]}
+
+
+@app.delete("/api/sms/thread")
+def api_sms_thread_delete(device_id: str, peer: str, iccid: str = "", imsi: str = ""):
+    inst = _sms_line(device_id)
+    if ((iccid and iccid != str(inst.get("iccid") or ""))
+            or (imsi and imsi != str(inst.get("imsi") or ""))):
+        raise HTTPException(409, "line identity changed")
+    return {"data": {"deleted": store.delete_thread(device_id, peer)}}
+
+
+@app.post("/api/sms/send")
+async def api_sms_send(body: dict):
+    iid = str(body.get("device_id") or "")
+    _sms_line(iid)
+    to = str(body.get("phone") or "").strip()
+    message = body.get("message")
+    if not to or not isinstance(message, str) or not message:
+        raise HTTPException(422, "recipient and non-empty message body are required")
+    result = await send_sms_on_line(iid, to, message)
+    if result.get("unavailable"):
+        raise HTTPException(409, result.get("error") or "SMS unavailable")
+    if not result.get("ok") and not result.get("uncertain"):
+        return JSONResponse({"data": mobile_dto.sms_outcome(result)}, status_code=502)
+    outcome = mobile_dto.sms_outcome(result)
+    if result.get("uncertain"):
+        outcome["outcome"] = "accepted_unconfirmed"
+    return {"data": outcome}
+
+
+@app.delete("/api/sms/messages/{message_id}")
+def api_sms_message_delete(message_id: str):
+    try:
+        deleted = sms_inbox.delete_message(message_id)
+    except sms_inbox.SmsInboxError as exc:
+        raise _sms_error(exc) from exc
+    return {"data": {"deleted": deleted}}
+
+
+@app.get("/api/sms/export")
+def api_sms_export(device_id: str = ""):
+    rows = sms_inbox.export_messages(cfg.list_instances(), device_id)
+    raw = json.dumps({"messages": rows}, ensure_ascii=False).encode("utf-8")
+    return Response(content=raw, media_type="application/json", headers={
+        "Content-Disposition": 'attachment; filename="sms-export.json"',
+        "X-SMS-Export-Count": str(len(rows)),
+    })
 
 
 @app.get("/api/settings")
@@ -7811,6 +8136,124 @@ async def api_calls_delete(iid: str, body: dict):
     return {"ok": True, "deleted": n}
 
 
+async def _automatic_task_poller():
+    """Run tasks the phone or the board enabled. A failure stays on that task's run row."""
+    while True:
+        await asyncio.sleep(30)
+        try:
+            moment = datetime.now(timezone.utc)
+            blob = (cfg.get_settings().get("phone_tasks") or {})
+            stored, claimed, skipped = phone_extras.claim_due(blob, moment)
+            if stored is not None:
+                cfg.update_settings({"phone_tasks": stored})
+            for task in skipped:
+                current = cfg.get_settings().get("phone_tasks") or {}
+                advanced, _run = phone_extras.begin_run(
+                    current, task, "", "", "failed", scheduled=True, record=False, now=moment)
+                cfg.update_settings({"phone_tasks": advanced})
+            for task in claimed:
+                try:
+                    status, output, error = await _execute_automatic_task(task)
+                except Exception as exc:  # noqa: BLE001 - one task must not drop the rest
+                    status, output, error = "failed", "", type(exc).__name__
+                current = cfg.get_settings().get("phone_tasks") or {}
+                finished, _run = phone_extras.begin_run(
+                    current, task, output, error, status, scheduled=True, now=moment)
+                cfg.update_settings({"phone_tasks": finished})
+                phone_extras.note_run(task, status)
+        except Exception as exc:  # noqa: BLE001 - one bad task must not stop the loop
+            log.warning("automatic task poll failed: %s", type(exc).__name__)
+
+
+async def _end_timed_call(iid: str, record: dict, seconds: int) -> None:
+    await asyncio.sleep(max(0, int(seconds)))
+    fresh = store.get_call(int(record["id"])) if record and record.get("id") is not None else None
+    if not fresh or fresh.get("end_ts"):
+        return
+    result = await hangup_call(iid, fresh)
+    if result.get("ok") or result.get("error") == "call is not active":
+        store.update_call(int(fresh["id"]), "ended", ended=True)
+        handset_audio.bridge.release_record(fresh)
+
+
+async def _execute_automatic_task(task: dict) -> tuple[str, str, str]:
+    kind = task.get("task_type")
+    payload = task.get("payload") or {}
+    iid = str(task.get("device_id") or "")
+    if kind == "public_ip":
+        plan = phone_extras.execution_plan(task, None)
+        return "failed", "", plan["error"]
+    inst = cfg.get_instance(iid)
+    if not inst:
+        return "failed", "", "line not found"
+    plan = phone_extras.execution_plan(task, inst)
+    if plan["action"] == "fail":
+        return "failed", "", plan["error"]
+    if plan["action"] == "sms":
+        result = await send_sms_on_line(iid, str(payload.get("phone") or ""),
+                                        str(payload.get("message") or ""),
+                                        transport=plan["transport"])
+        return phone_extras.classify_sms(result)
+    if plan["action"] == "call":
+        result = {"ok": False, "error": "call failed"}
+        attempts = 1
+        if plan.get("retry"):
+            attempts += int(task.get("retry_count") or 0)
+        for _ in range(max(1, attempts)):
+            result = await place_handset_call(iid, str(payload.get("phone") or ""))
+            if result.get("ok") or not result.get("unavailable") or result.get("call_id"):
+                break
+        status, output, error = phone_extras.classify_call(result)
+        if status == "started" and plan.get("duration") and result.get("record"):
+            asyncio.create_task(_end_timed_call(iid, result["record"], int(plan["duration"])))
+        return status, output, error
+    return "failed", "", "unsupported task"
+
+
+async def place_handset_call(iid: str, to: str) -> dict:
+    """Place `to` on the IMS and attach the phone's PCM socket to that same call.
+
+    The call row is written before Originate. The engine's uniqueid callback then joins
+    this row instead of inserting a second one.
+    """
+    ami = await hub.ami_for(iid)
+    if not ami:
+        return {"ok": False, "unavailable": True, "error": "instance not running"}
+    phone_id, audio_id = handset_audio.bridge.prepare(iid)
+    inst = cfg.get_instance(iid) or {}
+    profile = carrier_profiles.resolve(carrier_profiles.identity_from_instance(inst))
+    number = phone_extras.canonicalize_dial(to, profile)
+    record = store.add_call(iid, "out", number, status="dialing", call_id=phone_id)
+    result = await ami.originate_handset(number, audio_id)
+    result["call_id"] = phone_id
+    if not result.get("ok"):
+        store.update_call(int(record["id"]), "failed", ended=True)
+        handset_audio.bridge.drop(phone_id)
+        result["record"] = store.get_call(int(record["id"])) or record
+        return result
+    result["record"] = record
+    return result
+
+
+async def answer_handset_call(iid: str, call_id: str) -> dict:
+    """Connect a ringing inbound call to the phone. An outbound handset call is already attached."""
+    ami = await hub.ami_for(iid)
+    if not ami:
+        return {"ok": False, "unavailable": True, "error": "instance not running"}
+    if handset_audio.bridge.leg(call_id) is not None:
+        return {"ok": True, "call_id": call_id}
+    channel = await ami.channel_for_uniqueid(call_id)
+    if not channel:
+        return {"ok": False, "error": "call is no longer ringing"}
+    phone_id, audio_id = handset_audio.bridge.prepare(iid, call_id)
+    result = await ami.redirect(channel, "handset-media", audio_id)
+    if not result.get("ok"):
+        handset_audio.bridge.drop(phone_id)
+        return result
+    result["call_id"] = phone_id
+    return result
+
+
 async def place_call_on_line(iid: str, to: str, from_endpoint: str = "webrtc") -> dict:
     """Ring the browser endpoint and bridge it to `to` over IMS, logging the call."""
     ami = await hub.ami_for(iid)
@@ -7826,6 +8269,18 @@ async def hangup_on_line(iid: str) -> dict:
     if not ami:
         return {"ok": False, "unavailable": True, "error": "instance not running"}
     return await ami.hangup_all()
+
+
+async def hangup_call(iid: str, record: dict) -> dict:
+    """Hang up the channel that belongs to this call record."""
+    ami = await hub.ami_for(iid)
+    if not ami:
+        return {"ok": False, "unavailable": True, "error": "instance not running"}
+    chosen = await ami.channels_for_call(
+        str(record.get("engine_id") or ""), str(record.get("call_id") or ""))
+    if not chosen.get("ok"):
+        return {"ok": False, "error": chosen.get("error") or "call is not active"}
+    return await ami.hangup_channel(target_channel(chosen, "hangup"))
 
 
 @app.post("/api/instances/{iid}/call")
@@ -7976,6 +8431,19 @@ def api_media():
             "line_filters": line_filters,
         })
     return result
+
+
+@app.websocket("/api/devices/{iid}/calls/media")
+async def ws_call_media(ws: WebSocket, iid: str, id: str = ""):
+    """PCM for one call: signed 16-bit linear, 8 kHz, 20 ms frames."""
+    if not cfg.get_instance(iid) or not str(id or "").strip():
+        await ws.close(code=1008)
+        return
+    await ws.accept()
+    try:
+        await handset_audio.attach_phone(iid, str(id), ws)
+    except WebSocketDisconnect:
+        return
 
 
 @app.websocket("/api/instances/{iid}/softphone/ws")
@@ -8212,8 +8680,10 @@ async def api_engine_event(payload: dict):
             elif call_id:
                 asyncio.create_task(_push_anonymous_call(iid, call_id, cid))
     elif event == "call_out" and args:
-        call_id = str(args[1] or "") if len(args) > 1 else ""
-        rec = store.add_call_correlated(iid, "out", args[0], status="dialing", call_id=call_id)
+        uniqueid = str(args[1] or "") if len(args) > 1 else ""
+        business_id = str(args[2] or "") if len(args) > 2 else ""
+        rec = store.associate_engine_call(
+            iid, "out", str(args[0] or ""), uniqueid, business_id)
         await hub.broadcast({"type": "call", "instance": iid, "call": rec})
     elif event == "call_answer" and args:
         call_id = str(args[0] or "")
@@ -8236,20 +8706,23 @@ async def api_engine_event(payload: dict):
             dialstatus = (args[2] if len(args) > 2 else "").upper()
             cause = int(args[3]) if len(args) > 3 and str(args[3]).isdigit() else 0
             call_id = str(args[5] or "") if len(args) > 5 else ""
+            business_id = str(args[6] or "") if len(args) > 6 else ""
         else:
             direction = "out"
             to = args[0]
             dialstatus = (args[1] if len(args) > 1 else "").upper()
             cause = int(args[2]) if len(args) > 2 and str(args[2]).isdigit() else 0
             call_id = ""
+            business_id = ""
         disp = _call_disposition(dialstatus, cause, direction, to)
-        exact = {"call_id": call_id} if call_id else {}
-        rec = store.update_last_call(iid, direction, to, disp, **exact)
-        if not rec and call_id:
-            # The backgrounded start callback can be delayed indefinitely or lost. Reserve
-            # the exact terminal identity now; a later start only fills its missing peer.
-            rec = store.finalize_call_by_id(iid, direction, call_id, to, disp)
-        if not rec and to and not call_id:
+        if call_id or business_id:
+            # args[5] stays the Asterisk uniqueid. args[6], when the dialplan sends it,
+            # is the handset id and must not shift the uniqueid.
+            rec = store.close_engine_call(
+                iid, direction, to, disp, uniqueid=call_id, business_id=business_id)
+        else:
+            rec = store.update_last_call(iid, direction, to, disp)
+        if not rec and to and not call_id and not business_id:
             # The dialplan fires call_out and call_result from separate backgrounded
             # notify.py processes ('&'), so nothing orders them. On a call that lasts under a
             # second — a dialled service code answered on the BYE does exactly that — the
@@ -8264,17 +8737,19 @@ async def api_engine_event(payload: dict):
             # overtook its own call_out.
             for _ in range(15):
                 await asyncio.sleep(0.2)
-                rec = store.update_last_call(iid, direction, to, disp, **exact)
+                rec = store.update_last_call(iid, direction, to, disp)
                 if rec:
                     log.info("call_result for %s arrived before its record; applied on retry",
                              to)
                     break
-        if not rec and to and not call_id:
+        if not rec and to and not call_id and not business_id:
             # Only now, with the ordering window spent: 'h' can lose the number to a
             # masquerade in legacy engines. ID-bearing callbacks must never take this
             # fallback: two clients may be dialling the same peer concurrently.
             rec = store.update_last_call(iid, direction, None, disp)
         if rec:
+            if rec.get("end_ts"):
+                handset_audio.bridge.release_record(rec)
             await hub.broadcast({"type": "call", "instance": iid, "call": rec})
             # A call nobody answered is worth a notification; one the user actively declined
             # is not — they were there and said no. Dedupe on the record id, not on the
@@ -8644,92 +9119,133 @@ async def api_esim_enable(iccid: str, body: dict | None = None):
         if active == iccid and iccid in installed:
             return {"ok": True, "iccid": iccid, "se_id": se["id"],
                     "verified": True, "already_active": True, "eid": eid,
-                    "card": {"name": name, "index": idx, "iccid": str(actual_card.iccid)}}
-        # Native readers have no host bridge to recycle and retain the established path.
-        if not hardware_id:
-            previous = await _esim_prepare_reader_profile_switch(name)
+                    "card": {"name": name, "index": idx, "iccid": str(actual_card.iccid)},
+                    "esim_switch": esim_switch_progress.snapshot(name)}
+        # Five coarse steps stay on the card. The phase name is the finer ladder.
+        ids = (switch_key, name)
+        marked = {"ok": False, "explicit": False}
+
+        def _fail(reason: str) -> None:
+            marked["explicit"] = True
+            esim_switch_progress.fail(reason, *ids)
+
+        esim_switch_progress.begin(*ids)
+        try:
+            # Native readers have no host bridge to recycle and retain the established path.
+            if not hardware_id:
+                previous = await _esim_prepare_reader_profile_switch(name)
+                esim_switch_progress.advance(2, *ids)
+                try:
+                    esim_switch_progress.advance(3, *ids)
+                    await _esim_run(
+                        name, idx, _esim_enable_captured(name, iccid, se.get("aid"), snapshot))
+                    hub.lpa_busy[name] = True
+                    async with hub.reader_lock(name):
+                        esim_switch_progress.advance(4, *ids)
+                        actual_eid, active, _ = await _esim_retry_profile_inventory(name, se.get("aid"))
+                        if actual_eid != snapshot["eid"] or active != iccid:
+                            raise RuntimeError("new profile did not verify on the original eUICC")
+                        card_data = await _esim_probe_card(
+                            idx, expect_iccid=iccid, attempts=ESIM_CARD_REFRESH_ATTEMPTS)
+                        if str(card_data.iccid or "") != iccid:
+                            raise RuntimeError("physical reader did not report the target ICCID")
+                        esim_switch_progress.advance(5, *ids)
+                        refreshed = await _esim_refresh_card(
+                            name, idx, card_data=card_data, auto_start=False)
+                        if str(refreshed.get("iccid") or "") != iccid:
+                            raise RuntimeError("physical reader identity could not be refreshed")
+                except asyncio.CancelledError:
+                    esim_switch_progress.advance(5, *ids)
+                    try:
+                        await _esim_compensate_cancelled(
+                            name, idx, "", iccid, snapshot, previous)
+                        _fail("rolled_back")
+                    except Exception as rollback_exc:  # noqa
+                        _fail("rollback_failed")
+                        log.error("cancelled eSIM enable compensation failed reader=%s: %s",
+                                  name, rollback_exc)
+                    raise
+                except Exception as exc:
+                    esim_switch_progress.advance(5, *ids)
+                    try:
+                        await _esim_compensate_enable(name, idx, "", iccid, snapshot, previous)
+                    except Exception as rollback_exc:  # noqa
+                        _fail("rollback_failed")
+                        raise HTTPException(503, f"profile enable failed: {exc}; "
+                                            f"compensation failed: {rollback_exc}") from exc
+                    _fail("rolled_back")
+                    raise HTTPException(503, f"profile enable failed: {exc}; "
+                                        "original profile restored and verified") from exc
+                finally:
+                    hub.lpa_busy.pop(name, None)
+                await asyncio.to_thread(_esim_cache_update_profile, iccid, state="enabled")
+                esim_switch_progress.complete(*ids)
+                marked["ok"] = True
+                await asyncio.to_thread(_apply_remembered_card_policy, iccid)
+                return {"ok": True, "iccid": iccid, "se_id": se["id"],
+                        "verified": True, "card": refreshed,
+                        "esim_switch": esim_switch_progress.snapshot(name)}
+
+            previous = await _esim_prepare_profile_switch(hardware_id)
+            esim_switch_progress.advance(2, *ids)
+            busy_readers = _esim_modem_reader_names(name, hardware_id)
+            for reader in busy_readers:
+                hub.lpa_busy[reader] = True
             try:
+                esim_switch_progress.advance(3, *ids)
                 await _esim_run(
-                    name, idx, _esim_enable_captured(name, iccid, se.get("aid"), snapshot))
-                hub.lpa_busy[name] = True
-                async with hub.reader_lock(name):
-                    actual_eid, active, _ = await _esim_retry_profile_inventory(name, se.get("aid"))
-                    if actual_eid != snapshot["eid"] or active != iccid:
-                        raise RuntimeError("new profile did not verify on the original eUICC")
-                    card_data = await _esim_probe_card(
-                        idx, expect_iccid=iccid, attempts=ESIM_CARD_REFRESH_ATTEMPTS)
-                    if str(card_data.iccid or "") != iccid:
-                        raise RuntimeError("physical reader did not report the target ICCID")
-                    refreshed = await _esim_refresh_card(
-                        name, idx, card_data=card_data, auto_start=False)
-                    if str(refreshed.get("iccid") or "") != iccid:
-                        raise RuntimeError("physical reader identity could not be refreshed")
+                    name, idx, _esim_enable_captured(name, iccid, se.get("aid"), snapshot),
+                    keep_busy=True)
+                esim_switch_progress.advance(4, *ids)
+                actual_eid, active, _ = await _esim_retry_profile_inventory(name, se.get("aid"))
+                if actual_eid != snapshot["eid"] or active != iccid:
+                    raise RuntimeError("new profile did not verify on the original eUICC")
+                await asyncio.to_thread(_esim_cache_update_profile, iccid, state="enabled")
+                esim_switch_progress.advance(5, *ids)
+                recovery = await _esim_recover_profile_switch(name, hardware_id, iccid)
+                esim_switch_progress.complete(*ids)
+                marked["ok"] = True
+                await asyncio.to_thread(_apply_remembered_card_policy, iccid)
+                return {"ok": True, "iccid": iccid, "se_id": se["id"],
+                        "card": recovery["card"], "recovery": {
+                            "instance_id": recovery["instance_id"],
+                            "readers": recovery["readers"],
+                            "bridge_state": recovery["bridge"].get("state"),
+                        }, "esim_switch": esim_switch_progress.snapshot(name)}
             except asyncio.CancelledError:
+                esim_switch_progress.advance(5, *ids)
                 try:
                     await _esim_compensate_cancelled(
-                        name, idx, "", iccid, snapshot, previous)
+                        name, idx, hardware_id, iccid, snapshot, previous)
+                    _fail("rolled_back")
                 except Exception as rollback_exc:  # noqa
+                    _fail("rollback_failed")
                     log.error("cancelled eSIM enable compensation failed reader=%s: %s",
                               name, rollback_exc)
                 raise
             except Exception as exc:
+                esim_switch_progress.advance(5, *ids)
                 try:
-                    await _esim_compensate_enable(name, idx, "", iccid, snapshot, previous)
+                    await _esim_compensate_enable(name, idx, hardware_id, iccid,
+                                                  snapshot, previous)
+                    if snapshot.get("previous_iccid"):
+                        await asyncio.to_thread(_esim_cache_update_profile,
+                                                snapshot["previous_iccid"], state="enabled")
                 except Exception as rollback_exc:  # noqa
-                    raise HTTPException(503, f"profile enable failed: {exc}; "
+                    _fail("rollback_failed")
+                    log.error("eSIM enable and compensation both failed reader=%s hardware=%s: %s; %s",
+                              name, hardware_id, exc, rollback_exc)
+                    raise HTTPException(503, f"profile enable/recovery failed: {exc}; "
                                         f"compensation failed: {rollback_exc}") from exc
-                raise HTTPException(503, f"profile enable failed: {exc}; "
+                _fail("rolled_back")
+                raise HTTPException(503, f"profile enable/recovery failed: {exc}; "
                                     "original profile restored and verified") from exc
             finally:
-                hub.lpa_busy.pop(name, None)
-            await asyncio.to_thread(_esim_cache_update_profile, iccid, state="enabled")
-            return {"ok": True, "iccid": iccid, "se_id": se["id"],
-                    "verified": True, "card": refreshed}
-
-        previous = await _esim_prepare_profile_switch(hardware_id)
-        busy_readers = _esim_modem_reader_names(name, hardware_id)
-        for reader in busy_readers:
-            hub.lpa_busy[reader] = True
-        try:
-            await _esim_run(
-                name, idx, _esim_enable_captured(name, iccid, se.get("aid"), snapshot),
-                keep_busy=True)
-            actual_eid, active, _ = await _esim_retry_profile_inventory(name, se.get("aid"))
-            if actual_eid != snapshot["eid"] or active != iccid:
-                raise RuntimeError("new profile did not verify on the original eUICC")
-            await asyncio.to_thread(_esim_cache_update_profile, iccid, state="enabled")
-            recovery = await _esim_recover_profile_switch(name, hardware_id, iccid)
-            return {"ok": True, "iccid": iccid, "se_id": se["id"],
-                    "card": recovery["card"], "recovery": {
-                        "instance_id": recovery["instance_id"],
-                        "readers": recovery["readers"],
-                        "bridge_state": recovery["bridge"].get("state"),
-                    }}
-        except asyncio.CancelledError:
-            try:
-                await _esim_compensate_cancelled(
-                    name, idx, hardware_id, iccid, snapshot, previous)
-            except Exception as rollback_exc:  # noqa
-                log.error("cancelled eSIM enable compensation failed reader=%s: %s",
-                          name, rollback_exc)
-            raise
-        except Exception as exc:
-            try:
-                await _esim_compensate_enable(name, idx, hardware_id, iccid,
-                                              snapshot, previous)
-                if snapshot.get("previous_iccid"):
-                    await asyncio.to_thread(_esim_cache_update_profile,
-                                            snapshot["previous_iccid"], state="enabled")
-            except Exception as rollback_exc:  # noqa
-                log.error("eSIM enable and compensation both failed reader=%s hardware=%s: %s; %s",
-                          name, hardware_id, exc, rollback_exc)
-                raise HTTPException(503, f"profile enable/recovery failed: {exc}; "
-                                    f"compensation failed: {rollback_exc}") from exc
-            raise HTTPException(503, f"profile enable/recovery failed: {exc}; "
-                                "original profile restored and verified") from exc
+                for reader in set(busy_readers) | set(_esim_modem_reader_names(name, hardware_id)):
+                    hub.lpa_busy.pop(reader, None)
         finally:
-            for reader in set(busy_readers) | set(_esim_modem_reader_names(name, hardware_id)):
-                hub.lpa_busy.pop(reader, None)
+            if not marked["ok"] and not marked["explicit"]:
+                esim_switch_progress.fail("switch_incomplete", *ids)
 
 
 @app.post("/api/esim/profiles/{iccid}/disable")
@@ -9030,6 +9546,43 @@ from . import mobile_api  # in-process page adapters; registered before the stat
 import sys as _sys
 
 mobile_api.install(app, _sys.modules[__name__])
+
+
+class PhonePathRewrite:
+    """Send the paths the phones call to the mobile handlers before authorization."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") in ("http", "websocket"):
+            bearer = ""
+            for key, value in scope.get("headers") or []:
+                if key.decode("latin1").lower() == "authorization":
+                    header = value.decode("latin1")
+                    if header.lower().startswith("bearer "):
+                        bearer = header[7:].strip()
+                    break
+            method = "WEBSOCKET" if scope.get("type") == "websocket" else scope.get("method") or "GET"
+            original = scope.get("path") or ""
+            path = phone_compat.rewrite(original, bearer, method)
+            headers = None
+            if scope.get("type") == "websocket" and not bearer and path.endswith("/calls/media"):
+                token = phone_compat.socket_token(scope.get("query_string") or b"")
+                if token:
+                    headers = list(scope.get("headers") or [])
+                    headers.append((b"authorization", b"Bearer " + token.encode("ascii")))
+            if path != original or headers is not None:
+                scope = dict(scope)
+                if path != original:
+                    scope["path"] = path
+                    scope["raw_path"] = path.encode()
+                if headers is not None:
+                    scope["headers"] = headers
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(PhonePathRewrite)
 
 
 @app.exception_handler(HTTPException)

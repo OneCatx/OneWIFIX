@@ -1,0 +1,416 @@
+/**
+ * 表单选择框 / 筛选输入 — 全局原生 select 深浅色统一
+ */
+
+:root {
+  --ob-select-chevron-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.72)' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  --ob-select-chevron-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(15,23,42,0.55)' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  /* 下拉列表 · 玻璃面板色（半透明，贴近 frame-base） */
+  --ob-select-list-bg-dark: rgba(24, 30, 44, 0.94);
+  --ob-select-list-bg-light: rgba(255, 255, 255, 0.94);
+  --ob-select-option-hover-dark: rgba(96, 165, 250, 0.16);
+  --ob-select-option-checked-dark: rgba(52, 211, 153, 0.14);
+  --ob-select-option-text-dark: rgba(255, 255, 255, 0.92);
+  --ob-select-option-accent-dark: rgba(147, 197, 253, 0.95);
+  --ob-select-option-hover-light: rgba(79, 140, 255, 0.1);
+  --ob-select-option-checked-light: rgba(79, 140, 255, 0.14);
+  --ob-select-option-text-light: rgba(15, 23, 42, 0.92);
+  --ob-select-option-accent-light: #2563eb;
+}
+
+/* ── 所有原生 select 基础 ── */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 34px 7px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+}
+
+select.policy-field__select {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  padding: 7px 34px 7px 10px;
+}
+
+:is(.ob-field-input, input.ob-field-input, input.search-input) {
+  min-height: 34px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+/* ── Dark ── */
+[data-theme='dark'] select {
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(24, 26, 38, 0.41);
+  background-image: var(--ob-select-chevron-dark);
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.02),
+    0 6px 22px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(24px) saturate(128%) brightness(0.88);
+  -webkit-backdrop-filter: blur(24px) saturate(128%) brightness(0.88);
+  color-scheme: dark;
+}
+
+[data-theme='dark'] select:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-theme='dark'] select:focus,
+[data-theme='dark'] select:focus-visible {
+  border-color: rgba(96, 165, 250, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(96, 165, 250, 0.18),
+    0 6px 22px rgba(0, 0, 0, 0.34);
+}
+
+[data-theme='dark'] select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 原生 option 列表：浏览器支持有限，尽量贴近玻璃面板 */
+[data-theme='dark'] select option,
+[data-theme='dark'] select optgroup {
+  background-color: var(--ob-select-list-bg-dark);
+  color: var(--ob-select-option-text-dark);
+}
+
+[data-theme='dark'] select option:hover,
+[data-theme='dark'] select option:focus {
+  background-color: var(--ob-select-option-hover-dark);
+  color: var(--ob-select-option-accent-dark);
+}
+
+[data-theme='dark'] select option:checked {
+  background-color: var(--ob-select-option-checked-dark);
+  color: rgba(110, 231, 183, 0.95);
+}
+
+[data-theme='dark'] :is(.ob-field-input, input.ob-field-input, input.search-input, input.policy-field__input) {
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 86% 50%, rgba(255, 255, 255, 0.014) 0%, transparent 52%),
+    linear-gradient(168deg, rgba(24, 26, 38, 0.41) 0%, rgba(13, 15, 24, 0.44) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 22px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(24px) saturate(128%) brightness(0.88);
+  -webkit-backdrop-filter: blur(24px) saturate(128%) brightness(0.88);
+}
+
+[data-theme='dark'] :is(.ob-field-input, input.ob-field-input, input.search-input, input.policy-field__input)::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+[data-theme='dark'] :is(.ob-field-input, input.ob-field-input, input.search-input, input.policy-field__input):focus {
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+/* ── Light ── */
+[data-theme='light'] select {
+  color: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background-color: rgba(255, 255, 255, 0.62);
+  background-image: var(--ob-select-chevron-light);
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 4px 16px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  color-scheme: light;
+}
+
+[data-theme='light'] select:hover {
+  border-color: rgba(79, 140, 255, 0.22);
+  background-color: rgba(255, 255, 255, 0.78);
+}
+
+[data-theme='light'] select:focus,
+[data-theme='light'] select:focus-visible {
+  border-color: rgba(79, 140, 255, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(79, 140, 255, 0.14),
+    0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme='light'] select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+[data-theme='light'] select option,
+[data-theme='light'] select optgroup {
+  background-color: var(--ob-select-list-bg-light);
+  color: var(--ob-select-option-text-light);
+}
+
+[data-theme='light'] select option:hover,
+[data-theme='light'] select option:focus {
+  background-color: var(--ob-select-option-hover-light);
+  color: var(--ob-select-option-accent-light);
+}
+
+[data-theme='light'] select option:checked {
+  background-color: var(--ob-select-option-checked-light);
+  color: var(--ob-select-option-accent-light);
+}
+
+[data-theme='light'] :is(.ob-field-input, input.ob-field-input, input.search-input, input.policy-field__input) {
+  color: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 4px 16px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+
+[data-theme='light'] :is(.ob-field-input, input.ob-field-input, input.search-input, input.policy-field__input)::placeholder {
+  color: rgba(15, 23, 42, 0.42);
+}
+
+[data-theme='light'] :is(.ob-field-input, input.ob-field-input, input.search-input, input.policy-field__input):focus {
+  border-color: rgba(79, 140, 255, 0.35);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+/* 面板内字段型输入/下拉：圆角矩形，不用 pill */
+input.policy-field__input.ob-field-input {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  padding: 7px 10px;
+}
+
+/* ── 自定义玻璃下拉（Windows 原生 option 列表不可控时使用） ── */
+.ob-glass-select {
+  position: relative;
+  width: 100%;
+}
+
+.ob-glass-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.ob-glass-select__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ob-glass-select__chevron {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  background-image: var(--ob-select-chevron-dark);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
+  transition: transform 0.2s ease;
+}
+
+.ob-glass-select.is-open .ob-glass-select__chevron {
+  transform: rotate(180deg);
+}
+
+.ob-glass-select__menu {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ob-glass-select__option {
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+[data-theme='dark'] .ob-glass-select__trigger {
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 86% 50%, rgba(255, 255, 255, 0.014) 0%, transparent 52%),
+    linear-gradient(168deg, rgba(255, 255, 255, 0.022) 0%, transparent 36%, rgba(0, 0, 0, 0.045) 100%),
+    linear-gradient(168deg, rgba(24, 26, 38, 0.41) 0%, rgba(13, 15, 24, 0.44) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.02),
+    0 6px 22px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(24px) saturate(128%) brightness(0.88);
+  -webkit-backdrop-filter: blur(24px) saturate(128%) brightness(0.88);
+}
+
+[data-theme='dark'] .ob-glass-select__trigger:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-theme='dark'] .ob-glass-select.is-open .ob-glass-select__trigger,
+[data-theme='dark'] .ob-glass-select__trigger:focus-visible {
+  border-color: rgba(96, 165, 250, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(96, 165, 250, 0.18),
+    0 6px 22px rgba(0, 0, 0, 0.34);
+}
+
+[data-theme='dark'] .ob-glass-select__menu {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(circle at 86% 50%, rgba(255, 255, 255, 0.014) 0%, transparent 52%),
+    linear-gradient(168deg, rgba(255, 255, 255, 0.022) 0%, transparent 36%, rgba(0, 0, 0, 0.045) 100%),
+    linear-gradient(168deg, rgba(24, 30, 44, 0.92) 0%, rgba(13, 15, 24, 0.94) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 10px 36px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(24px) saturate(128%) brightness(0.88);
+  -webkit-backdrop-filter: blur(24px) saturate(128%) brightness(0.88);
+}
+
+[data-theme='dark'] .ob-glass-select__option {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+[data-theme='dark'] .ob-glass-select__option:hover {
+  background: rgba(96, 165, 250, 0.14);
+  color: rgba(147, 197, 253, 0.95);
+}
+
+[data-theme='dark'] .ob-glass-select__option.is-selected {
+  background: rgba(52, 211, 153, 0.12);
+  color: rgba(110, 231, 183, 0.95);
+}
+
+[data-theme='dark'] .ob-glass-select.is-disabled .ob-glass-select__trigger {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-theme='light'] .ob-glass-select__chevron {
+  background-image: var(--ob-select-chevron-light);
+}
+
+[data-theme='light'] .ob-glass-select__trigger {
+  color: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    radial-gradient(circle at 86% 50%, rgba(255, 255, 255, 0.5) 0%, transparent 52%),
+    linear-gradient(168deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.55) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 4px 16px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+
+[data-theme='light'] .ob-glass-select__trigger:hover:not(:disabled) {
+  border-color: rgba(79, 140, 255, 0.22);
+}
+
+[data-theme='light'] .ob-glass-select.is-open .ob-glass-select__trigger,
+[data-theme='light'] .ob-glass-select__trigger:focus-visible {
+  border-color: rgba(79, 140, 255, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(79, 140, 255, 0.14),
+    0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme='light'] .ob-glass-select__menu {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 28px rgba(15, 23, 42, 0.1);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+
+[data-theme='light'] .ob-glass-select__option {
+  color: rgba(15, 23, 42, 0.88);
+}
+
+[data-theme='light'] .ob-glass-select__option:hover {
+  background: rgba(79, 140, 255, 0.1);
+  color: #2563eb;
+}
+
+[data-theme='light'] .ob-glass-select__option.is-selected {
+  background: rgba(79, 140, 255, 0.14);
+  color: #2563eb;
+}
+
+[data-theme='light'] .ob-glass-select.is-disabled .ob-glass-select__trigger {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

@@ -19,13 +19,13 @@
 
 ## 1. 五窗口分工与不重叠边界
 
-| 窗口 | 责任板块 | 允许修改范围 | 主要交付物 | 不负责 |
-|---|---|---|---|---|
+| 窗口      | 责任板块                             | 允许修改范围                                                                  | 主要交付物                                                                                | 不负责                  |
+| ------- | -------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------- |
 | W1（本窗口） | **Android：证书、APK/JVM、SIP/晚注册接听** | `E:\GQ\Ultra\ONEWIFI\android`；Android 证据只写 MDD `docs/onewifi-migration` | `android-final-evidence.json`、`android-kotlin-final-evidence.json`、APK 哈希、Android 报告 | iOS、后端业务逻辑、真实 SIM 验收 |
-| W2 | MDD/Gateway 回归与接口契约 | `mdd-sim-gateway` 后端、测试、契约文档 | 2097+ 全量回归、端点/契约差异清单 | Android 原生实现、iOS UI |
-| W3 | iOS 原生构建与 CallKit/PushKit | `ONEWIFI/IOS` | Flutter/analyzer、Xcode/Swift/真机结果；缺环境则 BLOCKED | Android、后端 |
-| W4 | 运行时/远端主机/硬件门 | MDD 运行配置、运行证据文档；不得改 NEWONE | MDD 实际启动、reader/SIM/IMS/通话短信 eSIM 证据 | 移动端源码大改 |
-| W5 | 终审、跨仓审计、制品封存 | 仅审计脚本和 `docs/onewifi-migration` 证据 | final-audit、契约审计、最终哈希、冻结清单 | 修复别的窗口代码 |
+| W2      | MDD/Gateway 回归与接口契约              | `mdd-sim-gateway` 后端、测试、契约文档                                            | 2097+ 全量回归、端点/契约差异清单                                                                 | Android 原生实现、iOS UI  |
+| W3      | iOS 原生构建与 CallKit/PushKit        | `ONEWIFI/IOS`                                                           | Flutter/analyzer、Xcode/Swift/真机结果；缺环境则 BLOCKED                                       | Android、后端           |
+| W4      | 运行时/远端主机/硬件门                     | MDD 运行配置、运行证据文档；不得改 NEWONE                                              | MDD 实际启动、reader/SIM/IMS/通话短信 eSIM 证据                                                 | 移动端源码大改              |
+| W5      | 终审、跨仓审计、制品封存                     | 仅审计脚本和 `docs/onewifi-migration` 证据                                      | final-audit、契约审计、最终哈希、冻结清单                                                           | 修复别的窗口代码             |
 
 ### 并行协议
 
@@ -123,15 +123,15 @@ python ..\mdd-sim-gateway\docs\onewifi-migration\run-mobile-final.py android
 
 ### 2.6 Android 验收账本
 
-| 验收项 | 状态起点 | PASS 证据 | 当前判定规则 |
-|---|---|---|---|
-| `gateway_selfsigned` 资源 | 已过资源门 | Gradle `processDebugResources` 成功 + cert hash 对照 | 证书不匹配即 FAIL |
-| Android JVM 109 项 | 2 失败 | Gradle 全量 0 failures/errors | 任何失败不得绿灯 |
-| APK debug 组装 | 未确认 | `assembleDebug` 成功 + APK SHA-256 | 不等于签名/真机 |
-| Flutter/analyzer | 892 通过 | 新 receipt | analyzer warning 不能冒充错误 |
-| SIP-only 呼叫状态 | 已有单测 | Kotlin focused tests + source parity | 不等于真实通话 |
-| 晚注册 pickup | BLOCKED | 端到端 MDD/OS/receipt 证据 | 无真实链路保持 BLOCKED |
-| 真机来电/去电/短信 | NOT RUN | 实机与授权号码日志 | 无设备保持 NOT RUN/BLOCKED |
+| 验收项                     | 状态起点    | PASS 证据                                          | 当前判定规则                  |
+| ----------------------- | ------- | ------------------------------------------------ | ----------------------- |
+| `gateway_selfsigned` 资源 | 已过资源门   | Gradle `processDebugResources` 成功 + cert hash 对照 | 证书不匹配即 FAIL             |
+| Android JVM 109 项       | 2 失败    | Gradle 全量 0 failures/errors                      | 任何失败不得绿灯                |
+| APK debug 组装            | 未确认     | `assembleDebug` 成功 + APK SHA-256                 | 不等于签名/真机                |
+| Flutter/analyzer        | 892 通过  | 新 receipt                                        | analyzer warning 不能冒充错误 |
+| SIP-only 呼叫状态           | 已有单测    | Kotlin focused tests + source parity             | 不等于真实通话                 |
+| 晚注册 pickup              | BLOCKED | 端到端 MDD/OS/receipt 证据                            | 无真实链路保持 BLOCKED         |
+| 真机来电/去电/短信              | NOT RUN | 实机与授权号码日志                                        | 无设备保持 NOT RUN/BLOCKED   |
 
 ### 2.7 W1 结束时必须写入的文件
 
@@ -147,7 +147,7 @@ python ..\mdd-sim-gateway\docs\onewifi-migration\run-mobile-final.py android
 
 - 重跑 `run-backend-final.py` 和 `verify-final-evidence.py`。
 - 审计 auth、calls、SMS/MMS、reader、eSIM、APNs、typed settings/telemetry、Asterisk consumer。
-- 对 AT&T/Three HK 只做 fail-closed gap，不做无证据半实现。
+- 对 AT\&T/Three HK 只做 fail-closed gap，不做无证据半实现。
 - 交付：`backend-final-evidence.json`、`backend-report.md`、端点契约差异表。
 
 ### W3：iOS
@@ -200,4 +200,3 @@ python ..\mdd-sim-gateway\docs\onewifi-migration\run-mobile-final.py android
 - 晚注册 pickup：软件 slice `PASS`（已接 `/ws`、history、UUID lease、receipt、SIP bind）；真机 Telecom、MDD live、Doze/被杀进程恢复仍为 `BLOCKED/NOT RUN`，不能用软件证据替代。
 - 真机安装、MDD 登录、SIM/IMS、SIP fork/pickup、短信、APNs：仍为 `BLOCKED/NOT RUN`。
 - 结构化证据：`E:\GQ\Ultra\mdd-sim-gateway\docs\onewifi-migration\android-jvm-apk-evidence.json`。
-

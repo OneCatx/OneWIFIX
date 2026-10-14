@@ -1,0 +1,282 @@
+/**
+ * OneBoard Mobile Adaptation Layer — iOS / Android 系统特性 + 响应式适配
+ *
+ * 定位：叠加式覆盖层（main.js 最后引入，靠 cascade 顺序赢过同权重规则），
+ * 不改动任何桌面端视觉；个别 !important 用于压制上游带 !important 或
+ * scoped 高权重的旧规则，属本层既定策略。
+ *
+ * 分区：
+ *  1. 系统级基础（全尺寸生效）：文字缩放锁定 / 触摸高亮 / 横向回弹
+ *  2. 动态视口（100dvh）：修复 iOS Safari 地址栏收展导致的裁剪
+ *  3. ≤900px 布局重排：紧凑留白 + 刘海安全区
+ *  4. ≤900px 侧边栏 → 顶部玻璃导航坞（sticky + 横向滑动胶囊）
+ *  5. 触屏交互（hover:none）：44px 热区 / 去 hover 残留
+ *  6. 小屏细节：弹窗 / Toast / 输入防缩放 / 表格横滑
+ */
+
+/* ── 1. 系统级基础 ── */
+
+html {
+  /* iOS 横竖屏切换时禁止 Safari 自动放大文字，避免布局炸裂 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  /* 禁止横向 rubber-band 回弹拖出页面边缘露底（Android/iOS 通用） */
+  overscroll-behavior-x: none;
+}
+
+a,
+button {
+  /* 移除移动端点击时的系统灰色高亮块，反馈交给组件自身的态 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role='button'],
+input[type='checkbox'],
+select {
+  /* 消除双击缩放判定延迟，点按即响应 */
+  touch-action: manipulation;
+}
+
+/* ── 2. 动态视口单位：iOS 地址栏收展不再裁掉页面底部 ── */
+
+@supports (height: 100dvh) {
+  body,
+  #app,
+  .app-main {
+    min-height: 100dvh;
+  }
+
+  @media (min-width: 901px) {
+    .layout {
+      height: 100dvh !important;
+      max-height: 100dvh !important;
+    }
+
+    /* 排除 embedded 形态：它自身以 height:100% 跟随父容器 */
+    .app-shell:not(.app-shell--embedded) {
+      height: calc(100dvh - var(--layout-gutter) * 2) !important;
+      max-height: calc(100dvh - var(--layout-gutter) * 2) !important;
+    }
+  }
+
+  .layout--embedded {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+}
+
+/* ── 3. ≤900px 布局重排：紧凑留白 + 安全区 ── */
+
+@media (max-width: 900px) {
+  :root {
+    --layout-gutter: 12px;
+    --sidebar-content-gap: 12px;
+    --panel-padding: 16px;
+    --space-section: 14px;
+    --space-grid: 12px;
+    --radius-shell: 22px;
+  }
+
+  /* 覆盖 MainLayout scoped 的 16px：收紧四边并让出刘海/圆角/Home 指示条；
+     底部额外让出悬浮 Tab 栏的高度（--lg-tabbar-clearance 见 liquid-glass.css）。
+     同时锁死滚动链，避免壳层 height:auto 撑破后被 layout overflow:hidden 裁切。 */
+  .layout {
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 12px !important;
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+    padding-right: max(12px, env(safe-area-inset-right)) !important;
+    padding-bottom: calc(var(--lg-tabbar-clearance, 88px) + 8px) !important;
+    padding-left: max(12px, env(safe-area-inset-left)) !important;
+  }
+
+  @supports (height: 100dvh) {
+    .layout {
+      height: 100dvh !important;
+      max-height: 100dvh !important;
+    }
+  }
+
+  .app-shell:not(.app-shell--embedded) {
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    gap: 12px;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: hidden !important;
+  }
+
+  .content:not(.content--embedded) {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    /* 滚到底时最后一块内容不被悬浮 Tab 视觉遮挡（layout 底 padding 之外再留一点） */
+    scroll-padding-bottom: 12px;
+  }
+
+  /* 压制 cinematic-glass-light 的 22px/24px !important 内衬 */
+  [data-theme='light'] .app-shell {
+    padding: 12px 10px !important;
+  }
+
+  /* 暗黑仪表盘的桌面内衬同步收紧 */
+  [data-theme='dark'] .content:has(.dashboard) {
+    padding: 4px 2px 12px !important;
+  }
+
+  /* 小屏把 READY ORBIT 收到标题上方，不再藏掉 */
+
+  /*
+   * 全站卡片网格：≤900px 一律单列（压过各页 scoped 的 repeat(2/3/4)）。
+   * 不含「更多」抽屉的 3 列图标宫格（.lg-sheet__grid）——那是导航不是内容卡。
+   */
+  .dashboard .info-row,
+  .dashboard-shell .info-row,
+  .status-hero__layer--metrics,
+  .info-row,
+  .metric-row,
+  .overview-grid,
+  .onewifi-lab-shell .metric-row,
+  .onewifi-lab-shell .overview-grid,
+  .onewifi-lab-shell .soft-label-grid,
+  .soft-label-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── 4. ≤900px 侧边栏 → 顶部玻璃导航坞 ── */
+
+@media (max-width: 900px) {
+  .cp-sidebar {
+    /* 吸顶悬浮：滚动时导航始终可达，玻璃坞自带 backdrop blur 呈原生 App 顶栏观感 */
+    position: sticky;
+    top: max(8px, env(safe-area-inset-top));
+    z-index: 40;
+  }
+
+  .cp-sidebar__dock {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 18px;
+  }
+
+  /* 铭牌横排：头像跨两行，右侧上名字下主机名，徽章让位 */
+  .cp-sidebar__nameplate {
+    display: grid;
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    align-items: center;
+    min-width: 0;
+    padding: 0;
+    text-align: left;
+    border-bottom: none;
+  }
+
+  .cp-sidebar__avatar {
+    grid-row: 1 / span 2;
+    width: 38px;
+    height: 38px;
+    margin: 0;
+  }
+
+  .cp-sidebar__name {
+    grid-column: 2;
+    align-self: end;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cp-sidebar__host {
+    grid-column: 2;
+    align-self: start;
+    margin: 1px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cp-sidebar__badges {
+    display: none;
+  }
+
+  /* 主题胶囊上移至铭牌右侧，与头像同排 */
+  .cp-sidebar__dock-foot {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 0;
+    border-top: none;
+  }
+
+  /* 页面导航由底部悬浮 Tab 栏（MobileTabBar）承担，顶部坞只保留身份与主题，
+     避免双重导航（rail 仅桌面侧边栏使用） */
+  .cp-sidebar__rail {
+    display: none;
+  }
+}
+
+/* ── 5. 触屏交互：热区达标 + 去 hover 残留 ── */
+
+@media (hover: none) and (pointer: coarse) {
+  /* Apple HIG 44pt / Material 48dp：主要可点对象拉到达标热区 */
+
+  /* 触屏没有悬停态：清掉 hover 位移/浮起，防止点击后样式黏在半途 */
+  .cp-nav-item:hover {
+    transform: none;
+  }
+
+  .content {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ── 6. 小屏细节修正 ── */
+
+@media (max-width: 900px) {
+  /* 16px 起步的输入字号：阻止 iOS 聚焦输入框时整页自动放大 */
+  input[type='text'],
+  input[type='password'],
+  input[type='search'],
+  input[type='number'],
+  input[type='url'],
+  input:not([type]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* 日志控制台高度改用动态视口，底部不再被地址栏吃掉 */
+
+  /* 表格容器惯性横滑 */
+}
+
+@media (max-width: 640px) {
+  /* Toast 顶部横幅化：占满可视宽度并避开刘海 */
+  .toast {
+    top: max(12px, env(safe-area-inset-top)) !important;
+    right: 12px !important;
+    left: 12px !important;
+    justify-content: center;
+  }
+
+  /* 全屏弹窗：内衬避开安全区，高度交给动态视口，编辑器在小屏不再顶出屏外 */
+}

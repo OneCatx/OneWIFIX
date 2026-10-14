@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OneWIFI 主题预览 · onewifi-theme.css</title>
+<!--
+  OneWIFI 主题预览页
+  ------------------------------------------------------------------
+  按 webui/src/main.js 的真实引入顺序加载全部上游 CSS + login.css + onewifi-theme.css，
+  页面结构复刻 MainLayout / Dashboard / OneWifiDevices / Settings / Login 的真实类名，
+  用来在不启动后端、不登录的前提下核对主题效果。
+
+  打开本文件即可预览；右上角可切换深/浅色。
+-->
+<link rel="stylesheet" href="./webui/src/style.css" />
+<link rel="stylesheet" href="./webui/src/assets/themes.css" />
+<link rel="stylesheet" href="./webui/src/assets/glass-frame-dark.css" />
+<link rel="stylesheet" href="./webui/src/assets/polish.css" />
+<link rel="stylesheet" href="./webui/src/assets/semantic-card.css" />
+<link rel="stylesheet" href="./webui/src/assets/card-typography.css" />
+<link rel="stylesheet" href="./webui/src/assets/control-sidebar.css" />
+<link rel="stylesheet" href="./webui/src/assets/icon-system.css" />
+<link rel="stylesheet" href="./webui/src/assets/status-hero-cosmic.css" />
+<link rel="stylesheet" href="./webui/src/assets/soft-label-card.css" />
+<link rel="stylesheet" href="./webui/src/assets/sidebar-dark.css" />
+<link rel="stylesheet" href="./webui/src/assets/onewifi-lab.css" />
+<link rel="stylesheet" href="./webui/src/assets/onewifi-lab-light.css" />
+<link rel="stylesheet" href="./webui/src/assets/onewifi-chip.css" />
+<link rel="stylesheet" href="./webui/src/assets/overview-panels.css" />
+<link rel="stylesheet" href="./webui/src/assets/form-select.css" />
+<link rel="stylesheet" href="./webui/src/assets/mobile.css" />
+<link rel="stylesheet" href="./webui/src/assets/liquid-glass.css" />
+<link rel="stylesheet" href="./webui/src/assets/onewifi-pages.css" />
+<!-- login.css 由 Login.vue 按需引入，这里排在主题之前以保证覆写生效 -->
+<link rel="stylesheet" href="./webui/src/assets/login.css" />
+<link rel="stylesheet" href="./webui/src/assets/onewifi-theme.css" />
+<style>
+  .preview-bar {
+    position: fixed; z-index: 999; top: 14px; right: 16px;
+    display: flex; gap: 8px; align-items: center;
+    padding: 8px 10px; border-radius: 23px;
+    background: var(--ow-panel); border: 1px solid var(--ow-border);
+    font: 600 12px/1 var(--sans, sans-serif); color: var(--ow-text-2);
+  }
+  .preview-bar button {
+    border: 1px solid var(--ow-border); background: var(--ow-inset);
+    color: var(--ow-text-1); border-radius: 23px; padding: 6px 14px;
+    font: 600 12px/1 var(--sans, sans-serif); cursor: pointer;
+  }
+  .preview-bar button[aria-pressed="true"] {
+    background: var(--ow-brand-gradient); color: #071723; border-color: transparent;
+  }
+  .preview-note { max-width: 980px; margin: 0 auto 18px; color: var(--ow-text-3); font-size: 12px; line-height: 1.7; }
+  .demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--space-grid, 14px); }
+  .demo-stack { display: grid; gap: 10px; }
+  .demo-label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ow-text-4); margin: 22px 0 8px; }
+  @media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; } }
+
+  /* ---- 复刻 MainLayout.vue / Dashboard.vue 的 scoped 版式 ---- */
+  .layout { box-sizing: border-box; height: 100vh; max-height: 100vh; padding: var(--layout-gutter); overflow: hidden; background: transparent; }
+  .app-shell { display: flex; align-items: stretch; gap: var(--sidebar-content-gap); height: calc(100vh - var(--layout-gutter) * 2); max-height: calc(100vh - var(--layout-gutter) * 2); min-height: 0; overflow: hidden; }
+  .content { flex: 1; min-width: 0; min-height: 0; padding: var(--content-padding); overflow-x: hidden; overflow-y: auto; }
+  .content-inner { width: 100%; padding-inline: var(--content-inner-inset, 0); }
+  .info-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-grid); }
+  .soft-label-stack .progress-bar { margin-top: 2px; }
+  @media (max-width: 900px) { .info-row { grid-template-columns: 1fr; } }
+
+  /* ---- 预览页专用：把锁视口的壳层改成可长高的文档流，侧栏吸顶 ---- */
+  .layout { height: auto; max-height: none; overflow: visible; padding-bottom: 48px; }
+  .app-shell { height: auto; max-height: none; overflow: visible; align-items: flex-start; }
+  .content { overflow: visible; }
+  .cp-sidebar { position: sticky; top: calc(var(--layout-gutter) + 46px); }
+
+  /* ---- 复刻 CatLogo.vue 的 scoped 尺寸（全局 CSS 里没有，否则 SVG 会塌成 0） ---- */
+  .brand-mark { --mark-plate: #141414; --mark-plate-border: rgba(255,255,255,.16); --mark-ring: #fff; width: 36px; height: 36px; flex-shrink: 0; }
+  .brand-mark--sm { width: 28px; height: 28px; }
+  .brand-mark--md { width: 36px; height: 36px; }
+  .brand-mark--lg { width: 52px; height: 52px; }
+  .brand-mark--fill { width: 100%; height: 100%; }
+  .brand-mark svg { width: 100%; height: 100%; display: block; }
+  .brand-mark__plate, .brand-mark__plate--circle { fill: var(--mark-plate); stroke: var(--mark-plate-border); stroke-width: 1; }
+  .brand-mark__ring { fill: var(--mark-ring); }
+</style>
+</head>
+<body>
+<div class="preview-bar">
+  <span>OneWIFI Theme</span>
+  <button id="btn-dark" aria-pressed="true">深色</button>
+  <button id="btn-light" aria-pressed="false">浅色</button>
+</div>
+
+<div class="layout">
+  <div class="app-shell">
+    <aside class="cp-sidebar">
+      <div class="cp-sidebar__dock">
+        <header class="cp-sidebar__nameplate">
+          <div class="cp-sidebar__avatar">
+            <div class="brand-mark brand-mark--lg brand-mark--circle brand-mark--fill">
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle class="brand-mark__plate brand-mark__plate--circle" cx="20" cy="20" r="19" />
+                <path class="brand-mark__ring" fill-rule="evenodd" clip-rule="evenodd"
+                  d="M20 7.5a12.5 12.5 0 1 0 0 25 12.5 12.5 0 0 0 0-25Zm0 5.2a7.3 7.3 0 1 1 0 14.6 7.3 7.3 0 0 1 0-14.6Z" />
+              </svg>
+            </div>
+          </div>
+          <h2 class="cp-sidebar__name">admin</h2>
+          <p class="cp-sidebar__host">OneWIFI 网关</p>
+          <div class="cp-sidebar__badges">
+            <span class="cp-sidebar__badge cp-sidebar__badge--live">在线</span>
+            <span class="cp-sidebar__badge">OneWIFI</span>
+          </div>
+        </header>
+        <nav class="cp-sidebar__rail">
+          <a class="cp-nav-item active"><span class="cp-nav-item__icon-wrap"><span class="ob-icon">◈</span></span><span class="cp-nav-item__label">仪表盘</span></a>
+          <a class="cp-nav-item"><span class="cp-nav-item__icon-wrap"><span class="ob-icon">▤</span></span><span class="cp-nav-item__label">设备管理</span></a>
+          <a class="cp-nav-item"><span class="cp-nav-item__icon-wrap"><span class="ob-icon">✉</span></span><span class="cp-nav-item__label">短信检测</span></a>
+          <a class="cp-nav-item"><span class="cp-nav-item__icon-wrap"><span class="ob-icon">☎</span></span><span class="cp-nav-item__label">通话</span></a>
+          <a class="cp-nav-item"><span class="cp-nav-item__icon-wrap"><span class="ob-icon">⇄</span></span><span class="cp-nav-item__label">代理管理</span></a>
+          <a class="cp-nav-item"><span class="cp-nav-item__icon-wrap"><span class="ob-icon">⚙</span></span><span class="cp-nav-item__label">系统设置</span></a>
+        </nav>
+        <div class="cp-sidebar__dock-foot">
+          <span class="ow-ver-pill">v1.14.0</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="content-inner onewifi-lab-shell">
+        <p class="preview-note">
+          本页按 <code>webui/src/main.js</code> 的真实引入顺序加载全部上游 CSS 与 <code>onewifi-theme.css</code>，
+          结构复刻 MainLayout / Dashboard / OneWifiDevices / Settings / Login 的真实类名，
+          用于核对主题在双主题下的实际效果。
+        </p>
+
+        <div class="ow-page dashboard dashboard--stream">
+          <div class="dashboard-shell">
+
+            <section class="status-hero panel-card panel-neutral glass-frame is-alive">
+              <div class="status-hero__glow" aria-hidden="true"></div>
+              <div class="status-hero__glass" aria-hidden="true"></div>
+              <div class="status-hero__content">
+                <div class="status-hero__layout">
+                  <div class="status-hero__visual" aria-hidden="true">
+                    <div class="hero-orbit">
+                      <span class="hero-orbit__ring hero-orbit__ring--a"></span>
+                      <span class="hero-orbit__ring hero-orbit__ring--b"></span>
+                      <span class="hero-orbit__orb"></span>
+                      <span class="hero-orbit__beam"></span>
+                      <span class="hero-orbit__label">READY ORBIT</span>
+                    </div>
+                  </div>
+                  <div class="status-hero__copy">
+                    <header class="status-hero__layer status-hero__layer--status">
+                      <p class="status-hero__kicker">CONTROL PLANE</p>
+                      <h1 class="status-hero__title status-hero__title--simple">OneWIFI</h1>
+                      <p class="status-hero__tagline">OneWIFI · 模组与 Wi‑Fi Calling</p>
+                      <div class="status-hero__pills">
+                        <span class="status-pill"><span class="dot"></span>运行中</span>
+                        <span class="status-pill status-pill--warn"><span class="dot"></span>1 条告警</span>
+                        <span class="status-pill offline"><span class="dot"></span>离线</span>
+                      </div>
+                    </header>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="dashboard-body">
+              <div class="metric-row">
+                <div class="metric-card glass-frame metric-card--green">
+                  <div class="metric-card__icon"><span class="ob-icon">▦</span></div>
+                  <div class="metric-card__body">
+                    <div class="metric-card__label">CPU</div>
+                    <div class="metric-card__value">18.4%</div>
+                    <div class="metric-card__sub">主机占用</div>
+                  </div>
+                </div>
+                <div class="metric-card glass-frame metric-card--blue">
+                  <div class="metric-card__icon"><span class="ob-icon">◔</span></div>
+                  <div class="metric-card__body">
+                    <div class="metric-card__label">内存</div>
+                    <div class="metric-card__value">42.7%</div>
+                    <div class="metric-card__sub">系统内存</div>
+                  </div>
+                </div>
+                <div class="metric-card glass-frame metric-card--purple">
+                  <div class="metric-card__icon"><span class="ob-icon">▭</span></div>
+                  <div class="metric-card__body">
+                    <div class="metric-card__label">磁盘</div>
+                    <div class="metric-card__value">63.1%</div>
+                    <div class="metric-card__sub">根分区</div>
+                  </div>
+                </div>
+                <div class="metric-card glass-frame metric-card--amber">
+                  <div class="metric-card__icon"><span class="ob-icon">◍</span></div>
+                  <div class="metric-card__body">
+                    <div class="metric-card__label">温度</div>
+                    <div class="metric-card__value">48 °C</div>
+                    <div class="metric-card__sub">thermal</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-row">
+                <section class="ow-glass glass-frame panel-card panel-neutral ow-glass--padded">
+                  <header class="ow-glass__head">
+                    <div class="ow-glass__title-row">
+                      <span class="panel-title-icon panel-title-icon--teal"><span class="ob-icon">◈</span></span>
+                      <h2 class="ow-glass__title">主机</h2>
+                    </div>
+                    <p class="ow-glass__desc">网关运行环境</p>
+                  </header>
+                  <div class="ow-glass__body">
+                    <div class="soft-label-stack">
+                      <div class="soft-label-card">
+                        <div class="soft-label-card__title">系统</div>
+                        <div class="soft-label-card__value">OneWIFI</div>
+                      </div>
+                      <div class="soft-label-card">
+                        <div class="soft-label-card__title">机型</div>
+                        <div class="soft-label-card__value">ARM64 · 4 核</div>
+                      </div>
+                      <div class="soft-label-card">
+                        <div class="soft-label-card__title">访问地址</div>
+                        <div class="soft-label-card__value soft-label-card__value--mono">192.168.1.10:8080</div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="ow-glass glass-frame panel-card panel-neutral ow-glass--padded">
+                  <header class="ow-glass__head">
+                    <div class="ow-glass__title-row">
+                      <span class="panel-title-icon panel-title-icon--purple"><span class="ob-icon">◔</span></span>
+                      <h2 class="ow-glass__title">占用</h2>
+                    </div>
+                    <p class="ow-glass__desc">实时采样</p>
+                  </header>
+                  <div class="ow-glass__body">
+                    <div class="soft-label-stack">
+                      <div class="soft-label-card">
+                        <div class="soft-label-card__title">CPU</div>
+                        <div class="soft-label-card__value">18.4%</div>
+                        <div class="soft-label-card__aux">
+                          <div class="progress-bar"><div class="progress-fill fill-purple" style="width:18.4%"></div></div>
+                        </div>
+                      </div>
+                      <div class="soft-label-card">
+                        <div class="soft-label-card__title">内存</div>
+                        <div class="soft-label-card__value">42.7%</div>
+                        <div class="soft-label-card__aux">
+                          <div class="progress-bar"><div class="progress-fill fill-teal" style="width:42.7%"></div></div>
+                        </div>
+                      </div>
+                      <div class="soft-label-card">
+                        <div class="soft-label-card__title">磁盘</div>
+                        <div class="soft-label-card__value">63.1%</div>
+                        <div class="soft-label-card__aux">
+                          <div class="progress-bar"><div class="progress-fill fill-pink" style="width:63.1%"></div></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="demo-label">组件 · 按钮 / 表单 / 列表 / 徽标</p>
+
+        <div class="ow-page">
+          <div class="demo-grid">
+
+            <section class="ow-glass glass-frame panel-card panel-neutral ow-glass--padded">
+              <header class="ow-glass__head">
+                <div class="ow-glass__title-row">
+                  <span class="panel-title-icon panel-title-icon--teal"><span class="ob-icon">◆</span></span>
+                  <h2 class="ow-glass__title">按钮体系</h2>
+                </div>
+                <p class="ow-glass__desc">渐变主按钮 / 次级 / 幽灵 / 危险</p>
+              </header>
+              <div class="ow-glass__body demo-stack">
+                <div class="runtime-actions">
+                  <button type="button" class="runtime-action-btn btn-primary">重新检测</button>
+                  <button type="button" class="runtime-action-btn">重连 VoWiFi</button>
+                  <button type="button" class="runtime-action-btn btn-ghost">导出诊断包</button>
+                  <button type="button" class="runtime-action-btn btn-danger">移除设备</button>
+                  <button type="button" class="runtime-action-btn" disabled>禁用态</button>
+                </div>
+                <div class="runtime-actions">
+                  <span class="overview-badge"><span class="overview-badge__dot"></span>JP</span>
+                  <span class="overview-badge"><span class="overview-badge__dot"></span>US</span>
+                  <span class="overview-badge overview-badge--hero"><span class="overview-badge__dot"></span>HK</span>
+                  <span class="status-pill"><span class="dot"></span>在线</span>
+                  <span class="ow-ver-pill">v1.14.0</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="ow-glass glass-frame panel-card panel-neutral ow-glass--padded">
+              <header class="ow-glass__head">
+                <div class="ow-glass__title-row">
+                  <span class="panel-title-icon panel-title-icon--amber"><span class="ob-icon">▤</span></span>
+                  <h2 class="ow-glass__title">表单控件</h2>
+                </div>
+                <p class="ow-glass__desc">圆角 16px / 底 #102E42 / 边 #25516A</p>
+              </header>
+              <div class="ow-glass__body demo-stack">
+                <label class="ow-field"><span>设备名称</span><input type="text" value="OneWIFI-SIM-01" /></label>
+                <label class="ow-field"><span>APN</span><input type="text" placeholder="cmiot" /></label>
+                <label class="ow-field"><span>出口策略</span>
+                  <select><option>自动选择</option><option>固定 JP</option><option>固定 US</option></select>
+                </label>
+                <div class="ow-row"><span>启用通知</span>
+                  <button type="button" class="policy-toggle is-on" aria-pressed="true" aria-label="启用通知"><span class="policy-toggle__thumb"></span></button>
+                </div>
+                <div class="ow-row"><span>VoWiFi 优先</span>
+                  <button type="button" class="policy-toggle" aria-pressed="false" aria-label="VoWiFi 优先"><span class="policy-toggle__thumb"></span></button>
+                </div>
+              </div>
+            </section>
+
+            <section class="ow-glass glass-frame panel-card panel-neutral ow-glass--padded">
+              <header class="ow-glass__head">
+                <div class="ow-glass__title-row">
+                  <span class="panel-title-icon panel-title-icon--teal"><span class="ob-icon">▦</span></span>
+                  <h2 class="ow-glass__title">列表行</h2>
+                </div>
+                <p class="ow-glass__desc">62px 级 / 圆角 16px / 底 #102E42</p>
+              </header>
+              <div class="ow-glass__body demo-stack">
+                <div class="esim-row">
+                  <div class="esim-item glass-frame glass-frame--selectable is-glow-green">
+                    <div class="esim-item__head">
+                      <span class="esim-item__name">China Unicom IoT</span>
+                      <span class="esim-item__badges"><span class="esim-item__badge current">当前</span></span>
+                    </div>
+                    <div class="esim-item__meta mono">8986 0112 3456 7890 123</div>
+                  </div>
+                </div>
+                <div class="esim-row">
+                  <div class="esim-item glass-frame glass-frame--selectable">
+                    <div class="esim-item__head">
+                      <span class="esim-item__name">China Mobile IoT</span>
+                      <span class="esim-item__badges"><span class="esim-item__badge enabled">已启用</span></span>
+                    </div>
+                    <div class="esim-item__meta mono">8986 0023 4567 8901 234</div>
+                  </div>
+                </div>
+                <div class="ow-log-row ow-log-row--success">
+                  <span class="ow-log-check">✓</span>
+                  <span class="mono">12:04:18</span>
+                  <span>VoWiFi 注册成功</span>
+                </div>
+                <div class="ow-log-row ow-log-row--error">
+                  <span class="ow-log-check">✕</span>
+                  <span class="mono">12:03:52</span>
+                  <span>IKE 协商超时</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="ow-glass glass-frame panel-card panel-neutral ow-glass--padded">
+              <header class="ow-glass__head">
+                <div class="ow-glass__title-row">
+                  <span class="panel-title-icon panel-title-icon--purple"><span class="ob-icon">◈</span></span>
+                  <h2 class="ow-glass__title">对话框</h2>
+                </div>
+                <p class="ow-glass__desc">圆角 28px 实心主面板</p>
+              </header>
+              <div class="ow-glass__body">
+                <div class="ow-dialog-overlay" style="position:relative;inset:auto;padding:0;background:none;backdrop-filter:none;">
+                  <div class="ow-dialog glass-frame">
+                    <div class="ow-dialog__head">
+                      <div>
+                        <h2>编辑 eSIM</h2>
+                        <p>修改 Profile 名称与启用状态</p>
+                      </div>
+                      <button type="button" class="ow-dialog__close" aria-label="关闭">✕</button>
+                    </div>
+                    <label class="ow-field"><span>Profile 名称</span><input type="text" value="Unicom-IoT-01" /></label>
+                    <div class="ow-dialog__foot">
+                      <button type="button" class="runtime-action-btn btn-ghost">取消</button>
+                      <button type="button" class="runtime-action-btn btn-primary">保存</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+          </div>
+        </div>
+
+        <p class="demo-label">登录页 · auth-card</p>
+        <div class="ow-page">
+          <div style="position:relative;height:520px;border-radius:28px;overflow:hidden;">
+          <div class="auth-page" style="position:absolute;inset:0;">
+            <div class="auth-bg" aria-hidden="true">
+              <span class="auth-wave auth-wave--1"></span>
+              <span class="auth-wave auth-wave--2"></span>
+              <span class="auth-wave auth-wave--3"></span>
+              <span class="auth-wave auth-wave--4"></span>
+            </div>
+            <div class="auth-scrim" aria-hidden="true"></div>
+            <div class="auth-stage" style="animation:none;">
+              <form class="auth-card glass-frame" onsubmit="return false">
+                <div class="auth-brand">
+                  <div class="brand-mark brand-mark--lg">
+                    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect class="brand-mark__plate" x="1" y="1" width="38" height="38" rx="11" />
+                      <path class="brand-mark__ring" fill-rule="evenodd" clip-rule="evenodd"
+                        d="M20 7.5a12.5 12.5 0 1 0 0 25 12.5 12.5 0 0 0 0-25Zm0 5.2a7.3 7.3 0 1 1 0 14.6 7.3 7.3 0 0 1 0-14.6Z" />
+                    </svg>
+                  </div>
+                  <span class="auth-brand-name">OneWIFI</span>
+                </div>
+                <h1 class="auth-title">登录网关</h1>
+                <p class="auth-lead">账号密码来自 OneWIFI 网关（首次打开时「创建管理员」设的那串，至少 10 位）。</p>
+                <label class="auth-field">
+                  <span class="auth-field-icon" aria-hidden="true">→</span>
+                  <input class="auth-input" type="text" placeholder="用户名" value="admin" />
+                </label>
+                <label class="auth-field">
+                  <span class="auth-field-icon" aria-hidden="true">◠</span>
+                  <input class="auth-input" type="password" placeholder="密码" value="1234567890" />
+                </label>
+                <div class="auth-actions" style="display:flex;justify-content:center;margin-top:6px;">
+                  <button type="submit" class="auth-go">进入网关</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var dark = document.getElementById('btn-dark');
+    var light = document.getElementById('btn-light');
+    function set(mode) {
+      root.setAttribute('data-theme', mode);
+      dark.setAttribute('aria-pressed', String(mode === 'dark'));
+      light.setAttribute('aria-pressed', String(mode === 'light'));
+    }
+    dark.addEventListener('click', function () { set('dark'); });
+    light.addEventListener('click', function () { set('light'); });
+  })();
+</script>
+</body>
+</html>

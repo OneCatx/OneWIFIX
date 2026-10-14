@@ -43,7 +43,16 @@
       "ims": {
         "identity_profile": "att",
         "register_profile": "att",
-        "ipsec_encryption": "aes-cbc"
+        "ipsec_encryption": "aes-cbc",
+        "register_expires": 18400,
+        "public_realm": "one.att.net",
+        "private_realm": "private.att.net",
+        "ipsec_server_port": 6000,
+        "pani": "IEEE-802.11\\;i-wlan-node-id=000000000000\\;network-provided",
+        "access_type": "wlan1",
+        "register_options": {
+          "user_agent": "SimAdmin VoWiFi"
+        }
       }
     },
     {
@@ -180,6 +189,18 @@
           ]
         }
       }
+    },
+    {
+      "id": "china-mainland",
+      "match": { "mcc": "460" }
+    },
+    {
+      "id": "estonia",
+      "match": { "mcc": "248" }
+    },
+    {
+      "id": "csl-hk",
+      "match": { "home_plmns": ["45400", "45402", "45410", "45418"] }
     }
   ]
 }

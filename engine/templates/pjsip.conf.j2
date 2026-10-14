@@ -51,6 +51,12 @@ volte_o2_register=yes
 {% if volte_ultra_contact %}
 volte_ultra_contact=yes
 {% endif %}
+{% if volte_att_register %}
+volte_att_register=yes
+{% endif %}
+{% if volte_three_register %}
+volte_three_register=yes
+{% endif %}
 manual_register=yes
 endpoint=volte_ims
 receive_sms=yes
@@ -83,7 +89,7 @@ sdp_session={{ sdp_session }}
 [volte_ims]
 type=auth
 auth_type=ims_aka
-username={{ imsi }}@{{ realm }}
+username={{ imsi }}@{{ private_realm | default(realm) }}
 usim_ami=yes
 
 [volte_ims]

@@ -23,11 +23,11 @@ jobs:
           - arch: arm64
             runner: ubuntu-latest
             machine: aarch64
-            modules: 127
+            modules: 129
           - arch: amd64
             runner: ubuntu-latest
             machine: x86_64
-            modules: 127
+            modules: 129
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

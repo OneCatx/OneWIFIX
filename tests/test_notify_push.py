@@ -331,6 +331,7 @@ class NotificationChannelTests(unittest.TestCase):
 
         settings = {channel: {"enabled": True, "events": {EV_INCOMING_SMS: True}}
                     for channel in started}
+        settings["webhook"]["url"] = "https://hook.example.test/sms"
         with ThreadPoolExecutor(max_workers=1) as caller, \
                 patch.object(notify_push, "_deliver_with_retry", side_effect=deliver):
             try:

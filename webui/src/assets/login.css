@@ -1,0 +1,617 @@
+/* ===========================================================
+   OneBord Auth — Premium monochrome glass (Jo Graph style)
+   =========================================================== */
+
+.auth-page {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 32px);
+  overflow: hidden;
+  font-family: var(--sans);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* ---------- 丝绸波浪 3D 背景 ---------- */
+.auth-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 110%, rgba(255, 255, 255, 0.04) 0%, transparent 55%),
+    linear-gradient(180deg, #0c0c0c 0%, #070707 42%, #030303 100%);
+}
+
+.auth-wave {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.auth-wave--1 {
+  width: 140%;
+  height: 72%;
+  left: -22%;
+  bottom: -38%;
+  background:
+    radial-gradient(ellipse 70% 55% at 38% 28%, rgba(255, 255, 255, 0.1) 0%, transparent 52%),
+    linear-gradient(145deg, #3a3a3a 0%, #1f1f1f 34%, #111 68%, #080808 100%);
+  filter: blur(1px);
+  transform: rotate(-7deg);
+  opacity: 0.92;
+  animation: auth-wave-drift-a 28s ease-in-out infinite alternate;
+}
+
+.auth-wave--2 {
+  width: 118%;
+  height: 58%;
+  right: -28%;
+  bottom: -22%;
+  background:
+    radial-gradient(ellipse 62% 48% at 62% 32%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+    linear-gradient(160deg, #2e2e2e 0%, #181818 45%, #0a0a0a 100%);
+  filter: blur(2px);
+  transform: rotate(9deg);
+  opacity: 0.78;
+  animation: auth-wave-drift-b 32s ease-in-out infinite alternate;
+}
+
+.auth-wave--3 {
+  width: 88%;
+  height: 46%;
+  left: -8%;
+  top: 8%;
+  background:
+    radial-gradient(ellipse 58% 42% at 48% 58%, rgba(255, 255, 255, 0.06) 0%, transparent 54%),
+    linear-gradient(135deg, #242424 0%, #121212 55%, #080808 100%);
+  filter: blur(3px);
+  transform: rotate(-4deg);
+  opacity: 0.55;
+  animation: auth-wave-drift-c 24s ease-in-out infinite alternate-reverse;
+}
+
+.auth-wave--4 {
+  width: 64%;
+  height: 34%;
+  right: -6%;
+  top: 18%;
+  background:
+    radial-gradient(ellipse 50% 40% at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 58%),
+    linear-gradient(125deg, #1c1c1c 0%, #0e0e0e 100%);
+  filter: blur(4px);
+  opacity: 0.42;
+  animation: auth-wave-drift-d 20s ease-in-out infinite alternate;
+}
+
+.auth-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 50%, transparent 35%, rgba(0, 0, 0, 0.42) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.32) 100%);
+}
+
+/* ---------- 舞台与玻璃卡 ---------- */
+.auth-stage {
+  position: relative;
+  z-index: 1;
+  width: min(440px, 100%);
+  animation: auth-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.auth-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 34px 32px 28px;
+  border-radius: 32px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03),
+    0 28px 72px rgba(0, 0, 0, 0.55),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(28px) saturate(118%);
+  -webkit-backdrop-filter: blur(28px) saturate(118%);
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -8%, rgba(255, 255, 255, 0.08) 0%, transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 28%);
+}
+
+.auth-card--wide {
+  width: 100%;
+}
+
+/* 装饰立方体 */
+.auth-deco {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-deco--cube {
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 42%, rgba(0, 0, 0, 0.22) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 10px 24px rgba(0, 0, 0, 0.35);
+  transform: rotate(18deg);
+  opacity: 0.55;
+}
+
+.auth-deco--a {
+  top: 42%;
+  right: -8px;
+}
+
+.auth-deco--b {
+  top: 56%;
+  right: 18px;
+  width: 22px;
+  height: 22px;
+  transform: rotate(-12deg);
+  opacity: 0.38;
+}
+
+.auth-brand,
+.auth-title,
+.auth-lead,
+.auth-field,
+.auth-rules,
+.auth-alert,
+.auth-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.auth-brand-name {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.auth-title {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.auth-lead {
+  margin: 0 0 26px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.46);
+}
+
+/* ---------- 输入框 ---------- */
+.auth-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 0 16px 0 14px;
+  min-height: 50px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 16px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(14px) saturate(110%);
+  -webkit-backdrop-filter: blur(14px) saturate(110%);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+
+.auth-field:focus-within {
+  background: rgba(0, 0, 0, 0.34);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.auth-field-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.auth-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.92);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.92);
+  caret-color: rgba(255, 255, 255, 0.85);
+}
+
+.auth-input::placeholder {
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.auth-input:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+/* ---------- 密码规则 ---------- */
+.auth-rules {
+  list-style: none;
+  margin: 4px 0 18px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.auth-rules li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.42);
+  transition: color 0.2s ease;
+}
+
+.auth-rules li.is-ok {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.auth-rule-dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-rules li.is-ok .auth-rule-dot {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12), 0 0 10px rgba(255, 255, 255, 0.18);
+}
+
+/* ---------- 提示状态 ---------- */
+.auth-alert {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.auth-alert--error {
+  color: rgba(255, 180, 180, 0.92);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.auth-preview {
+  display: block;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ---------- 圆形提交按钮 ---------- */
+.auth-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+  padding-top: 6px;
+}
+
+.auth-go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.12) 0%, transparent 42%),
+    linear-gradient(165deg, rgba(36, 36, 36, 0.95) 0%, rgba(10, 10, 10, 0.98) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 12px 32px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    opacity 0.22s ease;
+}
+
+.auth-go:hover:not(:disabled) {
+  transform: scale(1.04);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 16px 36px rgba(0, 0, 0, 0.5);
+}
+
+.auth-go:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.auth-go:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.auth-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-top-color: #fff;
+  animation: auth-spin 0.7s linear infinite;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- 动画 ---------- */
+@keyframes auth-wave-drift-a {
+  from { transform: rotate(-7deg) translate(0, 0); }
+  to { transform: rotate(-5deg) translate(12px, -10px); }
+}
+
+@keyframes auth-wave-drift-b {
+  from { transform: rotate(9deg) translate(0, 0); }
+  to { transform: rotate(7deg) translate(-14px, 8px); }
+}
+
+@keyframes auth-wave-drift-c {
+  from { transform: rotate(-4deg) translate(0, 0); }
+  to { transform: rotate(-2deg) translate(8px, 6px); }
+}
+
+@keyframes auth-wave-drift-d {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-6px, 8px); }
+}
+
+@keyframes auth-rise {
+  from { transform: translateY(24px) scale(0.98); }
+  to { transform: translateY(0) scale(1); }
+}
+
+@keyframes auth-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-stage {
+    animation: none;
+  }
+}
+
+/* ---------- 浅色模式 ---------- */
+[data-theme='light'] .auth-bg {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 110%, rgba(255, 255, 255, 0.5) 0%, transparent 55%),
+    linear-gradient(180deg, #ececec 0%, #d8d8d8 42%, #c8c8c8 100%);
+}
+
+[data-theme='light'] .auth-wave--1 {
+  background:
+    radial-gradient(ellipse 70% 55% at 38% 28%, rgba(255, 255, 255, 0.65) 0%, transparent 52%),
+    linear-gradient(145deg, #f0f0f0 0%, #dcdcdc 34%, #c4c4c4 68%, #b8b8b8 100%);
+}
+
+[data-theme='light'] .auth-wave--2 {
+  background:
+    radial-gradient(ellipse 62% 48% at 62% 32%, rgba(255, 255, 255, 0.55) 0%, transparent 50%),
+    linear-gradient(160deg, #e8e8e8 0%, #d0d0d0 45%, #bcbcbc 100%);
+}
+
+[data-theme='light'] .auth-wave--3,
+[data-theme='light'] .auth-wave--4 {
+  opacity: 0.35;
+}
+
+[data-theme='light'] .auth-scrim {
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 50%, transparent 35%, rgba(255, 255, 255, 0.28) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(0, 0, 0, 0.04) 100%);
+}
+
+[data-theme='light'] .auth-page {
+  color: rgba(20, 20, 20, 0.9);
+}
+
+[data-theme='light'] .auth-card {
+  background: rgba(255, 255, 255, 0.42);
+  border-color: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 28px 72px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='light'] .auth-brand-name,
+[data-theme='light'] .auth-title {
+  color: rgba(20, 20, 20, 0.92);
+}
+
+[data-theme='light'] .auth-lead {
+  color: rgba(20, 20, 20, 0.48);
+}
+
+[data-theme='light'] .auth-field {
+  color: rgba(20, 20, 20, 0.9);
+  background: rgba(255, 255, 255, 0.45);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='light'] .auth-field-icon {
+  color: rgba(20, 20, 20, 0.55);
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .auth-input {
+  color: rgba(20, 20, 20, 0.9);
+  -webkit-text-fill-color: rgba(20, 20, 20, 0.9);
+}
+
+[data-theme='light'] .auth-input::placeholder {
+  color: rgba(20, 20, 20, 0.34);
+}
+
+[data-theme='light'] .auth-rules {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='light'] .auth-rules li {
+  color: rgba(20, 20, 20, 0.45);
+}
+
+[data-theme='light'] .auth-rules li.is-ok {
+  color: rgba(20, 20, 20, 0.78);
+}
+
+[data-theme='light'] .auth-deco--cube {
+  opacity: 0.28;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 480px) {
+  .auth-page {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: max(16px, env(safe-area-inset-top));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .auth-stage {
+    margin: auto 0;
+    width: 100%;
+  }
+
+  .auth-card {
+    padding: 26px 20px 22px;
+    border-radius: 26px;
+  }
+
+  .auth-title {
+    font-size: 20px;
+  }
+
+  .auth-lead {
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+
+  .auth-field {
+    min-height: 48px;
+  }
+
+  .auth-deco--a,
+  .auth-deco--b {
+    display: none;
+  }
+
+  .auth-wave--1 {
+    width: 160%;
+    bottom: -42%;
+  }
+
+  .auth-wave--2 {
+    width: 130%;
+    right: -32%;
+  }
+}
+
+@media (max-height: 640px) {
+  .auth-page {
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  .auth-stage {
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
+
+  .auth-brand {
+    margin-bottom: 18px;
+  }
+
+  .auth-brand-name {
+    font-size: 20px;
+  }
+}

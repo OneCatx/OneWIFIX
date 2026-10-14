@@ -1,23 +1,23 @@
 {
-  "name": "onewifi-webui",
+  "name": "onewifi-web",
   "private": true,
-  "version": "1.14.0",
+  "version": "0.1.0",
+  "description": "OneBoard — slim Vue console for OneWIFI",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --import ./scripts/esm-resolve-js.mjs --test \"src/**/*.test.js\" \"server/tests/*.test.mjs\""
   },
   "dependencies": {
-    "jsqr": "^1.4.0",
     "jssip": "^3.10.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "lucide-vue-next": "^1.0.0",
+    "vue": "^3.5.38",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "@vitejs/plugin-react": "^4.3.4",
-    "tailwindcss": "^4.3.3",
-    "vite": "^6.0.7"
+    "@vitejs/plugin-vue": "^6.0.7",
+    "vite": "^8.1.0"
   }
 }

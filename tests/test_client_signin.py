@@ -121,7 +121,7 @@ class ClientSignInTests(unittest.TestCase):
             status, body = self.call("GET", "/api/mobile/v1/devices", token=token)
             self.assertEqual(status, 200, body)
             self.assertEqual(body["data"]["devices"][0]["id"], "sim1")
-            self.assertIsNone(body["data"]["device_limit"])
+            self.assertEqual(body["data"]["device_limit"], 64)
             status, body = self.call("GET", "/api/mobile/v1/devices/sim1/overview", token=token)
             self.assertEqual(status, 200, body)
             self.assertEqual(body["data"]["devices"][0]["vowifi_runtime"]["device_id"], "sim1")
@@ -363,7 +363,7 @@ class ClientSignInTests(unittest.TestCase):
     def test_notifications_reject_unsupported_enabled_and_keep_secrets_redacted(self):
         token = self.sign_in(capabilities=["manage_settings"])[1]["token"]
         self.assertEqual(self.call("PUT", "/api/mobile/v1/settings/notifications",
-                                   {"email": {"enabled": True}}, token=token)[0], 501)
+                                   {"email": {"enabled": True}}, token=token)[0], 422)
         with patch.object(main.cfg, "get_settings", return_value={
                 "telegram": {"enabled": True, "bot_token": "tg-private-123", "chat_id": "123"},
                 "wecom": {"enabled": True, "urls": ["https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=wx-private-123"]}}):
@@ -373,26 +373,38 @@ class ClientSignInTests(unittest.TestCase):
         self.assertNotIn("wx-private-123", json.dumps(body))
         self.assertEqual(body["data"]["telegram"]["bot_token"], "********")
 
-    def test_onetools_settings_reject_unsupported_mutations_over_bearer_route(self):
+    def test_onetools_settings_save_enablement_and_public_address(self):
         token = self.sign_in(capabilities=["manage_settings"])[1]["token"]
         path = "/api/mobile/v1/settings/notifications"
+        self.assertEqual(self.call("PUT", path, {"email": {"enabled": True}}, token=token)[0], 422)
         with patch.object(main.cfg, "update_settings") as save:
-            for body in ({"onetools": {"enabled": False, "public_base_url": ""}},
-                         {"onetools": {"enabled": True,
-                                        "public_base_url": "https://other.example.test"}}):
-                status, response = self.call("PUT", path, body, token=token)
-                self.assertEqual(status, 501, response)
-            save.assert_not_called()
             status, response = self.call("PUT", path, {
                 "email": {"enabled": False},
-                "onetools": {"enabled": True, "public_base_url": ""},
-                "webhook": {"enabled": False, "urls": []},
+                "onetools": {"enabled": True, "public_base_url": "https://gw.example.test/"},
+                "webhook": {"enabled": True, "urls": ["https://hook.example.test/sms"],
+                            "secret": "android-secret", "timeout_ms": 5000},
+                "bark": {"enabled": True, "urls": ["https://api.day.app/device-key"],
+                         "group": "OneWIFI", "icon": "", "level": "active"},
             }, token=token)
             self.assertEqual(status, 200, response)
             self.assertEqual(response["data"]["onetools"], {
-                "enabled": True, "public_base_url": ""})
-            self.assertEqual(save.call_count, 1)
-            self.assertEqual(set(save.call_args.args[0]), {"webhook"})
+                "enabled": True, "public_base_url": "https://gw.example.test"})
+            self.assertEqual(response["data"]["webhook"]["urls"], ["********"])
+            self.assertEqual(response["data"]["bark"]["urls"], ["********"])
+            saved = save.call_args.args[0]
+            self.assertEqual(saved["onetools"]["public_base_url"], "https://gw.example.test")
+            self.assertEqual(saved["webhook"]["urls"], ["https://hook.example.test/sms"])
+            self.assertEqual(saved["webhook"]["secret"], "android-secret")
+            self.assertEqual(saved["bark"]["urls"], ["https://api.day.app/device-key"])
+            status, response = self.call("PUT", path, {
+                "onetools": {"enabled": False, "public_base_url": ""},
+            }, token=token)
+            self.assertEqual(status, 200, response)
+            self.assertFalse(response["data"]["onetools"]["enabled"])
+            bad, detail = self.call("PUT", path, {
+                "onetools": {"enabled": True, "public_base_url": "ftp://files.example"},
+            }, token=token)
+            self.assertEqual(bad, 422, detail)
 
     def test_unbound_reader_uses_card_snapshot_but_is_never_callable(self):
         token = self.sign_in(capabilities=["manage_devices"])[1]["token"]
@@ -448,10 +460,13 @@ class ClientSignInTests(unittest.TestCase):
                                        {"auto_clear_modem_storage": True}, token=token)[0], 200)
             save.assert_called_with({"cellular_sms_storage": "delete"})
             info = self.call("GET", "/api/mobile/v1/system/info", token=token)
+            status, body = self.call("PUT", "/api/mobile/v1/settings/vowifi",
+                                     {"mtu_compatibility": True}, token=token)
+            self.assertEqual(status, 200, body)
+            self.assertEqual(body["data"], {"mtu_compatibility": True})
+            save.assert_any_call({"vowifi": {"mtu_compatibility": True}})
         self.assertEqual(info[0], 200, info)
         self.assertEqual(info[1]["data"]["version"], main.VERSION)
-        self.assertEqual(self.call("PUT", "/api/mobile/v1/settings/vowifi",
-                                   {"mtu_compatibility": True}, token=token)[0], 501)
 
     def test_long_sms_does_not_invent_segment_counts_or_delivery(self):
         token = self.sign_in()[1]["token"]

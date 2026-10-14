@@ -1,0 +1,337 @@
+{
+  "rules": [
+    {
+      "id": "estk-max",
+      "nameplate": "ESTK.me Max",
+      "eidPrefixes": [
+        "89033023"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-plus-plus",
+      "nameplate": "ESTK.me Plus+",
+      "eidPrefixes": [
+        "89049032",
+        "89034011"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-c-beta",
+      "nameplate": "Estk.me C beta",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-plus",
+      "nameplate": "ESTK.me Plus",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-light",
+      "nameplate": "ESTK.me Light",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-ready-plus",
+      "nameplate": "ESTK.me Ready+",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-start",
+      "nameplate": "ESTK.me Start",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-ready",
+      "nameplate": "ESTK.me Ready",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-times",
+      "nameplate": "ESTK.me Times",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-essential-lite",
+      "nameplate": "ESTK.me Essential Lite",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-air",
+      "nameplate": "ESTK.me Air",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-mega",
+      "nameplate": "ESTK.me Mega",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-essential",
+      "nameplate": "ESTK.me Essential",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-eco",
+      "nameplate": "ESTK.me ECO",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-400k",
+      "nameplate": "ESTK.me 400K",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-es",
+      "nameplate": "ESTK.me ES",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-beta-2",
+      "nameplate": "ESTK.me Beta 2",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-beta-1",
+      "nameplate": "ESTK.me Beta 1",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-alpha-2",
+      "nameplate": "ESTK.me Alpha 2",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-alpha-1",
+      "nameplate": "ESTK.me Alpha 1",
+      "eidPrefixes": [
+        "89049032"
+      ],
+      "sas": []
+    },
+    {
+      "id": "estk-generic",
+      "nameplate": "ESTK.me",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "tianlian",
+      "nameplate": "G+D天联",
+      "eidPrefixes": [
+        "89049032",
+        "89049038"
+      ],
+      "sas": []
+    },
+    {
+      "id": "xesim",
+      "nameplate": "XeSIM",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "xesim-x1",
+      "nameplate": "XeSIM X1",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "xesim-x2",
+      "nameplate": "XeSIM X2",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "xesim-x2-pro",
+      "nameplate": "XeSIM X2 Pro",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "5ber",
+      "nameplate": "5ber.eSIM",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "5ber-standard",
+      "nameplate": "5ber.eSIM Standard",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "5ber-premium",
+      "nameplate": "5ber.eSIM Premium",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "5ber-ultra",
+      "nameplate": "5ber.eSIM Ultra",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "esim-me",
+      "nameplate": "eSIM.me",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "esim-me-card-2",
+      "nameplate": "eSIM.me Card 2",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "linksfield",
+      "nameplate": "LinksField",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "9esim",
+      "nameplate": "9eSIM",
+      "eidPrefixes": [
+        "89044045",
+        "89044047"
+      ],
+      "sas": []
+    },
+    {
+      "id": "9esim-v3",
+      "nameplate": "9eSIM V3",
+      "eidPrefixes": [
+        "89044045"
+      ],
+      "sas": []
+    },
+    {
+      "id": "9esim-v0",
+      "nameplate": "9eSIM V0",
+      "eidPrefixes": [
+        "89086030"
+      ],
+      "sas": []
+    },
+    {
+      "id": "9esim-v0-max",
+      "nameplate": "9eSIM V0 Max",
+      "eidPrefixes": [
+        "89086030"
+      ],
+      "sas": []
+    },
+    {
+      "id": "9esim-b1",
+      "nameplate": "9eSIM B1",
+      "eidPrefixes": [
+        "89086030"
+      ],
+      "sas": []
+    },
+    {
+      "id": "sysmo-c2g",
+      "nameplate": "sysmoEUICC1-C2G",
+      "eidPrefixes": [
+        "89044045"
+      ],
+      "sas": []
+    },
+    {
+      "id": "sysmo-c2t",
+      "nameplate": "sysmoEUICC1-C2T",
+      "eidPrefixes": [
+        "89049044"
+      ],
+      "sas": []
+    },
+    {
+      "id": "jmp",
+      "nameplate": "JMP eSIM Adapter",
+      "eidPrefixes": [
+        "89044045"
+      ],
+      "sas": []
+    },
+    {
+      "id": "switch-esim",
+      "nameplate": "Switch.eSIM",
+      "eidPrefixes": [
+        "89086030"
+      ],
+      "sas": []
+    },
+    {
+      "id": "switch-pro",
+      "nameplate": "Switch.eSIM Pro",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "switch-max",
+      "nameplate": "Switch.eSIM Max",
+      "eidPrefixes": [],
+      "sas": []
+    },
+    {
+      "id": "eiotclub",
+      "nameplate": "eIoTClub",
+      "eidPrefixes": [],
+      "sas": []
+    }
+  ]
+}

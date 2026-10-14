@@ -12,6 +12,7 @@ import glob
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import threading
@@ -803,9 +804,24 @@ def _migration_engine_call_id(c) -> None:
     c.execute("CREATE INDEX IF NOT EXISTS idx_calls_engine_id ON calls(instance,call_id)")
 
 
+def _migration_call_engine_alias(c) -> None:
+    """Remember the Asterisk uniqueid beside the handset's own call id.
+
+    A phone dial is recorded under the AudioSocket id before the carrier leg exists.
+    The engine later reports a different id. Both must name the same row, including
+    after that row has already ended.
+    """
+    try:
+        c.execute("ALTER TABLE calls ADD COLUMN engine_id TEXT NOT NULL DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    c.execute("CREATE INDEX IF NOT EXISTS idx_calls_engine_alias ON calls(instance,engine_id)")
+
+
 _MIGRATIONS = (_migration_message_identity, _migration_modem_object_on_message, _migration_mms,
                _migration_identity_scope, lambda c: _migration_filed_mms_pushes(c),
-               _migration_read_baseline, _migration_completed_ts, _migration_engine_call_id)
+               _migration_read_baseline, _migration_completed_ts, _migration_engine_call_id,
+               _migration_call_engine_alias)
 
 
 def _sweep_binary_messages(c) -> int:
@@ -1273,6 +1289,12 @@ def set_message_body(mid: int, body: str, completed_ts: int | None = None) -> di
                              row["peer"], body, int(row["ts"]), row["transport"] or "vowifi",
                              row["kind"] or "sms")
     return dict(row) if row else None
+
+
+def message_by_id(message_id: int) -> dict | None:
+    with _lock, _conn() as c:
+        row = c.execute("SELECT * FROM messages WHERE id=?", (int(message_id),)).fetchone()
+        return dict(row) if row else None
 
 
 def add_message(instance: str, direction: str, peer: str, body: str, status: str = "ok",
@@ -2306,6 +2328,14 @@ def list_threads(instance: str) -> list:
     return [dict(r) for r in rows]
 
 
+def count_outbound_since(since_ts: int) -> int:
+    """Outbound messages filed at or after `since_ts`, for the hourly send quota."""
+    with _lock, _conn() as c:
+        row = c.execute("SELECT COUNT(*) FROM messages WHERE direction='out' AND ts>=?",
+                        (int(since_ts),)).fetchone()
+    return int(row[0] if row else 0)
+
+
 def list_messages(instance: str, peer: str, limit: int = 200) -> list:
     with _lock, _conn() as c:
         rows = c.execute(
@@ -2422,6 +2452,127 @@ def add_call_correlated(instance: str, direction: str, peer: str,
         return dict(c.execute("SELECT * FROM calls WHERE id=?", (cur.lastrowid,)).fetchone())
 
 
+_HANDSET_CALL_ID = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+
+def _handset_call_id(value) -> bool:
+    return bool(_HANDSET_CALL_ID.fullmatch(str(value or "")))
+
+
+def _stamp_engine_id(c, row_id: int, engine_id: str, call_id: str) -> None:
+    token = str(engine_id or "")
+    if not token or token == str(call_id or ""):
+        return
+    c.execute(
+        "UPDATE calls SET engine_id=? WHERE id=? AND IFNULL(engine_id,'')=''",
+        (token, int(row_id)))
+
+
+def _row_by_call_token(c, instance: str, direction: str, token: str):
+    if not token:
+        return None
+    return c.execute(
+        "SELECT * FROM calls WHERE instance=? AND direction=? "
+        "AND (call_id=? OR engine_id=?) ORDER BY id DESC LIMIT 1",
+        (str(instance), direction, str(token), str(token))).fetchone()
+
+
+def _open_handset_rows(c, instance: str, peer: str = ""):
+    rows = c.execute(
+        "SELECT * FROM calls WHERE instance=? AND direction='out' AND end_ts IS NULL "
+        "ORDER BY id ASC", (str(instance),)).fetchall()
+    chosen = []
+    for row in rows:
+        if not _handset_call_id(row["call_id"]):
+            continue
+        if peer and str(row["peer"] or "") != peer:
+            continue
+        chosen.append(row)
+    return chosen
+
+
+def associate_engine_call(instance: str, direction: str, peer: str, engine_id: str,
+                          business_id: str = "") -> dict:
+    """Attach an Asterisk uniqueid to the handset call, or record a softphone call once.
+
+    A row that has already ended stays ended. A second callback for the same uniqueid
+    returns the row it already created.
+    """
+    engine_id = str(engine_id or "")
+    business_id = str(business_id or "")
+    peer = str(peer or "")
+    with _lock, _conn() as c:
+        row = _row_by_call_token(c, instance, direction, business_id)
+        if row is None and engine_id:
+            row = _row_by_call_token(c, instance, direction, engine_id)
+        if row is None and direction == "out" and engine_id:
+            waiting = [item for item in _open_handset_rows(c, instance, peer)
+                       if not str(item["engine_id"] or "")]
+            if len(waiting) == 1:
+                row = waiting[0]
+        if row is not None:
+            _stamp_engine_id(c, row["id"], engine_id, row["call_id"])
+            if peer and not row["peer"]:
+                c.execute("UPDATE calls SET peer=? WHERE id=?", (peer, row["id"]))
+            return dict(c.execute("SELECT * FROM calls WHERE id=?", (row["id"],)).fetchone())
+    created = add_call_correlated(
+        instance, direction, peer, status="dialing", call_id=business_id or engine_id)
+    if business_id and engine_id and business_id != engine_id and created.get("id") is not None:
+        with _lock, _conn() as c:
+            _stamp_engine_id(c, int(created["id"]), engine_id, created.get("call_id") or "")
+            fresh = c.execute("SELECT * FROM calls WHERE id=?", (int(created["id"]),)).fetchone()
+        return dict(fresh) if fresh else created
+    return created
+
+
+def close_engine_call(instance: str, direction: str, peer: str, status: str,
+                      uniqueid: str = "", business_id: str = "") -> dict | None:
+    """End the call named by the handset id or the Asterisk uniqueid.
+
+    When neither id matches and two handset calls to the same peer are still open,
+    this leaves both alone. A softphone result, whose only id is its uniqueid and
+    which matches no handset row, is stored under that uniqueid.
+    """
+    uniqueid = str(uniqueid or "")
+    business_id = str(business_id or "")
+    peer = str(peer or "")
+    primary = business_id or uniqueid
+    if not primary:
+        return None
+    with _lock, _conn() as c:
+        row = None
+        for token in (business_id, uniqueid):
+            if not token:
+                continue
+            row = _row_by_call_token(c, instance, direction, token)
+            if row is not None:
+                break
+        if row is None and direction == "out" and uniqueid:
+            waiting = [item for item in _open_handset_rows(c, instance, peer)
+                       if str(item["engine_id"] or "") in ("", uniqueid)]
+            if len(waiting) == 1:
+                row = waiting[0]
+        if row is None and direction == "out" and not business_id:
+            if len(_open_handset_rows(c, instance, peer)) > 1:
+                return None
+        if row is not None:
+            _stamp_engine_id(c, row["id"], uniqueid, row["call_id"])
+            now = int(time.time())
+            c.execute(
+                "UPDATE calls SET status=?, end_ts=? WHERE id=? AND end_ts IS NULL",
+                (status, now, row["id"]))
+            fresh = c.execute("SELECT * FROM calls WHERE id=?", (row["id"],)).fetchone()
+            return dict(fresh) if fresh else None
+    created = finalize_call_by_id(instance, direction, primary, peer, status)
+    if uniqueid and str(created.get("call_id") or "") != uniqueid:
+        with _lock, _conn() as c:
+            _stamp_engine_id(c, int(created["id"]), uniqueid, created.get("call_id") or "")
+            fresh = c.execute("SELECT * FROM calls WHERE id=?", (int(created["id"]),)).fetchone()
+        return dict(fresh) if fresh else created
+    return created
+
+
 def get_open_call_for_transport(instance: str, transport: str) -> dict | None:
     with _lock, _conn() as c:
         row = c.execute(
@@ -2435,8 +2586,10 @@ def get_open_call_by_id(instance: str, call_id: str) -> dict | None:
     if not call_id:
         return None
     with _lock, _conn() as c:
-        row = c.execute("SELECT * FROM calls WHERE instance=? AND call_id=? AND end_ts IS NULL "
-                        "ORDER BY id DESC LIMIT 1", (str(instance), str(call_id))).fetchone()
+        row = c.execute(
+            "SELECT * FROM calls WHERE instance=? AND end_ts IS NULL "
+            "AND (call_id=? OR engine_id=?) ORDER BY id DESC LIMIT 1",
+            (str(instance), str(call_id), str(call_id))).fetchone()
         return dict(row) if row else None
 
 
@@ -2444,8 +2597,10 @@ def get_call_by_id(instance: str, call_id: str, direction: str = "in") -> dict |
     if not call_id:
         return None
     with _lock, _conn() as c:
-        row = c.execute("SELECT * FROM calls WHERE instance=? AND direction=? AND call_id=? "
-                        "ORDER BY id DESC LIMIT 1", (str(instance), direction, str(call_id))).fetchone()
+        row = c.execute(
+            "SELECT * FROM calls WHERE instance=? AND direction=? "
+            "AND (call_id=? OR engine_id=?) ORDER BY id DESC LIMIT 1",
+            (str(instance), direction, str(call_id), str(call_id))).fetchone()
     return dict(row) if row else None
 
 
@@ -2548,9 +2703,9 @@ def update_last_call(instance: str, direction: str, peer: str | None, status: st
     with _lock, _conn() as c:
         if call_id:
             row = c.execute(
-                "SELECT id FROM calls WHERE instance=? AND direction=? AND call_id=? "
-                "AND end_ts IS NULL ORDER BY id DESC LIMIT 1",
-                (str(instance), direction, str(call_id))).fetchone()
+                "SELECT id FROM calls WHERE instance=? AND direction=? "
+                "AND (call_id=? OR engine_id=?) AND end_ts IS NULL ORDER BY id DESC LIMIT 1",
+                (str(instance), direction, str(call_id), str(call_id))).fetchone()
         elif peer:
             row = c.execute(
                 "SELECT id FROM calls WHERE instance=? AND direction=? AND peer=? AND end_ts IS NULL "
@@ -2574,8 +2729,9 @@ def finalize_call_by_id(instance: str, direction: str, call_id: str,
         raise ValueError("engine call ID required")
     with _lock, _conn() as c:
         row = c.execute(
-            "SELECT * FROM calls WHERE instance=? AND direction=? AND call_id=? "
-            "ORDER BY id DESC LIMIT 1", (str(instance), direction, str(call_id))).fetchone()
+            "SELECT * FROM calls WHERE instance=? AND direction=? "
+            "AND (call_id=? OR engine_id=?) ORDER BY id DESC LIMIT 1",
+            (str(instance), direction, str(call_id), str(call_id))).fetchone()
         now = int(time.time())
         if row:
             c.execute("UPDATE calls SET status=?, end_ts=?, peer=? WHERE id=? AND end_ts IS NULL",

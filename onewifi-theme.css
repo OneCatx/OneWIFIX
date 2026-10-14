@@ -1,0 +1,1691 @@
+/* ============================================================================
+   OneWIFI Theme  —  深海蓝 #071723 × 冰蓝渐变 #168CFF → #20D9AE
+   ----------------------------------------------------------------------------
+   一套完整的 WebUI 主题，覆写 webui/src/assets/themes.css 的设计令牌，
+   不改任何 Vue 组件与模板，因此与现有架构完全解耦。
+
+   适配架构：Vue 3 + token 驱动主题（themes.css / glass-frame-dark.css /
+   polish.css / deep-control-panel.css 等 24 层 CSS）。
+
+   启用方式：本文件仍最后引入。规则全部挂在 html[data-skin="onewifi"] 上。
+   默认皮肤是 OneWIFI；切到经典时去掉该属性，上游玻璃主题自己生效。
+   明暗仍走 data-theme=dark|light。
+
+   主题切换沿用现有机制（stores/theme.js：dark / light / auto），
+   本文件同时提供两套 OneWIFI 表面色。
+
+   设计来源：assets/social-preview.svg
+   规范文档：docs/design/onewifi-ui-design-language.md
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   0. OneWIFI 自有令牌（上游未定义，供本文件与组件规则使用）
+   ------------------------------------------------------------------------ */
+html[data-skin="onewifi"] {
+  --ow-brand-from: #168CFF;
+  --ow-brand-to: #20D9AE;
+  --ow-brand-gradient: linear-gradient(135deg, #168CFF 0%, #20D9AE 100%);
+  --ow-brand-halo: linear-gradient(135deg, rgba(22, 140, 255, .16), rgba(32, 217, 174, .16));
+  --ow-brand-halo-solid: #123A52;
+  --ow-mint: #B8F8EC;
+  --ow-grid-line: #7CB9D5;
+
+  /* 表面四档：层次靠明度差，不靠模糊 */
+  --ow-bg-void: #071723;
+  --ow-bg-sidebar: #081A29;
+  --ow-panel: #0D293D;
+  --ow-panel-deep: #0C2434;
+  --ow-inset: #102E42;
+  --ow-border: #25516A;
+  --ow-border-strong: #2F6B8A;
+
+  /* 三级文字 */
+  --ow-text-1: #F4FBFF;
+  --ow-text-2: #A8C2D1;
+  --ow-text-3: #8EACBE;
+  --ow-text-4: #6F92A6;
+
+  /* 大而柔的投影：卡片明显浮离背景 */
+  --ow-shadow: 0 16px 22px rgba(2, 11, 18, .45);
+  --ow-shadow-soft: 0 6px 16px rgba(2, 11, 18, .32);
+
+  /* OneWIFI 圆角：与上游 token 同名对齐，便于混用 */
+  --ow-radius-card: 20px;
+  --ow-radius-panel: 28px;
+  --ow-radius-pill: 23px;
+}
+
+/* ---------------------------------------------------------------------------
+   1. 深色（OneWIFI 签名外观）
+   ------------------------------------------------------------------------ */
+html[data-skin="onewifi"][data-theme="dark"] {
+  /* 表面：关闭玻璃拟态，回到实心深色面板 */
+  --bg-base: #071723;
+  --bg-surface: #0D293D;
+  --bg-card: #0D293D;
+  --bg-card-hover: #14344A;
+  --bg-input: #102E42;
+  --bg-hover: #14344A;
+
+  --border-subtle: #25516A;
+  --border-field: #25516A;
+  --border-glass: #25516A;
+
+  /* 玻璃层退化：OneWIFI 不用模糊与内描光 */
+  --glass-blur: 0px;
+  --glass-blur-size: 0px;
+  --glass-saturate: 100%;
+  --glass-highlight: none;
+  --glass-rim: none;
+  --glass-shadow-ambient: none;
+  --glass-shadow: 0 16px 22px rgba(2, 11, 18, .45);
+  --glass-shadow-inset: none;
+  --glass-card: #0D293D;
+  --glass-card-soft: #102E42;
+  --glass-card-lift: #14344A;
+  --glass-card-accent: rgba(22, 140, 255, .12);
+  --glass-border: #25516A;
+  --glass-border-soft: rgba(124, 185, 213, .18);
+  --glass-border-accent: rgba(32, 217, 174, .35);
+  --glass-shell: #0D293D;
+
+  --shell-bg: #0D293D;
+  --shell-border: #25516A;
+  --shell-shadow: 0 16px 22px rgba(2, 11, 18, .45);
+
+  --sidebar-bg: #081A29;
+  --sidebar-shadow: 0 16px 22px rgba(2, 11, 18, .45);
+  --sidebar-brand-bg: #0D293D;
+  --sidebar-footer-bg: #0D293D;
+  --sidebar-divider: #25516A;
+  --sidebar-nav-hover-bg: #14344A;
+  --sidebar-nav-hover-color: #F4FBFF;
+  --sidebar-nav-active-bg: var(--ow-brand-halo), var(--ow-brand-halo-solid);
+  --sidebar-nav-active-color: #B8F8EC;
+  --sidebar-nav-active-border: rgba(32, 217, 174, .35);
+  --sidebar-nav-active-shadow: none;
+  --sidebar-footer-hover-bg: #14344A;
+
+  --stat-card-bg: #0D293D;
+  --stat-card-border: #25516A;
+  --stat-card-shadow: 0 16px 22px rgba(2, 11, 18, .45);
+  --stat-card-shadow-hover: 0 20px 28px rgba(2, 11, 18, .5);
+  --stat-label-color: #8EACBE;
+  --stat-value-color: #F4FBFF;
+  --stat-sub-color: #A8C2D1;
+  --stat-glass-blur: 0px;
+  --stat-wave-back: rgba(124, 185, 213, .10);
+  --stat-wave-mid: rgba(124, 185, 213, .14);
+  --stat-wave-front: rgba(124, 185, 213, .18);
+  --stat-wave-stroke: rgba(32, 217, 174, .55);
+  --stat-wave-fill-top: rgba(22, 140, 255, .16);
+  --stat-wave-fill-bottom: rgba(22, 140, 255, 0);
+
+  --region-card-bg: #102E42;
+  --region-scrim: linear-gradient(to right, rgba(7, 23, 35, .88), rgba(7, 23, 35, 0));
+  --region-tag-bg: rgba(7, 23, 35, .72);
+  --region-icon-border: #25516A;
+
+  /* 品牌色：整体收敛到蓝—薄荷一支渐变 */
+  --accent: #168CFF;
+  --accent-hover: #3AA0FF;
+  --accent-soft: rgba(22, 140, 255, .16);
+  --accent-muted: rgba(22, 140, 255, .55);
+  --purple: #7C9CFF;
+  --purple-soft: rgba(124, 156, 255, .14);
+  --green: #20D9AE;
+  --green-soft: rgba(32, 217, 174, .14);
+  --orange: #F5A65B;
+  --orange-soft: rgba(245, 166, 91, .14);
+  --pink: #F27EB3;
+  --pink-soft: rgba(242, 126, 179, .14);
+  --cyan: #20D9AE;
+  --cyan-soft: rgba(32, 217, 174, .14);
+  --success: #20D9AE;
+  --warning: #F5A65B;
+  --danger: #ef4444;
+  --info: #168CFF;
+
+  --text-primary: #F4FBFF;
+  --text-secondary: #A8C2D1;
+  --text-muted: #8EACBE;
+  --text-disabled: #6F92A6;
+
+  --toggle-bg: #25516A;
+  --thumb-shadow: 0 2px 6px rgba(2, 11, 18, .45);
+
+  /* 圆角与排版尺度统一到 OneWIFI（大圆角、紧凑字号） */
+  --radius-shell: 28px;
+  --radius-panel: 24px;
+  --radius-card: 20px;
+  --radius-card-sm: 16px;
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --fs-base: 12.5px;
+
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------------------
+   2. 浅色（结构不变，只换表面；品牌渐变保持一致）
+   ------------------------------------------------------------------------ */
+html[data-skin="onewifi"][data-theme="light"] {
+  --bg-base: #F2F7FB;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #EAF2F8;
+  --bg-input: #EAF2F8;
+  --bg-hover: #E4EFF6;
+
+  --border-subtle: #D3E3EE;
+  --border-field: #D3E3EE;
+  --border-glass: #D3E3EE;
+
+  --glass-blur: 0px;
+  --glass-blur-size: 0px;
+  --glass-saturate: 100%;
+  --glass-highlight: none;
+  --glass-rim: none;
+  --glass-shadow-ambient: none;
+  --glass-shadow: 0 2px 8px rgba(10, 31, 46, .08);
+  --glass-shadow-inset: none;
+  --glass-card: #FFFFFF;
+  --glass-card-soft: #EAF2F8;
+  --glass-card-lift: #FFFFFF;
+  --glass-card-accent: rgba(22, 140, 255, .08);
+  --glass-border: #D3E3EE;
+  --glass-border-soft: #E4EFF6;
+  --glass-border-accent: rgba(22, 140, 255, .28);
+  --glass-shell: #FFFFFF;
+
+  --shell-bg: #FFFFFF;
+  --shell-border: #D3E3EE;
+  --shell-shadow: 0 2px 8px rgba(10, 31, 46, .08);
+
+  --sidebar-bg: #FFFFFF;
+  --sidebar-shadow: 0 2px 8px rgba(10, 31, 46, .08);
+  --sidebar-brand-bg: #FFFFFF;
+  --sidebar-footer-bg: #FFFFFF;
+  --sidebar-divider: #D3E3EE;
+  --sidebar-nav-hover-bg: #E4EFF6;
+  --sidebar-nav-hover-color: #0A1F2E;
+  --sidebar-nav-active-bg: var(--ow-brand-halo), #E4EFF6;
+  --sidebar-nav-active-color: #0E7490;
+  --sidebar-nav-active-border: rgba(22, 140, 255, .28);
+  --sidebar-nav-active-shadow: none;
+  --sidebar-footer-hover-bg: #E4EFF6;
+
+  --stat-card-bg: #FFFFFF;
+  --stat-card-border: #D3E3EE;
+  --stat-card-shadow: 0 2px 8px rgba(10, 31, 46, .08);
+  --stat-card-shadow-hover: 0 4px 12px rgba(10, 31, 46, .12);
+  --stat-label-color: #4A6B7E;
+  --stat-value-color: #0A1F2E;
+  --stat-sub-color: #6B8798;
+  --stat-glass-blur: 0px;
+  --stat-wave-back: rgba(122, 160, 184, .10);
+  --stat-wave-mid: rgba(122, 160, 184, .14);
+  --stat-wave-front: rgba(122, 160, 184, .18);
+  --stat-wave-stroke: rgba(32, 217, 174, .6);
+  --stat-wave-fill-top: rgba(22, 140, 255, .12);
+  --stat-wave-fill-bottom: rgba(22, 140, 255, 0);
+
+  --region-card-bg: #FFFFFF;
+  --region-scrim: linear-gradient(to right, rgba(255, 255, 255, .9), rgba(255, 255, 255, 0));
+  --region-tag-bg: rgba(255, 255, 255, .82);
+  --region-icon-border: #D3E3EE;
+
+  --accent: #168CFF;
+  --accent-hover: #0F6FD0;
+  --accent-soft: rgba(22, 140, 255, .12);
+  --accent-muted: rgba(22, 140, 255, .55);
+  --purple: #5B7CF0;
+  --purple-soft: rgba(91, 124, 240, .12);
+  --green: #0E9F83;
+  --green-soft: rgba(14, 159, 131, .12);
+  --orange: #D97706;
+  --orange-soft: rgba(217, 119, 6, .12);
+  --pink: #DB2777;
+  --pink-soft: rgba(219, 39, 119, .10);
+  --cyan: #0E9F83;
+  --cyan-soft: rgba(14, 159, 131, .12);
+  --success: #0E9F83;
+  --warning: #D97706;
+  --danger: #DC2626;
+  --info: #168CFF;
+
+  --text-primary: #0A1F2E;
+  --text-secondary: #4A6B7E;
+  --text-muted: #6B8798;
+  --text-disabled: #93A9B7;
+
+  --toggle-bg: #D3E3EE;
+  --thumb-shadow: 0 1px 3px rgba(10, 31, 46, .16);
+
+  color-scheme: light;
+}
+
+/* ---------------------------------------------------------------------------
+   3. 签名背景：深空底 + 右上径向光晕 + 极淡网格
+   ------------------------------------------------------------------------ */
+html[data-skin="onewifi"][data-theme="dark"] body {
+  background-color: #071723;
+  background-image:
+    radial-gradient(560px 520px at calc(100% - 80px) -100px,
+                    rgba(22, 140, 255, .25), rgba(22, 140, 255, 0) 70%),
+    repeating-linear-gradient(0deg,  rgba(124, 185, 213, .16) 0 1px, transparent 1px 80px),
+    repeating-linear-gradient(90deg, rgba(124, 185, 213, .16) 0 1px, transparent 1px 80px);
+  background-attachment: fixed;
+}
+html[data-skin="onewifi"][data-theme="light"] body {
+  background-color: #F2F7FB;
+  background-image:
+    radial-gradient(520px 480px at calc(100% - 80px) -100px,
+                    rgba(22, 140, 255, .12), rgba(22, 140, 255, 0) 70%),
+    repeating-linear-gradient(0deg,  rgba(122, 160, 184, .10) 0 1px, transparent 1px 80px),
+    repeating-linear-gradient(90deg, rgba(122, 160, 184, .10) 0 1px, transparent 1px 80px);
+  background-attachment: fixed;
+}
+
+/* ---------------------------------------------------------------------------
+   4. 二级令牌覆写 —— 把上游「玻璃 / 电影感」家族改写成 OneWIFI 实心表面
+   ----------------------------------------------------------------------------
+   上游 24 层 CSS 的外观绝大多数不是硬编码，而是集中在若干变量家族里：
+
+     --gf-*                玻璃框体几何与投影            glass-frame-dark.css
+     --glass-* / --frame-* / --corner-glow-* / --lens-wash
+                           面板底纹与内描光              themes.css / polish.css / onewifi-lab.css
+     --vh-*                OneWifi 实验室面板            onewifi-lab.css / onewifi-ref.css / onewifi-pages.css
+     --dk-*                可点击元素（pill 按钮族）      dark-clickables.css
+     --cp-*                控制面侧栏                    control-sidebar.css
+     --lg-* / --mat-* / --cg-* / --ob-* / --se-* / --ccs-*
+                           液态玻璃 / 材质 / 电影感       liquid-glass.css / cinematic-glass-light.css
+     --dash-* / --dcp-*    仪表盘与深控面板              dashboard-cinematic.css / deep-control-panel.css
+     --ob-icon-*           图标容器                      icon-system.css
+
+   这些家族各自定义在自己的 [data-theme='dark']（或 .onewifi-lab-shell 等
+   页面作用域）块里，与本文件中的声明同权重；本文件最后加载，因此同名声明
+   由这里胜出 —— 既不用提高选择器权重，也不需要用 !important。
+
+   两处例外必须按原作用域覆写，否则会被更具体的选择器压过：
+     · --vh-* 定义在 [data-theme='dark'] .onewifi-lab-shell / .onewifi-console /
+       .ow-page 上，比全局 [data-theme='dark'] 更具体（见 4.2 / 4.5）；
+     · --frame-* 等在 .glass-frame--tone-green / .is-glow-green 上被再次定义，
+       用于「已选中」的绿色高亮卡（见 4.3）。
+   ------------------------------------------------------------------------ */
+
+/* 4.1 深色 · 全局 */
+html[data-skin="onewifi"][data-theme="dark"] {
+  /* 框体几何：OneWIFI 大圆角 + 大而柔的投影 */
+  --gf-radius: 18px;
+  --gf-card-shadow: var(--ow-shadow);
+  --gf-edge-top: transparent;
+  --gf-edge-side: transparent;
+  --gf-edge-bottom: transparent;
+
+  /* 玻璃彻底退化 */
+  --glass-filter: none;
+  --glass-blur-soft: none;
+  --glass-blur-size: 0px;
+  --glass-blur: 0px;
+  --glass-saturate: 100%;
+  --glass-highlight: none;
+  --glass-rim: none;
+  --glass-shadow-ambient: none;
+  --glass-shadow-inset: none;
+  --glass-shadow: var(--ow-shadow);
+  --glass-shadow-elevated: var(--ow-shadow);
+
+  /* 面板底纹：实心 + 一抹品牌冷光，去掉所有 veil / 眩光层 */
+  --frame-base-top: #0D293D;
+  --frame-base-bottom: #0D293D;
+  --frame-veil-top: transparent;
+  --frame-veil-bottom: transparent;
+  --lens-wash: rgba(22, 140, 255, .05);
+  --corner-glow-x: 260px;
+  --corner-glow-y: 210px;
+  --corner-glow-a: rgba(22, 140, 255, .10);
+  --corner-glow-b: rgba(32, 217, 174, .05);
+  --corner-glow-c: rgba(32, 217, 174, 0);
+  --corner-glow-fade: 68%;
+  --corner-glow-base: #0D293D;
+  --corner-glow-bg:
+    radial-gradient(
+      ellipse var(--corner-glow-x) var(--corner-glow-y) at 0% 0%,
+      var(--corner-glow-a) 0%,
+      var(--corner-glow-b) 30%,
+      transparent 68%
+    ),
+    var(--corner-glow-base);
+  --corner-glow-large-bg: var(--corner-glow-bg);
+
+  /* 液态玻璃 → 实心 */
+  --lg-surface: #0D293D;
+  --lg-surface-solid: #0D293D;
+  --lg-border: #25516A;
+  --lg-specular: none;
+  --lg-shadow: var(--ow-shadow);
+  --lg-text: #F4FBFF;
+  --lg-text-active: #B8F8EC;
+  --lg-pill: #102E42;
+  --lg-pill-border: #25516A;
+  --lg-sheet-scrim: rgba(4, 12, 20, .62);
+  --lg-radius: 18px;
+  --lg-blur: 0px;
+  --lg-saturate: 100%;
+  --lg-tab-accent: #168CFF;
+  --lg-z-tabbar: 40;
+  --lg-tabbar-clearance: 0px;
+
+  /* 图标容器：78×78 → 36px 规格，圆角 12px，实心底 + 1px 边 */
+  --ob-icon-color: #A8C2D1;
+  --ob-icon-color-hover: #F4FBFF;
+  --ob-icon-color-active: #B8F8EC;
+  --ob-icon-color-muted: #6F92A6;
+  --ob-icon-container-bg: #102E42;
+  --ob-icon-container-border: #25516A;
+  --ob-icon-container-glow: none;
+  --ob-icon-container-radius: 14px;
+  --ob-icon-container-size: 36px;
+  --ob-icon-container-size-sm: 28px;
+  --ob-icon-container-size-lg: 44px;
+  --ob-icon-stroke: 1.6;
+  --ob-glass-radius: 18px;
+  --ob-glass-radius-shell: 28px;
+  --ob-glass-blur: 0px;
+  --ob-glass-saturate: 100%;
+  --ob-page-bg: #071723;
+
+  /* 可点击元素：OneWIFI 二级按钮（实心深蓝 + 1px 边 + 全圆端） */
+  --dk-click-radius: 23px;
+  --dk-click-pad-y: 9px;
+  --dk-click-pad-x: 18px;
+  --dk-click-min-h: 38px;
+  --dk-click-font: 12.5px;
+  --dk-click-weight: 600;
+  --dk-click-color: #F4FBFF;
+  --dk-click-border: #25516A;
+  --dk-click-bg-top: #102E42;
+  --dk-click-bg-bottom: #102E42;
+  --dk-click-shadow: var(--ow-shadow-soft);
+  --dk-click-bg: #102E42;
+
+  /* 控制面侧栏：实心侧栏 + 渐变激活胶囊 */
+  --cp-sidebar-width: 208px;
+  --cp-dock-bg: #081A29;
+  --cp-dock-border: #25516A;
+  --cp-dock-shadow: var(--ow-shadow);
+  --cp-dock-divider: #25516A;
+  --cp-dock-radius: 24px;
+  --cp-dock-pad-x: 14px;
+  --cp-dock-pad-y: 16px;
+  --cp-nav-color: #8EACBE;
+  --cp-nav-hover-color: #F4FBFF;
+  --cp-nav-hover-bg: #14344A;
+  --cp-nav-active-color: #B8F8EC;
+  --cp-nav-active-bg: var(--ow-brand-halo), var(--ow-brand-halo-solid);
+  --cp-nav-active-border: rgba(32, 217, 174, .35);
+  --cp-nav-active-glow: none;
+
+  /* 仪表盘 / 深控面板 */
+  --dash-card-bg: #0D293D;
+  --dash-card-border: #25516A;
+  --dash-card-radius: 20px;
+  --dash-inner-bg: #102E42;
+  --dash-highlight: rgba(32, 217, 174, .35);
+  --dash-canvas-bg: #071723;
+  --dcp-card-bg: #0D293D;
+  --dcp-card-border: #25516A;
+  --dcp-card-radius: 20px;
+  --dcp-card-blur: 0px;
+  --dcp-hover-lift: -2px;
+  --dcp-hover-shadow: var(--ow-shadow);
+  --dcp-ms-color: #20D9AE;
+  --dcp-ms-glow: none;
+  --dcp-online-glow: none;
+  --dcp-offline-color: #6F92A6;
+  --dcp-offline-glow: none;
+  --dcp-warning-glow: none;
+}
+
+/* 4.2 深色 · 页面作用域（--vh-* 的原生定义处，必须同作用域覆写） */
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-console,
+html[data-skin="onewifi"][data-theme="dark"] .ow-page,
+html[data-skin="onewifi"][data-theme="dark"] .dashboard,
+html[data-skin="onewifi"][data-theme="dark"] .dashboard-shell {
+  /* 面板表面：深海底三档 */
+  --vh-surface: #0D293D;
+  --vh-surface-hover: #14344A;
+  --vh-surface-inset: #102E42;
+  --vh-radius: 18px;
+  --vh-card-shadow: var(--ow-shadow);
+  --vh-top-light: none;
+  --vh-edge-top: transparent;
+  --vh-edge-side: transparent;
+  --vh-edge-bottom: transparent;
+
+  /* 语义色收敛到 OneWIFI 调色板 */
+  --vh-mint: #20D9AE;
+  --vh-mint-neon: #B8F8EC;
+  --vh-mint-soft: rgba(32, 217, 174, .12);
+  --vh-mint-border: rgba(32, 217, 174, .32);
+  --vh-amber: #F5A65B;
+  --vh-amber-neon: #FBD3A6;
+  --vh-amber-glow: none;
+  --vh-amber-soft: rgba(245, 166, 91, .12);
+  --vh-amber-border: rgba(245, 166, 91, .32);
+  --vh-glass-border: #25516A;
+  --vh-label: #8EACBE;
+  --vh-text: #F4FBFF;
+
+  /* 玻璃在这些作用域里被再次打开，这里再次关上 */
+  --glass-filter: none;
+  --glass-blur-soft: none;
+  --frame-base-top: #0D293D;
+  --frame-base-bottom: #0D293D;
+  --frame-veil-top: transparent;
+  --frame-veil-bottom: transparent;
+  --lens-wash: rgba(22, 140, 255, .05);
+  --corner-glow-a: rgba(22, 140, 255, .10);
+  --corner-glow-b: rgba(32, 217, 174, .05);
+  --corner-glow-c: rgba(32, 217, 174, 0);
+  --corner-glow-fade: 68%;
+}
+
+/* 4.3 深色 · 激活态与色调卡
+      上游在这些更具体的选择器上重新定义了 --frame-* / --corner-glow-*，
+      所以这里必须原样复刻选择器（同权重 + 后加载 = 胜出）。
+      OneWIFI 的「已选中」表达是薄荷描边 + 薄荷底晕，而非整卡染绿。 */
+html[data-skin="onewifi"][data-theme="dark"] .glass-frame.glass-frame--selectable.is-glow-green,
+html[data-skin="onewifi"][data-theme="dark"] .glass-frame.glass-frame--tone-green,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .glass-frame.glass-frame--selectable.is-glow-green,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .glass-frame.glass-frame--tone-green,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .device-card.is-glow-green,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .onewifi-head__chip.glass-frame.is-glow-green,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-console .device-card.glass-frame--selectable {
+  --frame-base-top: #0D293D;
+  --frame-base-bottom: #0D293D;
+  --frame-veil-top: transparent;
+  --frame-veil-bottom: transparent;
+  --lens-wash: rgba(32, 217, 174, .06);
+  --corner-glow-a: rgba(32, 217, 174, .12);
+  --corner-glow-b: rgba(32, 217, 174, .04);
+  --corner-glow-c: rgba(32, 217, 174, 0);
+  border-color: rgba(32, 217, 174, .34);
+}
+
+/* 色调卡（panel-blue / purple / green）：保留可辨识的色相，但换成 OneWIFI 冷光 */
+html[data-skin="onewifi"][data-theme="dark"] :is(.panel-blue, .panel-card.panel-blue, .glass-blue),
+html[data-skin="onewifi"][data-theme="dark"] .dashboard-shell :is(.panel-card.panel-blue, .hero-metric.panel-blue) {
+  --corner-glow-a: rgba(22, 140, 255, .13);
+  --corner-glow-b: rgba(22, 140, 255, .05);
+  --corner-glow-c: rgba(22, 140, 255, 0);
+}
+html[data-skin="onewifi"][data-theme="dark"] :is(.panel-purple, .panel-card.panel-purple, .glass-purple),
+html[data-skin="onewifi"][data-theme="dark"] .dashboard-shell :is(.panel-card.panel-purple, .hero-metric.panel-purple) {
+  --corner-glow-a: rgba(124, 156, 255, .13);
+  --corner-glow-b: rgba(124, 156, 255, .05);
+  --corner-glow-c: rgba(124, 156, 255, 0);
+}
+html[data-skin="onewifi"][data-theme="dark"] :is(.panel-green, .panel-card.panel-green, .glass-green),
+html[data-skin="onewifi"][data-theme="dark"] .dashboard-shell :is(.panel-card.panel-green, .hero-metric.panel-green) {
+  --corner-glow-a: rgba(32, 217, 174, .13);
+  --corner-glow-b: rgba(32, 217, 174, .05);
+  --corner-glow-c: rgba(32, 217, 174, 0);
+}
+
+/* ---------------------------------------------------------------------------
+   4.4 浅色 · 全局
+   OneWIFI 浅色不是「把深色反转」，而是同一套结构换成冷白表面：
+     画布 #F2F7FB / 纯白卡片 / 冰蓝边框，品牌渐变保持不变。
+   ------------------------------------------------------------------------ */
+html[data-skin="onewifi"][data-theme="light"] {
+  --gf-radius: 18px;
+  --gf-card-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+  --gf-edge-top: transparent;
+  --gf-edge-side: transparent;
+  --gf-edge-bottom: transparent;
+
+  --glass-filter: none;
+  --glass-blur-soft: none;
+  --glass-blur-size: 0px;
+  --glass-blur: 0px;
+  --glass-saturate: 100%;
+  --glass-highlight: none;
+  --glass-rim: none;
+  --glass-shadow-ambient: none;
+  --glass-shadow-inset: none;
+  --glass-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+  --glass-shadow-elevated: 0 6px 20px rgba(10, 31, 46, .12);
+  --glass-shell: #FFFFFF;
+  --shell-bg: #FFFFFF;
+  --shell-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+
+  --frame-base-top: #FFFFFF;
+  --frame-base-bottom: #FFFFFF;
+  --frame-veil-top: transparent;
+  --frame-veil-bottom: transparent;
+  --lens-wash: rgba(22, 140, 255, .04);
+  --corner-glow-x: 260px;
+  --corner-glow-y: 210px;
+  --corner-glow-a: rgba(22, 140, 255, .08);
+  --corner-glow-b: rgba(32, 217, 174, .04);
+  --corner-glow-c: rgba(32, 217, 174, 0);
+  --corner-glow-fade: 68%;
+  --corner-glow-base: #FFFFFF;
+  --corner-glow-bg:
+    radial-gradient(
+      ellipse var(--corner-glow-x) var(--corner-glow-y) at 0% 0%,
+      var(--corner-glow-a) 0%,
+      var(--corner-glow-b) 30%,
+      transparent 68%
+    ),
+    var(--corner-glow-base);
+  --corner-glow-large-bg: var(--corner-glow-bg);
+
+  /* 液态玻璃 → 实心冷白 */
+  --lg-surface: #FFFFFF;
+  --lg-surface-solid: #FFFFFF;
+  --lg-border: #D3E3EE;
+  --lg-specular: none;
+  --lg-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+  --lg-text: #0A1F2E;
+  --lg-text-active: #0E7490;
+  --lg-pill: #EAF2F8;
+  --lg-pill-border: #D3E3EE;
+  --lg-sheet-scrim: rgba(10, 31, 46, .32);
+  --lg-radius: 18px;
+  --lg-blur: 0px;
+  --lg-saturate: 100%;
+  --lg-tab-accent: #168CFF;
+
+  /* 材质家族：浅色下全部去透明、去模糊 */
+  --mat-blur: 0px;
+  --mat-saturate: 100%;
+  --mat-border: #D3E3EE;
+  --mat-border-soft: #E4EFF6;
+  --mat-light-bg: #FFFFFF;
+  --mat-light-bg-hover: #F2F7FB;
+  --mat-deep-bg: #FFFFFF;
+  --mat-deep-shell: #FFFFFF;
+  --mat-inner-bg: #EAF2F8;
+  --mat-inner-border: #D3E3EE;
+  --mat-leak-opacity: 0;
+  --cg-blur: 0px;
+  --cg-blur-soft: 0px;
+  --cg-saturate: 100%;
+  --cg-glass-card: #FFFFFF;
+  --cg-glass-shell: #FFFFFF;
+  --cg-glass-inner: #EAF2F8;
+  --cg-glass-hero: #FFFFFF;
+  --cg-border: #D3E3EE;
+  --cg-border-soft: #E4EFF6;
+  --cg-surface-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+
+  /* 主按钮渐变：浅色下略降饱和，避免白底上过亮 */
+  --cg-btn-primary-bg: linear-gradient(135deg, #168CFF 0%, #17BFA0 100%);
+  --cg-btn-primary-color: #052A22;
+  --cg-btn-primary-shadow: 0 8px 20px rgba(22, 140, 255, .22);
+  --cg-btn-primary-shadow-hover: 0 10px 26px rgba(22, 140, 255, .28);
+  --cg-btn-primary-bg-hover: linear-gradient(135deg, #3AA0FF 0%, #35D3B6 100%);
+
+  /* Soft Elevation：改成 OneWIFI 的柔和投影 */
+  --se-card-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+  --se-card-shadow-hover: 0 8px 22px rgba(10, 31, 46, .12);
+  --se-pill-shadow: 0 2px 8px rgba(10, 31, 46, .06);
+  --se-pill-shadow-hover: 0 4px 14px rgba(10, 31, 46, .10);
+
+  --ob-primary: #168CFF;
+  --ob-page-bg: #F2F7FB;
+  --ob-glass-radius: 18px;
+  --ob-glass-radius-shell: 28px;
+  --ob-glass-blur: 0px;
+  --ob-glass-saturate: 100%;
+  --ob-shell-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+  --ob-ready-pill-bg: #EAF2F8;
+  --ob-ready-pill-border: #D3E3EE;
+  --ob-ready-pill-text: #0A1F2E;
+  --ob-ready-pill-dot: #168CFF;
+  --ob-ready-surface-bg: #FFFFFF;
+  --ob-ready-surface-border: #D3E3EE;
+  --ob-ready-surface-hover: #F2F7FB;
+
+  --ob-icon-color: #4A6B7E;
+  --ob-icon-color-hover: #0A1F2E;
+  --ob-icon-color-active: #0E7490;
+  --ob-icon-color-muted: #93A9B7;
+  --ob-icon-container-bg: #EAF2F8;
+  --ob-icon-container-border: #D3E3EE;
+  --ob-icon-container-glow: none;
+  --ob-icon-container-radius: 14px;
+
+  --dk-click-radius: 23px;
+  --dk-click-pad-y: 9px;
+  --dk-click-pad-x: 18px;
+  --dk-click-min-h: 38px;
+  --dk-click-font: 12.5px;
+  --dk-click-weight: 600;
+  --dk-click-color: #0A1F2E;
+  --dk-click-border: #D3E3EE;
+  --dk-click-bg-top: #EAF2F8;
+  --dk-click-bg-bottom: #EAF2F8;
+  --dk-click-shadow: 0 1px 4px rgba(10, 31, 46, .06);
+  --dk-click-bg: #EAF2F8;
+
+  --cp-dock-bg: #FFFFFF;
+  --cp-dock-border: #D3E3EE;
+  --cp-dock-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+  --cp-dock-divider: #E4EFF6;
+  --cp-nav-color: #4A6B7E;
+  --cp-nav-hover-color: #0A1F2E;
+  --cp-nav-hover-bg: #E4EFF6;
+  --cp-nav-active-color: #0E7490;
+  --cp-nav-active-bg: var(--ow-brand-halo), #E4EFF6;
+  --cp-nav-active-border: rgba(22, 140, 255, .26);
+  --cp-nav-active-glow: none;
+
+  --dash-card-bg: #FFFFFF;
+  --dash-card-border: #D3E3EE;
+  --dash-inner-bg: #EAF2F8;
+  --dash-highlight: rgba(22, 140, 255, .30);
+  --dcp-card-bg: #FFFFFF;
+  --dcp-card-border: #D3E3EE;
+  --dcp-hover-shadow: 0 8px 22px rgba(10, 31, 46, .12);
+  --dcp-ms-color: #0E9F83;
+  --dcp-ms-glow: none;
+  --dcp-online-glow: none;
+  --dcp-offline-color: #93A9B7;
+  --dcp-offline-glow: none;
+  --dcp-warning-glow: none;
+
+  --md-elevation-1: 0 2px 8px rgba(10, 31, 46, .07);
+  --md-elevation-2: 0 6px 20px rgba(10, 31, 46, .10);
+}
+
+/* 4.5 浅色 · 页面作用域 */
+html[data-skin="onewifi"][data-theme="light"] .onewifi-lab-shell,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-console,
+html[data-skin="onewifi"][data-theme="light"] .ow-page,
+html[data-skin="onewifi"][data-theme="light"] .dashboard,
+html[data-skin="onewifi"][data-theme="light"] .dashboard-shell {
+  --vh-surface: #FFFFFF;
+  --vh-surface-hover: #F2F7FB;
+  --vh-surface-inset: #EAF2F8;
+  --vh-radius: 18px;
+  --vh-card-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+  --vh-top-light: none;
+  --vh-edge-top: transparent;
+  --vh-edge-side: transparent;
+  --vh-edge-bottom: transparent;
+  --vh-mint: #0E9F83;
+  --vh-mint-neon: #0B7A66;
+  --vh-mint-soft: rgba(14, 159, 131, .10);
+  --vh-mint-border: rgba(14, 159, 131, .28);
+  --vh-amber: #D97706;
+  --vh-amber-neon: #B45309;
+  --vh-amber-glow: none;
+  --vh-amber-soft: rgba(217, 119, 6, .10);
+  --vh-amber-border: rgba(217, 119, 6, .28);
+  --vh-glass-border: #D3E3EE;
+  --vh-label: #4A6B7E;
+  --vh-text: #0A1F2E;
+
+  --glass-filter: none;
+  --glass-blur-soft: none;
+  --frame-base-top: #FFFFFF;
+  --frame-base-bottom: #FFFFFF;
+  --frame-veil-top: transparent;
+  --frame-veil-bottom: transparent;
+  --lens-wash: rgba(22, 140, 255, .04);
+  --corner-glow-a: rgba(22, 140, 255, .08);
+  --corner-glow-b: rgba(32, 217, 174, .04);
+  --corner-glow-c: rgba(32, 217, 174, 0);
+  --corner-glow-fade: 68%;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .glass-frame.glass-frame--selectable.is-glow-green,
+html[data-skin="onewifi"][data-theme="light"] .glass-frame.glass-frame--tone-green,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-lab-shell .glass-frame.glass-frame--selectable.is-glow-green,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-lab-shell .glass-frame.glass-frame--tone-green,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-lab-shell .device-card.is-glow-green,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-console .device-card.glass-frame--selectable {
+  --frame-base-top: #FFFFFF;
+  --frame-base-bottom: #FFFFFF;
+  --frame-veil-top: transparent;
+  --frame-veil-bottom: transparent;
+  --lens-wash: rgba(14, 159, 131, .05);
+  --corner-glow-a: rgba(14, 159, 131, .10);
+  --corner-glow-b: rgba(14, 159, 131, .04);
+  --corner-glow-c: rgba(14, 159, 131, 0);
+  border-color: rgba(14, 159, 131, .30);
+}
+
+/* ============================================================================
+   5. 玻璃拟态拆除 —— 把「模糊 + 渐变眩光 + 内描光」换成 OneWIFI 实心面板
+   ----------------------------------------------------------------------------
+   第 4 节已经通过变量拿下了绝大部分外观，但上游仍有若干处把
+   border / backdrop-filter / border-radius / box-shadow 写成了硬编码值，
+   变量覆写管不到，只能靠选择器权重。
+
+   写法约定：对同一个类写两遍（.glass-frame.glass-frame）把权重从 (0,3,0)
+   抬到 (0,4,0)，压过所有上游声明；本文件又最后加载，所以即便是同权重
+   也由这里胜出。这是刻意为之，纯 CSS 技巧，不影响语义与可读性。
+   ========================================================================== */
+
+/* 5.1 深色 · 框体实心化 */
+html[data-skin="onewifi"][data-theme="dark"] .glass-frame.glass-frame,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .glass-frame.glass-frame,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-console .glass-frame.glass-frame,
+html[data-skin="onewifi"][data-theme="dark"] .ow-page .glass-frame.glass-frame,
+html[data-skin="onewifi"][data-theme="dark"] .dashboard .glass-frame.glass-frame,
+html[data-skin="onewifi"][data-theme="dark"] .dashboard-shell .glass-frame.glass-frame {
+  background: #0D293D;
+  border: 1px solid #25516A;
+  border-radius: 18px;
+  box-shadow: var(--ow-shadow);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 5.2 深色 · 伪元素：去掉渐变描边（::before）与 soft-light 眩光膜（::after）
+      OneWIFI 要的是干净 1px 边，不是玻璃高光。 */
+html[data-skin="onewifi"][data-theme="dark"] .glass-frame.glass-frame::before,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .glass-frame.glass-frame::before,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-console .glass-frame.glass-frame::before,
+html[data-skin="onewifi"][data-theme="dark"] .dashboard-shell .glass-frame.glass-frame::before {
+  background: #25516A;
+  opacity: 1;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .glass-frame.glass-frame::after,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .glass-frame.glass-frame::after,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-console .glass-frame.glass-frame::after,
+html[data-skin="onewifi"][data-theme="dark"] .dashboard-shell .glass-frame.glass-frame::after {
+  display: none;
+}
+
+/* 5.3 深色 · 变体圆角（必须排在 5.1 之后，同权重后者胜）
+      --pill 全圆端 23px / --compact 紧凑 16px / 头部胶囊 12px / 设备卡 18px */
+html[data-skin="onewifi"][data-theme="dark"] .glass-frame.glass-frame--pill,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .glass-frame.glass-frame--pill {
+  border-radius: 23px;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .glass-frame.glass-frame--compact,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .glass-frame.glass-frame--compact {
+  border-radius: 16px;
+  box-shadow: var(--ow-shadow-soft);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .onewifi-head__chip.glass-frame {
+  --gf-radius: 12px;
+  border-radius: 12px;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-console .device-card.glass-frame--selectable {
+  --gf-radius: 18px;
+  border-radius: 18px;
+}
+
+/* 5.4 浅色 · 框体实心化（结构同上，换成冷白表面） */
+html[data-skin="onewifi"][data-theme="light"] .glass-frame.glass-frame,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-lab-shell .glass-frame.glass-frame,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-console .glass-frame.glass-frame,
+html[data-skin="onewifi"][data-theme="light"] .ow-page .glass-frame.glass-frame,
+html[data-skin="onewifi"][data-theme="light"] .dashboard .glass-frame.glass-frame,
+html[data-skin="onewifi"][data-theme="light"] .dashboard-shell .glass-frame.glass-frame {
+  background: #FFFFFF;
+  border: 1px solid #D3E3EE;
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .glass-frame.glass-frame::before,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-lab-shell .glass-frame.glass-frame::before,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-console .glass-frame.glass-frame::before,
+html[data-skin="onewifi"][data-theme="light"] .dashboard-shell .glass-frame.glass-frame::before {
+  background: #D3E3EE;
+  opacity: 1;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .glass-frame.glass-frame::after,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-lab-shell .glass-frame.glass-frame::after,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-console .glass-frame.glass-frame::after,
+html[data-skin="onewifi"][data-theme="light"] .dashboard-shell .glass-frame.glass-frame::after {
+  display: none;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .glass-frame.glass-frame--pill,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-lab-shell .glass-frame.glass-frame--pill {
+  border-radius: 23px;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .glass-frame.glass-frame--compact,
+html[data-skin="onewifi"][data-theme="light"] .onewifi-lab-shell .glass-frame.glass-frame--compact {
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(10, 31, 46, .06);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .onewifi-lab-shell .onewifi-head__chip.glass-frame {
+  --gf-radius: 12px;
+  border-radius: 12px;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .onewifi-console .device-card.glass-frame--selectable {
+  --gf-radius: 18px;
+  border-radius: 18px;
+}
+
+/* 5.5 通用容器：.card / .panel-card / .panel-neutral / .status-hero
+      themes.css:124 已用变量描述，但内描光由 --glass-shadow-inset 提供，
+      上面已置 none；这里补一遍硬编码兜底，并去掉电影颗粒。 */
+html[data-skin="onewifi"][data-theme="dark"] .card,
+html[data-skin="onewifi"][data-theme="dark"] .panel-card,
+html[data-skin="onewifi"][data-theme="dark"] .panel-neutral {
+  background: #0D293D;
+  border: 1px solid #25516A;
+  box-shadow: var(--ow-shadow);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .card,
+html[data-skin="onewifi"][data-theme="light"] .panel-card,
+html[data-skin="onewifi"][data-theme="light"] .panel-neutral {
+  background: #FFFFFF;
+  border: 1px solid #D3E3EE;
+  box-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* 5.6 电影颗粒与页面 ambient：OneWIFI 只保留网格 + 光晕 */
+html[data-skin="onewifi"] {
+  --cine-grain-opacity: 0;
+  --ob-noise-image: none;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] body::before {
+  opacity: 0;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] #app::after {
+  display: none;
+}
+
+/* 5.7 侧栏内描光（themes.css:44 硬编码） */
+html[data-skin="onewifi"][data-theme="dark"] .sidebar {
+  border: 1px solid #25516A;
+  box-shadow: var(--ow-shadow);
+}
+
+html[data-skin="onewifi"][data-theme="light"] .sidebar {
+  border: 1px solid #D3E3EE;
+  box-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+}
+
+/* 5.8 浅色主容器：上游用 !important 写了半透明玻璃，这里只能用 !important 压回 */
+html[data-skin="onewifi"][data-theme="light"] .app-shell {
+  background: #FFFFFF !important;
+  border-color: #D3E3EE !important;
+  box-shadow: 0 2px 10px rgba(10, 31, 46, .08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 5.9 浅色画布：themes.css:252 用 !important 清掉了 body 背景，
+      改在 html 上画（与上游 cinematic-glass-light.css:166 同目标、后加载） */
+html[data-skin="onewifi"][data-theme="light"] {
+  background-color: #F2F7FB;
+  background-image:
+    radial-gradient(560px 520px at calc(100% - 80px) -100px,
+                    rgba(22, 140, 255, .12), rgba(22, 140, 255, 0) 70%),
+    repeating-linear-gradient(0deg,  rgba(122, 160, 184, .12) 0 1px, transparent 1px 80px),
+    repeating-linear-gradient(90deg, rgba(122, 160, 184, .12) 0 1px, transparent 1px 80px);
+  background-attachment: fixed;
+}
+
+/* ============================================================================
+   6. 组件级规则 —— 把 OneWIFI 的签名形态落到具体类名上
+   ----------------------------------------------------------------------------
+   落地思路：凡是上游用变量描述的外观，一律改变量（第 4 节）；只有硬编码的
+   几何与颜色才在这里覆写。因此这里的规则数量远少于 24 层上游 CSS。
+   ========================================================================== */
+
+/* 6.1 渐变主按钮
+      做法：不改选择器权重，只把 --dk-click-* 这几个变量在「主按钮」作用域里
+      换成品牌渐变。上游 dark-clickables.css 的 background / color / border /
+      box-shadow 全都写成了 var(--dk-click-*)，所以改变量即可整族换肤，
+      连它自带的 !important 也会拿到渐变。
+
+      OneWIFI 规范：主按钮是唯一允许大面积使用品牌渐变的地方，
+      文字用深蓝黑 #071723，圆角 23px，投影带一点品牌色。 */
+html[data-skin="onewifi"][data-theme="dark"] :is(.btn-primary, .stream-btn--primary, .sms-compose__send, .ow-ver-card__primary) {
+  --dk-click-bg: linear-gradient(135deg, #168CFF 0%, #20D9AE 100%);
+  --dk-click-bg-top: linear-gradient(135deg, #168CFF 0%, #20D9AE 100%);
+  --dk-click-bg-bottom: linear-gradient(135deg, #168CFF 0%, #20D9AE 100%);
+  --dk-click-color: #071723;
+  --dk-click-border: transparent;
+  --dk-click-shadow: 0 8px 20px rgba(22, 140, 255, .26);
+}
+
+html[data-skin="onewifi"][data-theme="dark"] :is(.btn-primary, .stream-btn--primary, .sms-compose__send):hover:not(:disabled) {
+  --dk-click-bg: linear-gradient(135deg, #3AA0FF 0%, #35D9B8 100%);
+  --dk-click-bg-top: linear-gradient(135deg, #3AA0FF 0%, #35D9B8 100%);
+  --dk-click-bg-bottom: linear-gradient(135deg, #3AA0FF 0%, #35D9B8 100%);
+  --dk-click-color: #04121C;
+  --dk-click-shadow: 0 12px 26px rgba(22, 140, 255, .32);
+}
+
+html[data-skin="onewifi"][data-theme="light"] :is(.btn-primary, .stream-btn--primary, .sms-compose__send, .ow-ver-card__primary) {
+  --dk-click-bg: linear-gradient(135deg, #168CFF 0%, #17BFA0 100%);
+  --dk-click-bg-top: linear-gradient(135deg, #168CFF 0%, #17BFA0 100%);
+  --dk-click-bg-bottom: linear-gradient(135deg, #168CFF 0%, #17BFA0 100%);
+  --dk-click-color: #052A22;
+  --dk-click-border: transparent;
+  --dk-click-shadow: 0 8px 20px rgba(22, 140, 255, .22);
+}
+
+/* 6.2 幽灵按钮：透明底 + 1px 边 + 冰白文字（OneWIFI 的次级操作） */
+html[data-skin="onewifi"][data-theme="dark"] :is(.btn-ghost, .ow-ver-card__ghost) {
+  --dk-click-bg: transparent;
+  --dk-click-bg-top: transparent;
+  --dk-click-bg-bottom: transparent;
+  --dk-click-color: #F4FBFF;
+  --dk-click-border: #25516A;
+  --dk-click-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="dark"] :is(.btn-ghost, .ow-ver-card__ghost):hover:not(:disabled) {
+  --dk-click-bg: #14344A;
+  --dk-click-bg-top: #14344A;
+  --dk-click-bg-bottom: #14344A;
+  --dk-click-border: #2F6B8A;
+}
+html[data-skin="onewifi"][data-theme="light"] :is(.btn-ghost, .ow-ver-card__ghost) {
+  --dk-click-bg: transparent;
+  --dk-click-bg-top: transparent;
+  --dk-click-bg-bottom: transparent;
+  --dk-click-color: #0A1F2E;
+  --dk-click-border: #D3E3EE;
+  --dk-click-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="light"] :is(.btn-ghost, .ow-ver-card__ghost):hover:not(:disabled) {
+  --dk-click-bg: #EAF2F8;
+  --dk-click-bg-top: #EAF2F8;
+  --dk-click-bg-bottom: #EAF2F8;
+  --dk-click-border: #B9D2E2;
+}
+
+/* 6.3 表单控件 —— OneWIFI：圆角 16px、底 #102E42、边 #25516A、占位 #8EACBE */
+html[data-skin="onewifi"][data-theme="dark"] .ow-page .ow-field input,
+html[data-skin="onewifi"][data-theme="dark"] .ow-page .ow-field select,
+html[data-skin="onewifi"][data-theme="dark"] .ow-page .ow-field textarea,
+html[data-skin="onewifi"][data-theme="dark"] .ow-dialog .ow-field input,
+html[data-skin="onewifi"][data-theme="dark"] .ow-dialog .ow-field select,
+html[data-skin="onewifi"][data-theme="dark"] .ow-dialog .ow-field textarea,
+html[data-skin="onewifi"][data-theme="dark"] .ow-field input,
+html[data-skin="onewifi"][data-theme="dark"] .ow-field select,
+html[data-skin="onewifi"][data-theme="dark"] .ow-field textarea {
+  background: #102E42;
+  border-color: #25516A;
+  border-radius: 16px;
+  box-shadow: none;
+  color: #F4FBFF;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .ow-field input::placeholder,
+html[data-skin="onewifi"][data-theme="dark"] .ow-field textarea::placeholder {
+  color: #8EACBE;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .ow-field input:focus,
+html[data-skin="onewifi"][data-theme="dark"] .ow-field select:focus,
+html[data-skin="onewifi"][data-theme="dark"] .ow-field textarea:focus {
+  border-color: rgba(22, 140, 255, .55);
+  box-shadow: 0 0 0 3px rgba(22, 140, 255, .16);
+}
+
+html[data-skin="onewifi"][data-theme="light"] .ow-field input,
+html[data-skin="onewifi"][data-theme="light"] .ow-field select,
+html[data-skin="onewifi"][data-theme="light"] .ow-field textarea {
+  background: #EAF2F8;
+  border-color: #D3E3EE;
+  border-radius: 16px;
+  box-shadow: none;
+  color: #0A1F2E;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .ow-field input::placeholder,
+html[data-skin="onewifi"][data-theme="light"] .ow-field textarea::placeholder {
+  color: #93A9B7;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .ow-field input:focus,
+html[data-skin="onewifi"][data-theme="light"] .ow-field select:focus,
+html[data-skin="onewifi"][data-theme="light"] .ow-field textarea:focus {
+  border-color: rgba(22, 140, 255, .55);
+  box-shadow: 0 0 0 3px rgba(22, 140, 255, .14);
+}
+
+/* 登录页输入框（auth-input）同样处理 */
+html[data-skin="onewifi"][data-theme="dark"] .auth-input {
+  background: #102E42;
+  border: 1px solid #25516A;
+  border-radius: 16px;
+  color: #F4FBFF;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-input::placeholder {
+  color: #8EACBE;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-input {
+  background: #EAF2F8;
+  border: 1px solid #D3E3EE;
+  border-radius: 16px;
+  color: #0A1F2E;
+}
+
+/* 6.4 导航项：OneWIFI 激活态 = 薄荷文字 + 渐变底晕 + 1px 薄荷边 */
+html[data-skin="onewifi"][data-theme="dark"] .cp-nav-item,
+html[data-skin="onewifi"][data-theme="dark"] .sidebar-nav-item {
+  border-radius: 14px;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .cp-nav-item.active,
+html[data-skin="onewifi"][data-theme="dark"] .sidebar-nav-item.active,
+html[data-skin="onewifi"][data-theme="dark"] .cp-nav-item.is-active,
+html[data-skin="onewifi"][data-theme="dark"] .sidebar-nav-item.is-active {
+  background: var(--ow-brand-halo), var(--ow-brand-halo-solid);
+  border-color: rgba(32, 217, 174, .35);
+  color: #B8F8EC;
+  box-shadow: none;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .cp-nav-item.active,
+html[data-skin="onewifi"][data-theme="light"] .sidebar-nav-item.active,
+html[data-skin="onewifi"][data-theme="light"] .cp-nav-item.is-active,
+html[data-skin="onewifi"][data-theme="light"] .sidebar-nav-item.is-active {
+  background: var(--ow-brand-halo), #E4EFF6;
+  border-color: rgba(22, 140, 255, .26);
+  color: #0E7490;
+  box-shadow: none;
+}
+
+/* 6.5 统计卡 / 概览卡：实心 + 大圆角 + 柔和投影；图标方块保持语义色但去辉光 */
+html[data-skin="onewifi"][data-theme="dark"] .metric-card,
+html[data-skin="onewifi"][data-theme="dark"] .overview-card,
+html[data-skin="onewifi"][data-theme="dark"] .device-card,
+html[data-skin="onewifi"][data-theme="dark"] .esim-item {
+  border-radius: 18px;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .metric-card--blue .metric-card__icon,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .metric-card--green .metric-card__icon,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .metric-card--purple .metric-card__icon,
+html[data-skin="onewifi"][data-theme="dark"] .onewifi-lab-shell .metric-card--amber .metric-card__icon {
+  box-shadow: none;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .metric-card__value {
+  color: #F4FBFF;
+}
+html[data-skin="onewifi"][data-theme="dark"] .metric-card__label {
+  color: #8EACBE;
+}
+html[data-skin="onewifi"][data-theme="dark"] .metric-card__sub {
+  color: #A8C2D1;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .metric-card__value {
+  color: #0A1F2E;
+}
+html[data-skin="onewifi"][data-theme="light"] .metric-card__label {
+  color: #4A6B7E;
+}
+html[data-skin="onewifi"][data-theme="light"] .metric-card__sub {
+  color: #6B8798;
+}
+
+/* 6.6 徽标胶囊 / 状态点：渐变描边 + 薄荷文字（OneWIFI 的「JP / US / HK」式样） */
+html[data-skin="onewifi"][data-theme="dark"] .overview-badge,
+html[data-skin="onewifi"][data-theme="dark"] .status-pill,
+html[data-skin="onewifi"][data-theme="dark"] .ow-ver-pill {
+  border-radius: 23px;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .overview-badge--hero {
+  background: var(--ow-brand-halo), #102E42;
+  border: 1px solid rgba(32, 217, 174, .32);
+  color: #B8F8EC;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .overview-badge--hero {
+  background: var(--ow-brand-halo), #EAF2F8;
+  border: 1px solid rgba(22, 140, 255, .26);
+  color: #0E7490;
+}
+
+/* 6.7 进度条：轨道深、填充用品牌渐变 */
+html[data-skin="onewifi"][data-theme="dark"] .progress-bar {
+  background: #102E42;
+  border: 1px solid #25516A;
+  border-radius: 23px;
+}
+html[data-skin="onewifi"][data-theme="dark"] .progress-fill {
+  background: linear-gradient(90deg, #168CFF, #20D9AE);
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="light"] .progress-bar {
+  background: #EAF2F8;
+  border: 1px solid #D3E3EE;
+  border-radius: 23px;
+}
+html[data-skin="onewifi"][data-theme="light"] .progress-fill {
+  background: linear-gradient(90deg, #168CFF, #17BFA0);
+  box-shadow: none;
+}
+
+/* 6.8 对话框：圆角 28px 的实心主面板 */
+html[data-skin="onewifi"][data-theme="dark"] .ow-dialog,
+html[data-skin="onewifi"][data-theme="dark"] .esim-dialog,
+html[data-skin="onewifi"][data-theme="dark"] .add-device-dialog,
+html[data-skin="onewifi"][data-theme="dark"] .device-rename-dialog {
+  border-radius: 28px;
+}
+html[data-skin="onewifi"][data-theme="light"] .ow-dialog,
+html[data-skin="onewifi"][data-theme="light"] .esim-dialog,
+html[data-skin="onewifi"][data-theme="light"] .add-device-dialog,
+html[data-skin="onewifi"][data-theme="light"] .device-rename-dialog {
+  border-radius: 28px;
+}
+
+/* 6.9 登录页：居中单卡，无侧栏；圆角 30px、2px 边、按母题投影 */
+html[data-skin="onewifi"][data-theme="dark"] .auth-card {
+  background: #0C2434;
+  border: 2px solid #25516A;
+  border-radius: 30px;
+  box-shadow: var(--ow-shadow);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-card::before {
+  display: none;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-brand-name,
+html[data-skin="onewifi"][data-theme="dark"] .auth-title {
+  color: #F4FBFF;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-lead {
+  color: #8EACBE;
+}
+/* 输入框：从胶囊+黑底改成 OneWIFI 的方角盒 —— 圆角 16px、底 #102E42、边 #25516A */
+html[data-skin="onewifi"][data-theme="dark"] .auth-field {
+  background: #102E42;
+  border: 1px solid #25516A;
+  border-radius: 16px;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: #F4FBFF;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-field:focus-within {
+  background: #102E42;
+  border-color: rgba(22, 140, 255, .55);
+  box-shadow: 0 0 0 3px rgba(22, 140, 255, .16);
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-field-icon {
+  background: #0D293D;
+  border: 1px solid #25516A;
+  border-radius: 12px;
+  box-shadow: none;
+  color: #A8C2D1;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-input {
+  color: #F4FBFF;
+  -webkit-text-fill-color: #F4FBFF;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-input::placeholder {
+  color: #8EACBE;
+}
+/* 提交按钮：OneWIFI 唯一允许的渐变实底，深蓝黑文字 */
+html[data-skin="onewifi"][data-theme="dark"] .auth-go {
+  width: auto;
+  min-width: 132px;
+  height: 48px;
+  padding: 0 26px;
+  border: none;
+  border-radius: 23px;
+  background: var(--ow-brand-gradient);
+  box-shadow: 0 8px 20px rgba(22, 140, 255, .26);
+  color: #071723;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: .04em;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-go:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3AA0FF 0%, #35D9B8 100%);
+  box-shadow: 0 12px 26px rgba(22, 140, 255, .32);
+  transform: translateY(-1px);
+}
+/* 密码规则面板：改成内嵌信息条 */
+html[data-skin="onewifi"][data-theme="dark"] .auth-rules {
+  background: #102E42;
+  border: 1px solid #25516A;
+  border-radius: 16px;
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-rules li {
+  color: #8EACBE;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-rules li.is-ok {
+  color: #B8F8EC;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-rule-dot {
+  background: #25516A;
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-rules li.is-ok .auth-rule-dot {
+  background: #20D9AE;
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-alert {
+  background: #102E42;
+  border: 1px solid #25516A;
+  border-radius: 16px;
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-alert--error {
+  background: rgba(239, 68, 68, .10);
+  border-color: rgba(239, 68, 68, .30);
+  color: #FCA5A5;
+}
+/* 品牌标识方块：78×78 → 44px 规格，圆角 14px，实心底 + 薄荷环 */
+html[data-skin="onewifi"][data-theme="dark"] .brand-mark__plate {
+  fill: #0D293D;
+  stroke: #25516A;
+  stroke-width: 1.5;
+}
+
+/* 登录页背景：上游是一套纯灰「丝绸波浪」，这里整幅重绘成 OneWIFI 深海
+      —— 深海底 + 右上品牌光晕 + 蓝薄荷渐变的柔和波峰，与签名背景同源。 */
+html[data-skin="onewifi"][data-theme="dark"] .auth-bg {
+  background:
+    radial-gradient(760px 640px at calc(100% - 60px) -140px,
+                    rgba(22, 140, 255, .26), rgba(22, 140, 255, 0) 68%),
+    radial-gradient(520px 420px at 6% 108%,
+                    rgba(32, 217, 174, .12), rgba(32, 217, 174, 0) 70%),
+    linear-gradient(180deg, #0B2334 0%, #071723 44%, #040F19 100%);
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .auth-wave--1 {
+  background:
+    radial-gradient(ellipse 70% 55% at 38% 28%, rgba(124, 185, 213, .16) 0%, transparent 52%),
+    linear-gradient(145deg, #14425C 0%, #0C2A3E 34%, #08202F 68%, #05141F 100%);
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-wave--2 {
+  background:
+    radial-gradient(ellipse 62% 48% at 62% 32%, rgba(32, 217, 174, .10) 0%, transparent 50%),
+    linear-gradient(160deg, #10394F 0%, #0A2536 45%, #061A27 100%);
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-wave--3 {
+  background:
+    radial-gradient(ellipse 58% 42% at 48% 58%, rgba(22, 140, 255, .10) 0%, transparent 54%),
+    linear-gradient(135deg, #0E3247 0%, #092232 55%, #05141F 100%);
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-wave--4 {
+  background:
+    radial-gradient(ellipse 50% 40% at 40% 40%, rgba(124, 185, 213, .10) 0%, transparent 58%),
+    linear-gradient(125deg, #0C2C3F 0%, #071B28 100%);
+}
+html[data-skin="onewifi"][data-theme="dark"] .auth-scrim {
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 50%, transparent 38%, rgba(4, 15, 25, .46) 100%),
+    linear-gradient(180deg, rgba(7, 23, 35, .18) 0%, rgba(7, 23, 35, .34) 100%);
+}
+
+html[data-skin="onewifi"][data-theme="light"] .auth-bg {
+  background:
+    radial-gradient(760px 640px at calc(100% - 60px) -140px,
+                    rgba(22, 140, 255, .16), rgba(22, 140, 255, 0) 68%),
+    radial-gradient(520px 420px at 6% 108%,
+                    rgba(32, 217, 174, .10), rgba(32, 217, 174, 0) 70%),
+    linear-gradient(180deg, #E8F2F9 0%, #F2F7FB 44%, #EAF3F8 100%);
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-wave--1 {
+  background:
+    radial-gradient(ellipse 70% 55% at 38% 28%, rgba(255, 255, 255, .55) 0%, transparent 52%),
+    linear-gradient(145deg, #D6E9F4 0%, #E7F1F8 34%, #F0F7FB 68%, #F5FAFD 100%);
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-wave--2 {
+  background:
+    radial-gradient(ellipse 62% 48% at 62% 32%, rgba(32, 217, 174, .08) 0%, transparent 50%),
+    linear-gradient(160deg, #DDEDF6 0%, #EAF3F9 45%, #F2F8FC 100%);
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-wave--3 {
+  background:
+    radial-gradient(ellipse 58% 42% at 48% 58%, rgba(22, 140, 255, .08) 0%, transparent 54%),
+    linear-gradient(135deg, #E2EFF7 0%, #EDF5FA 55%, #F4FAFD 100%);
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-wave--4 {
+  background:
+    radial-gradient(ellipse 50% 40% at 40% 40%, rgba(255, 255, 255, .50) 0%, transparent 58%),
+    linear-gradient(125deg, #E6F2F9 0%, #F0F7FB 100%);
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-scrim {
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 50%, transparent 38%, rgba(226, 240, 248, .50) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, .12) 0%, rgba(255, 255, 255, .26) 100%);
+}
+
+/* 品牌标识方块：OneWIFI 深海底方牌 + 薄荷圆环
+      CatLogo 的 scoped 样式把 --mark-* 定义在 .brand-mark[data-v-xxx]（0,2,0）上，
+      所以这里要把 .brand-mark 写两遍把权重抬到 (0,3,0) 才能压过。 */
+html[data-skin="onewifi"][data-theme="dark"] .brand-mark.brand-mark {
+  --mark-plate: #0D293D;
+  --mark-plate-border: #25516A;
+  --mark-ring: #20D9AE;
+}
+html[data-skin="onewifi"][data-theme="light"] .brand-mark.brand-mark {
+  --mark-plate: #EAF2F8;
+  --mark-plate-border: #D3E3EE;
+  --mark-ring: #0E9F83;
+}
+
+html[data-skin="onewifi"][data-theme="light"] .auth-card {
+  background: #FFFFFF;
+  border: 2px solid #D3E3EE;
+  border-radius: 30px;
+  box-shadow: 0 2px 10px rgba(10, 31, 46, .08);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-card::before {
+  display: none;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-brand-name,
+html[data-skin="onewifi"][data-theme="light"] .auth-title {
+  color: #0A1F2E;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-lead {
+  color: #4A6B7E;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-field {
+  background: #EAF2F8;
+  border: 1px solid #D3E3EE;
+  border-radius: 16px;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: #0A1F2E;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-field:focus-within {
+  border-color: rgba(22, 140, 255, .55);
+  box-shadow: 0 0 0 3px rgba(22, 140, 255, .14);
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-field-icon {
+  background: #FFFFFF;
+  border: 1px solid #D3E3EE;
+  border-radius: 12px;
+  box-shadow: none;
+  color: #4A6B7E;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-input {
+  color: #0A1F2E;
+  -webkit-text-fill-color: #0A1F2E;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-input::placeholder {
+  color: #93A9B7;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-go {
+  width: auto;
+  min-width: 132px;
+  height: 48px;
+  padding: 0 26px;
+  border: none;
+  border-radius: 23px;
+  background: linear-gradient(135deg, #168CFF 0%, #17BFA0 100%);
+  box-shadow: 0 8px 20px rgba(22, 140, 255, .22);
+  color: #052A22;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: .04em;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-rules {
+  background: #EAF2F8;
+  border: 1px solid #D3E3EE;
+  border-radius: 16px;
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-rules li {
+  color: #4A6B7E;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-rules li.is-ok {
+  color: #0E7490;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-rule-dot {
+  background: #C4DAE8;
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-rules li.is-ok .auth-rule-dot {
+  background: #0E9F83;
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="light"] .auth-alert {
+  background: #EAF2F8;
+  border: 1px solid #D3E3EE;
+  border-radius: 16px;
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="light"] .brand-mark__plate {
+  fill: #EAF2F8;
+  stroke: #D3E3EE;
+  stroke-width: 1.5;
+}
+html[data-skin="onewifi"][data-theme="light"] .brand-mark__ring {
+  fill: #0E9F83;
+}
+
+/* 6.10 内嵌列表行 —— OneWIFI 列表行规格：62px 级、圆角 16px、底 #102E42
+      注意：.ow-row / .metric-row / .ow-theme-row / .device-card__plate 是
+      「行容器」或已带 glass-frame 的元素，不能加卡片底，故不在此列。 */
+html[data-skin="onewifi"][data-theme="dark"] :is(.policy-compact__row, .esim-row, .ow-log-row, .carrier-banner) {
+  background: #102E42;
+  border: 1px solid #25516A;
+  border-radius: 16px;
+}
+html[data-skin="onewifi"][data-theme="light"] :is(.policy-compact__row, .esim-row, .ow-log-row, .carrier-banner) {
+  background: #EAF2F8;
+  border: 1px solid #D3E3EE;
+  border-radius: 16px;
+}
+
+/* 6.11 开关与主题胶囊 */
+html[data-skin="onewifi"][data-theme="dark"] .policy-toggle {
+  background: #102E42;
+  border: 1px solid #25516A;
+  border-radius: 23px;
+}
+html[data-skin="onewifi"][data-theme="dark"] .policy-toggle__thumb {
+  background: #6F92A6;
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="dark"] .policy-toggle.is-on {
+  background: var(--ow-brand-gradient);
+  border-color: transparent;
+}
+html[data-skin="onewifi"][data-theme="dark"] .policy-toggle.is-on .policy-toggle__thumb {
+  background: #071723;
+}
+html[data-skin="onewifi"][data-theme="light"] .policy-toggle {
+  background: #E4EFF6;
+  border: 1px solid #D3E3EE;
+  border-radius: 23px;
+}
+html[data-skin="onewifi"][data-theme="light"] .policy-toggle__thumb {
+  background: #93A9B7;
+  box-shadow: none;
+}
+html[data-skin="onewifi"][data-theme="light"] .policy-toggle.is-on {
+  background: linear-gradient(135deg, #168CFF, #17BFA0);
+  border-color: transparent;
+}
+html[data-skin="onewifi"][data-theme="light"] .policy-toggle.is-on .policy-toggle__thumb {
+  background: #FFFFFF;
+}
+
+html[data-skin="onewifi"][data-theme="dark"] .ow-theme-chip {
+  background: #102E42;
+  border: 1px solid #25516A;
+  color: #A8C2D1;
+}
+html[data-skin="onewifi"][data-theme="dark"] .ow-theme-chip.is-active,
+html[data-skin="onewifi"][data-theme="dark"] .ow-theme-chip[aria-pressed="true"] {
+  background: var(--ow-brand-halo), #102E42;
+  border-color: rgba(32, 217, 174, .35);
+  color: #B8F8EC;
+}
+html[data-skin="onewifi"][data-theme="light"] .ow-theme-chip {
+  background: #EAF2F8;
+  border: 1px solid #D3E3EE;
+  color: #4A6B7E;
+}
+html[data-skin="onewifi"][data-theme="light"] .ow-theme-chip.is-active,
+html[data-skin="onewifi"][data-theme="light"] .ow-theme-chip[aria-pressed="true"] {
+  background: var(--ow-brand-halo), #EAF2F8;
+  border-color: rgba(22, 140, 255, .26);
+  color: #0E7490;
+}
+
+/* ============================================================================
+   7. 细节收口 —— 滚动条 / 焦点环 / 文本选择 / 动效
+   ========================================================================== */
+
+/* 7.1 滚动条：纤细、深底、圆角拇指 */
+html[data-skin="onewifi"][data-theme="dark"] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+html[data-skin="onewifi"][data-theme="dark"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+html[data-skin="onewifi"][data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #25516A;
+  border: 2px solid transparent;
+  border-radius: 23px;
+  background-clip: content-box;
+}
+html[data-skin="onewifi"][data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #2F6B8A;
+  background-clip: content-box;
+}
+html[data-skin="onewifi"][data-theme="light"] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+html[data-skin="onewifi"][data-theme="light"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+html[data-skin="onewifi"][data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #C4DAE8;
+  border: 2px solid transparent;
+  border-radius: 23px;
+  background-clip: content-box;
+}
+
+/* 7.2 焦点环：统一品牌蓝 3px 柔环，保证键盘可达性 */
+html[data-skin="onewifi"][data-theme="dark"] :focus-visible,
+html[data-skin="onewifi"][data-theme="light"] :focus-visible {
+  outline: 2px solid rgba(22, 140, 255, .75);
+  outline-offset: 2px;
+}
+
+/* 7.3 文本选择：品牌浅底 + 深字 */
+html[data-skin="onewifi"][data-theme="dark"] ::selection {
+  background: rgba(32, 217, 174, .28);
+  color: #F4FBFF;
+}
+html[data-skin="onewifi"][data-theme="light"] ::selection {
+  background: rgba(22, 140, 255, .20);
+  color: #0A1F2E;
+}
+
+/* 7.4 动效：OneWIFI 用「慢出」曲线，位移克制 */
+html[data-skin="onewifi"][data-theme="dark"] .glass-frame,
+html[data-skin="onewifi"][data-theme="dark"] .panel-card,
+html[data-skin="onewifi"][data-theme="dark"] .metric-card,
+html[data-skin="onewifi"][data-theme="dark"] .overview-card,
+html[data-skin="onewifi"][data-theme="dark"] .device-card {
+  transition:
+    border-color 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 悬浮抬升：-2px + 阴影加深，不做缩放、不做辉光爆炸 */
+html[data-skin="onewifi"][data-theme="dark"] :is(.glass-frame--selectable, .metric-card, .overview-card):hover {
+  border-color: #2F6B8A;
+  box-shadow: 0 20px 30px rgba(2, 11, 18, .52);
+  transform: translateY(-2px);
+}
+html[data-skin="onewifi"][data-theme="light"] :is(.glass-frame--selectable, .metric-card, .overview-card):hover {
+  border-color: #B9D2E2;
+  box-shadow: 0 10px 26px rgba(10, 31, 46, .14);
+  transform: translateY(-2px);
+}
+
+/* 7.5 尊重系统偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .glass-frame,
+  .panel-card,
+  .metric-card,
+  .overview-card,
+  .device-card,
+  .progress-fill,
+  .runtime-action-btn {
+    transition: none !important;
+    animation: none !important;
+  }
+  html[data-skin="onewifi"][data-theme="dark"] :is(.glass-frame--selectable, .metric-card, .overview-card):hover,
+  html[data-skin="onewifi"][data-theme="light"] :is(.glass-frame--selectable, .metric-card, .overview-card):hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-skin="onewifi"][data-theme="dark"] .glass-frame,
+  html[data-skin="onewifi"][data-theme="dark"] .panel-card,
+  html[data-skin="onewifi"][data-theme="dark"] .card,
+  html[data-skin="onewifi"][data-theme="light"] .glass-frame,
+  html[data-skin="onewifi"][data-theme="light"] .panel-card,
+  html[data-skin="onewifi"][data-theme="light"] .card {
+    background: #0D293D;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html[data-skin="onewifi"][data-theme="light"] .glass-frame,
+  html[data-skin="onewifi"][data-theme="light"] .panel-card,
+  html[data-skin="onewifi"][data-theme="light"] .card {
+    background: #FFFFFF;
+  }
+}
+
+/* ============================================================================
+   OneWIFI Theme —— 完
+   ----------------------------------------------------------------------------
+   覆盖范围自查：
+     第 1–3 节  一级令牌 + 双主题表面 + 签名背景
+     第 4 节    二级令牌（玻璃 / 材质 / 电影感 / 侧栏 / 仪表盘家族）
+     第 5 节    硬编码的玻璃声明 —— 实心化、伪元素眩光、电影颗粒
+     第 6 节    组件形态 —— 主按钮 / 幽灵按钮 / 表单 / 导航 / 卡片 /
+                 徽标 / 进度 / 对话框 / 登录页 / 列表行 / 开关
+     第 7 节    滚动条 / 焦点环 / 动效 / 系统偏好
+
+   若日后新增页面引入了新的玻璃容器，只需在第 5.1 的选择器列表里补一个
+   作用域；外观本身由第 4 节的变量统一供给，不必再写组件规则。
+   ========================================================================== */

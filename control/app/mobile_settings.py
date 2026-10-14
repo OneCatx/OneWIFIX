@@ -1,6 +1,8 @@
 """Native notification settings mapped onto MDD's retained channel configuration."""
 from __future__ import annotations
 
+from urllib.parse import urlsplit
+
 from fastapi import HTTPException
 
 from . import config as cfg, mobile_apns, notify_push
@@ -21,7 +23,16 @@ def view(settings: dict) -> dict:
     for name in CHANNELS:
         channel = settings.get(name) or {}
         if name == "onetools":
-            result[name] = {"enabled": True, "public_base_url": ""}
+            # Absent means the pairing stream stays available, matching installs that
+            # never saved this channel. An explicit save is what turns it off.
+            explicit = isinstance(channel, dict) and "enabled" in channel
+            result[name] = {
+                "enabled": bool(channel.get("enabled")) if explicit else True,
+                "public_base_url": str(channel.get("public_base_url") or ""),
+            }
+            continue
+        if name == "email":
+            result[name] = notify_push.email_view(channel)
             continue
         item = {"enabled": bool(channel.get("enabled"))}
         if name in ("webhook", "wecom", "bark"):
@@ -117,27 +128,36 @@ def update(body: dict) -> dict:
     for name, supplied in body.items():
         if not isinstance(supplied, dict) or not isinstance(supplied.get("enabled"), bool):
             raise HTTPException(422, "notification channel requires boolean enabled")
+        previous = current.get(name) or {}
         if name == "email":
-            if supplied["enabled"]:
-                raise HTTPException(501, "email delivery is not supported")
+            try:
+                patch[name] = notify_push.prepare_email(supplied, previous)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
             continue
         if name == "onetools":
-            if not supplied["enabled"] or supplied.get("public_base_url", "") != "":
-                raise HTTPException(501, "OneTools enablement and public address cannot be changed")
+            public = str(supplied.get("public_base_url") or "").strip()
+            if public:
+                parsed = urlsplit(public)
+                if parsed.scheme not in ("http", "https") or not parsed.hostname:
+                    raise HTTPException(422, "public_base_url must be an absolute http or https URL")
+                public = public.rstrip("/")
+            item = dict(previous)
+            item["enabled"] = supplied["enabled"]
+            item["public_base_url"] = public
+            patch[name] = item
             continue
         if name == "telegram" and supplied.get("base_url") and not (
                 supplied["base_url"] == MASK and
                 (current.get("telegram") or {}).get("base_url")):
             raise HTTPException(501, "custom Telegram API base URL is not supported")
-        previous = current.get(name) or {}
         item = dict(previous)
         item["enabled"] = supplied["enabled"]
         if name in ("webhook", "wecom", "bark") and "urls" in supplied:
             urls = _restore_urls(supplied["urls"], previous)
             if name == "webhook":
-                if len(urls) > 1:
-                    raise HTTPException(501, "multiple custom webhook destinations are not supported")
                 item["url"] = urls[0] if urls else ""
+                item["urls"] = urls
             else:
                 item["urls"] = urls
         fields = {
@@ -162,7 +182,11 @@ def update(body: dict) -> dict:
                 elif name == "webhook":
                     sample = notify_push.build_payload(notify_push.EV_INCOMING_SMS,
                                                        {"id": "preview"}, "", "test")
-                    notify_push.build_webhook_request(item, sample)
+                    targets = item.get("urls") or ([item["url"]] if item.get("url") else [])
+                    if not targets:
+                        raise ValueError("webhook URL is empty")
+                    for target in targets:
+                        notify_push.build_webhook_request({**item, "url": target}, sample)
                 elif name == "telegram" and not (item.get("bot_token") and item.get("chat_id")):
                     raise ValueError("Telegram token and chat ID are required")
                 elif name == "pushplus" and not item.get("token"):
@@ -178,7 +202,7 @@ def update(body: dict) -> dict:
 def test(name: str, body: dict) -> dict:
     senders = {"telegram": notify_push.send_telegram, "webhook": notify_push.send_webhook,
                "wecom": notify_push.send_wecom, "bark": notify_push.send_bark,
-               "pushplus": notify_push.send_pushplus}
+               "pushplus": notify_push.send_pushplus, "email": notify_push.send_email}
     if name not in senders:
         raise HTTPException(501, "notification test is not supported")
     if not isinstance(body, dict):
@@ -190,9 +214,10 @@ def test(name: str, body: dict) -> dict:
     if "urls" in body:
         urls = _restore_urls(body["urls"], current)
         if name == "webhook":
-            if len(urls) != 1:
+            if not urls:
                 raise HTTPException(422, "exactly one webhook URL required")
             item["url"] = urls[0]
+            item["urls"] = urls
         else:
             item["urls"] = urls
     for field, value in body.items():
@@ -200,8 +225,25 @@ def test(name: str, body: dict) -> dict:
             continue
         target = "proxy_url" if field == "proxy" else field
         item[target] = _secret(value, current.get(target))
-    if name in ("wecom", "bark"):
-        (notify_push.validate_wecom if name == "wecom" else notify_push.validate_bark)(item)
     payload = notify_push.build_payload(notify_push.EV_INCOMING_SMS,
                                         {"id": "preview", "name": "SIM"}, "+10000000000", "test")
-    return senders[name](item, payload)
+    try:
+        if name == "bark":
+            notify_push.validate_bark(item)
+        elif name == "wecom":
+            notify_push.validate_wecom(item)
+        elif name == "webhook":
+            targets = item.get("urls") or ([item["url"]] if item.get("url") else [])
+            if not targets:
+                raise ValueError("webhook URL is empty")
+            for target in targets:
+                notify_push.build_webhook_request({**item, "url": target}, payload)
+        elif name == "telegram" and not (item.get("bot_token") and item.get("chat_id")):
+            raise ValueError("Telegram token and chat ID are required")
+        elif name == "pushplus" and not item.get("token"):
+            raise ValueError("PushPlus token is required")
+        return senders[name](item, payload)
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except RuntimeError:
+        raise HTTPException(502, "notification was not delivered")

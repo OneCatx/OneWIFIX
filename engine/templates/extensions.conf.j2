@@ -159,7 +159,13 @@ same => n,Set(FILE(/logs/calls.txt,,,a)=OUT call to ${EXTEN} at ${STRFTIME(${EPO
 ; Quote ${EXTEN}: TrySystem runs this through a shell, where '#' starting a word begins a
 ; comment. An unquoted #225# swallowed the argument and every following one, so the call
 ; record was never created — while *#21# survived only because its '#' is mid-word.
-same => n,TrySystem(/usr/local/bin/notify.py call_out "${EXTEN}" "${CHANNEL(uniqueid)}" &)
+; A handset dial originates Local/<uuid>@handset-media. That uuid is the call id the
+; phone already holds. A softphone channel is not a Local channel, so this leaves the
+; extra argument empty and the uniqueid in the notify line stays that call's id.
+same => n,GotoIf($["${CHANNEL(name):0:6}" != "Local/"]?out_id_ready)
+same => n,GotoIf($["${ONEWIFI_CALL_ID}" != ""]?out_id_ready)
+same => n,Set(ONEWIFI_CALL_ID=${CUT(CUT(CHANNEL(name),@,1),/,2)})
+same => n(out_id_ready),TrySystem(/usr/local/bin/notify.py call_out "${EXTEN}" "${CHANNEL(uniqueid)}" "${ONEWIFI_CALL_ID}" &)
 ; Ring timeout {{ ring_timeout }}s (configurable): if the callee never answers, Asterisk
 ; CANCELs the outbound INVITE at this deadline instead of leaving it open. The carrier keeps
 ; the early dialog alive and RE-ALERTS the callee (repeated 180 Ringing) for as long as our
@@ -208,7 +214,10 @@ same => n,Hangup()
 exten => h,1,Set(ST=${IF($["${REALSTATUS}" != ""]?${REALSTATUS}:${DIALSTATUS})})
 same => n,Set(CS=${IF($["${REALCAUSE}" != ""]?${REALCAUSE}:${HANGUPCAUSE})})
 same => n,Gosub(hangup-by,s,1)
-same => n,ExecIf($["${ONEWIFI_OUTBOUND_CALL}"="1"]?TrySystem(/usr/local/bin/notify.py call_result out "${CALLPEER}" "${ST}" "${CS}" "${GOSUB_RETVAL}" "${CHANNEL(uniqueid)}" &))
+same => n,GotoIf($["${CHANNEL(name):0:6}" != "Local/"]?out_result_ready)
+same => n,GotoIf($["${ONEWIFI_CALL_ID}" != ""]?out_result_ready)
+same => n,Set(ONEWIFI_CALL_ID=${CUT(CUT(CHANNEL(name),@,1),/,2)})
+same => n(out_result_ready),ExecIf($["${ONEWIFI_OUTBOUND_CALL}"="1"]?TrySystem(/usr/local/bin/notify.py call_result out "${CALLPEER}" "${ST}" "${CS}" "${GOSUB_RETVAL}" "${CHANNEL(uniqueid)}" "${ONEWIFI_CALL_ID}" &))
 same => n,Hangup()
 
 [hangup-by]
@@ -251,3 +260,13 @@ same => n,Set(EXTEN=${CUT(CUT(MESSAGE(to),@,1),:,2)})
 same => n,Set(FILE(/logs/messages.txt,,,a)=OUT SMS to ${EXTEN} at ${STRFTIME(${EPOCH},,%Y-%m-%d %H:%M:%S)}:${NL}${MESSAGE(body)}${NL}=====${NL})
 same => n,TrySystem(/usr/local/bin/notify.py sms_out "${EXTEN}" "${BASE64_ENCODE(${MESSAGE(body)})}" &)
 same => n,MessageSend(pjsip:volte_ims/${EXTEN}@volte_ims,sip:{{ msisdn }}@{{ realm }},sip:${EXTEN}@volte_ims)
+
+; ===== Phone handset audio =====
+; The handset is not a second IMS registration. A Local channel runs AudioSocket toward the
+; control plane, and from-local dials the carrier on the other half. The extension is the
+; call's UUID. Audio is signed 16-bit linear, 8 kHz, little endian: the phone's PCM socket.
+[handset-media]
+exten => _[0-9a-fA-F-]!,1,NoOp(Handset audio ${EXTEN})
+same => n,Answer()
+same => n,AudioSocket(${EXTEN},{{ audiosocket_host | default("host.docker.internal") }}:{{ audiosocket_port | default(8792) }})
+same => n,Hangup()

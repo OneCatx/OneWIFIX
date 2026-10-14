@@ -1,0 +1,175 @@
+/* 2025 Liquid Glass — 当代 dashboard 微调（扁平磨砂 / 单 accent / 清晰层级） */
+
+:root {
+  --sans: 'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'HarmonyOS Sans SC', sans-serif;
+  --mono: ui-monospace, 'Cascadia Code', 'Cascadia Mono', Consolas, monospace;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.progress-bar {
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill,
+.fill-purple,
+.fill-teal,
+.fill-pink {
+  border-radius: 999px;
+  transition: width 0.45s var(--ease-out);
+}
+
+.status-pill {
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.panel-card {
+  transition:
+    background 0.2s var(--ease-out),
+    border-color 0.2s var(--ease-out),
+    box-shadow 0.2s var(--ease-out);
+}
+
+/* 暗黑：去掉 Material 立体边，统一当代 flat glass */
+[data-theme="dark"] {
+  --accent: #5ac8fa;
+  --accent-hover: #7dd3fc;
+  --accent-soft: rgba(90, 200, 250, 0.14);
+  --glass-blur-size: 18px;
+  --glass-blur: var(--glass-blur-size);
+  --glass-saturate: 118%;
+  --glass-rim: none;
+  --glass-shadow-inset: none;
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+  --glass-card: rgba(34, 34, 40, 0.72);
+  --border-glass: rgba(255, 255, 255, 0.11);
+  --sidebar-bg: rgba(26, 26, 30, 0.88);
+  --sidebar-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  --sidebar-nav-active-bg: rgba(90, 200, 250, 0.16);
+  --sidebar-nav-active-color: #ffffff;
+  --sidebar-nav-active-border: rgba(90, 200, 250, 0.28);
+  --sidebar-nav-active-shadow: none;
+  --stat-card-bg: rgba(34, 34, 40, 0.72);
+  --stat-card-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+  --stat-card-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.22);
+  --stat-wave-stroke: #5ac8fa;
+  --stat-wave-fill-top: rgba(90, 200, 250, 0.16);
+  --toggle-bg: rgba(34, 34, 40, 0.72);
+
+  /* 左上角局部光感 — 范围收窄（大框专用） */
+  --corner-glow-ellipse-x: 72%;
+  --corner-glow-ellipse-y: 52%;
+  --corner-glow-origin-x: 0%;
+  --corner-glow-origin-y: -2%;
+  --corner-glow-mid: 30%;
+  --corner-glow-fade: 52%;
+  --corner-glow-a: rgba(90, 200, 250, 0.22);
+  --corner-glow-b: rgba(90, 200, 250, 0.06);
+  --corner-glow-base: linear-gradient(165deg, rgba(16, 16, 20, 0.97) 0%, rgba(10, 10, 14, 0.99) 100%);
+  --corner-glow-large-bg:
+    radial-gradient(
+      ellipse var(--corner-glow-ellipse-x) var(--corner-glow-ellipse-y)
+      at var(--corner-glow-origin-x) var(--corner-glow-origin-y),
+      var(--corner-glow-a) 0%,
+      var(--corner-glow-b) var(--corner-glow-mid),
+      transparent var(--corner-glow-fade)
+    ),
+    var(--corner-glow-base);
+  --corner-glow-bg: var(--corner-glow-large-bg);
+}
+
+/* 暗黑大框：已迁移至 glass-frame-dark.css */
+/*
+[data-theme="dark"] .card,
+...
+*/
+
+[data-theme="dark"] .panel-blue,
+[data-theme="dark"] .panel-card.panel-blue {
+  --corner-glow-a: rgba(59, 130, 246, 0.28);
+  --corner-glow-b: rgba(59, 130, 246, 0.08);
+  --corner-glow-base: linear-gradient(165deg, rgba(14, 15, 22, 0.97) 0%, rgba(8, 9, 14, 0.99) 100%);
+}
+
+[data-theme="dark"] .panel-purple,
+[data-theme="dark"] .panel-card.panel-purple {
+  --corner-glow-a: rgba(167, 139, 250, 0.26);
+  --corner-glow-b: rgba(167, 139, 250, 0.07);
+  --corner-glow-base: linear-gradient(165deg, rgba(18, 15, 24, 0.97) 0%, rgba(10, 8, 14, 0.99) 100%);
+}
+
+[data-theme="dark"] .panel-green,
+[data-theme="dark"] .panel-card.panel-green {
+  --corner-glow-a: rgba(52, 211, 153, 0.24);
+  --corner-glow-b: rgba(52, 211, 153, 0.07);
+  --corner-glow-base: linear-gradient(165deg, rgba(12, 18, 16, 0.97) 0%, rgba(7, 11, 10, 0.99) 100%);
+}
+
+[data-theme="dark"] .fill-purple,
+[data-theme="dark"] .fill-teal,
+[data-theme="dark"] .fill-pink,
+[data-theme="dark"] .progress-fill.blue,
+[data-theme="dark"] .progress-fill.green {
+  background: #5ac8fa;
+}
+
+/* 仪表盘信息三列：深浅色共用结构 */
+
+[data-theme="dark"] .info-row .fill-purple {
+  background: linear-gradient(90deg, rgba(167, 139, 250, 0.9), rgba(129, 140, 248, 0.9));
+}
+
+[data-theme="dark"] .info-row .fill-teal {
+  background: linear-gradient(90deg, rgba(45, 212, 191, 0.9), rgba(52, 211, 153, 0.9));
+}
+
+[data-theme="dark"] .info-row .fill-pink {
+  background: linear-gradient(90deg, rgba(251, 113, 133, 0.9), rgba(244, 114, 182, 0.9));
+}
+
+/* 浅色主题变量见 themes.css */
+
+@media (prefers-reduced-transparency: reduce) {
+  [data-theme="light"] .app-shell,
+  [data-theme="light"] .sidebar,
+  [data-theme="light"] .panel-card {
+    backdrop-filter: blur(12px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
+  }
+
+  [data-theme="dark"] .card,
+  [data-theme="dark"] .panel-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  [data-theme="light"] .app-shell {
+    background: transparent !important;
+  }
+
+  [data-theme="light"] .sidebar,
+  [data-theme="light"] .panel-card {
+    background: rgba(255, 255, 255, 0.88) !important;
+  }
+
+  [data-theme="light"] .panel-card::before,
+  [data-theme="light"] .cp-sidebar::before {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(12px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
+  }
+
+  [data-theme="dark"] .card,
+  [data-theme="dark"] .panel-card {
+    background: rgba(14, 14, 18, 0.98) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-card,
+  .progress-fill {
+    transition: none !important;
+  }
+}

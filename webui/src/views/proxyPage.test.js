@@ -1,0 +1,91 @@
+import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const here = dirname(fileURLToPath(import.meta.url))
+const proxy = readFileSync(join(here, 'Proxy.vue'), 'utf8')
+const card = readFileSync(join(here, '../components/OwProxyCountryCard.vue'), 'utf8')
+const css = readFileSync(join(here, '../assets/onewifi-pages.css'), 'utf8')
+
+describe('proxy page layout', () => {
+  it('keeps proxies in the top box and countries on their own cards', () => {
+    assert.match(proxy, /OwGlassPanel title="上游代理"/)
+    assert.match(proxy, /OwGlassPanel title="国家规则"/)
+    assert.match(proxy, /ow-proxy-add-row/)
+    assert.match(proxy, /draftName/)
+    assert.match(proxy, /placeholder="家宽"/)
+    assert.match(proxy, /composeProxyAddr/)
+    assert.match(proxy, /proxyDisplayName/)
+    assert.match(proxy, /deleteOnewifiUpstreamProxy/)
+    assert.match(proxy, /OwProxyCountryCard/)
+    assert.match(proxy, /sortedRules/)
+    assert.match(proxy, /openAddCountry/)
+    assert.match(proxy, /增加国家/)
+    assert.match(proxy, /ow-proxy-country-toolbar/)
+    assert.doesNotMatch(proxy, /ow-proxy-country-card--add/)
+    assert.doesNotMatch(proxy, /#actions/)
+    assert.doesNotMatch(proxy, /新增代理/)
+    assert.doesNotMatch(proxy, /countryCards/)
+    assert.doesNotMatch(proxy, /openCreate/)
+    assert.doesNotMatch(proxy, /openRules/)
+    assert.doesNotMatch(proxy, /openEdit/)
+    assert.doesNotMatch(proxy, /openBind/)
+  })
+
+  it('lets each country pick a proxy, toggle itself, and show the green nameplate', () => {
+    assert.match(card, /ow-proxy-country-card/)
+    assert.match(card, /ow-proxy-esim-body/)
+    assert.match(card, /glass-frame/)
+    assert.match(card, /ow-proxy-toggle/)
+    assert.match(card, /overview-badge/)
+    assert.match(card, /glass-frame--tone-green/)
+    assert.match(card, /proxyDisplayName/)
+    assert.match(card, /\$emit\('toggle'\)/)
+    assert.match(card, /emit\('assign'/)
+    assert.match(card, /\$emit\('remove'\)/)
+    assert.match(card, /ow-proxy-plate-row/)
+    assert.match(card, /删除/)
+    assert.doesNotMatch(card, /ow-proxy-assign/)
+    assert.doesNotMatch(card, />去掉</)
+    assert.doesNotMatch(card, /\$emit\('edit'\)/)
+    assert.doesNotMatch(card, /country-node-card/)
+    assert.doesNotMatch(card, /SemanticCardLayers/)
+    assert.doesNotMatch(card, /ow-proxy-country-body/)
+    assert.doesNotMatch(card, /proxyProbeRows|proxyProbeSummary/)
+    assert.doesNotMatch(card, /SIM 绑定|检测/)
+    assert.doesNotMatch(proxy, /class="ow-table"/)
+    assert.doesNotMatch(proxy, /检测连通性/)
+    assert.doesNotMatch(proxy, /添加所选/)
+    assert.doesNotMatch(proxy, /chip=/)
+  })
+
+  it('uses an equal-width grid without flag watermarks', () => {
+    assert.match(css, /grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(220px,\s*1fr\)\)/)
+    assert.match(css, /ow-proxy-country-toolbar/)
+    assert.match(css, /ow-proxy-add-row/)
+    assert.match(css, /ow-proxy-add-row__name/)
+    assert.match(css, /ow-proxy-chip__name/)
+    assert.match(css, /ow-proxy-esim-body/)
+    assert.match(css, /ow-proxy-toggle/)
+    assert.match(css, /ow-proxy-plate-row/)
+    assert.doesNotMatch(css, /\.ow-proxy-stack\s*\{[^}]*flex-direction:\s*column/)
+    assert.doesNotMatch(css, /ow-proxy-metric/)
+    assert.doesNotMatch(css, /ow-proxy-round/)
+    assert.doesNotMatch(css, /ow-proxy-country-links/)
+    assert.doesNotMatch(css, /ow-proxy-country-body/)
+  })
+
+  it('adds countries from a search dialog without flags', () => {
+    assert.match(proxy, /placeholder="搜索国家"/)
+    assert.match(proxy, /dialog === 'country'/)
+    assert.doesNotMatch(proxy, /ow-proxy-mini-flag/)
+    assert.doesNotMatch(proxy, /getFlagAssetPath/)
+  })
+
+  it('keeps country title free of proxy address', () => {
+    assert.match(card, /cnc-title/)
+    assert.doesNotMatch(card, /cnc-title[\s\S]{0,80}proxy\.addr/)
+  })
+})

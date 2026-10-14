@@ -231,6 +231,30 @@ def migrate_reader_records(live_readers: dict[str, dict]) -> list[tuple[str, str
     return moved
 
 
+def clean_device_name(name) -> str:
+    """Operator-facing physical device label. Line names stay on the instance."""
+    if not isinstance(name, str):
+        raise ValueError("设备名称不能为空")
+    trimmed = name.strip()
+    if not trimmed:
+        raise ValueError("设备名称不能为空")
+    if len(trimmed) > 64:
+        raise ValueError("设备名称不能超过 64 个字符")
+    return trimmed
+
+
+def resolve_device_name(record, *fallbacks, default: str) -> str:
+    """A saved display name wins over the hardware or reader label."""
+    custom = str((record or {}).get("display_name") or "").strip()
+    if custom:
+        return custom
+    for item in fallbacks:
+        text = str(item or "").strip()
+        if text:
+            return text
+    return default
+
+
 def set_hardware(device_id: str, patch: dict) -> dict:
     device_id = str(device_id).strip()
     if not device_id:

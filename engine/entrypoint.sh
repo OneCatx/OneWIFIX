@@ -87,7 +87,7 @@ set -a; . "$ONEWIFI_RUNDIR/engine.env"; set +a
 export USIM_PIN USIM_READER USIM_READER_INDEX USIM_READER_PORT USIM_IMSI ONEWIFI_ID MANAGER_URL MANAGER_EVENT_TOKEN ONEWIFI_RUNDIR
 export PIN_USIM_READER
 export SWU_SOURCE SWU_EPDG SWU_APN SWU_MCC SWU_MNC SWU_IMEI SWU_IMEISV SWU_CHILD_REKEY_MINUTES SWU_IDR_MODE SWU_CP_MODE SWU_CP_MODE_ORDER
-export SWU_ACCEPT_EPDG_ESP_REKEY
+export SWU_ACCEPT_EPDG_ESP_REKEY SWU_EAP_DIRECT
 
 # --- 1b. Relay media mode: the media interface accepts call media only ------------
 # The relay can reach this container's media address, and AMI, SIP and the softphone WebSocket

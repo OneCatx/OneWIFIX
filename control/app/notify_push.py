@@ -23,9 +23,11 @@ import logging
 import json
 import os
 import re
+import smtplib
 import threading
 import time
 import uuid
+from email.message import EmailMessage
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from typing import Any
@@ -34,7 +36,7 @@ from urllib.parse import urlsplit
 
 import requests
 
-from . import egress
+from . import egress, sms_code
 
 log = logging.getLogger("vowifi.push")
 
@@ -189,7 +191,7 @@ def _events_enabled(chan: dict) -> dict:
 def has_enabled_channel(settings: dict, event: str) -> bool:
     standard = any(bool((settings.get(key) or {}).get("enabled"))
                and bool(_events_enabled(settings.get(key) or {}).get(event))
-               for key in ("webhook", "telegram", "pushplus", "wecom", "bark"))
+               for key in ("webhook", "telegram", "pushplus", "wecom", "bark", "email"))
     return standard or any(
         bool(channel.get("enabled")) and bool(_events_enabled(channel).get(event))
         for channel in feishu_channels(settings.get("feishu") or {})
@@ -480,15 +482,43 @@ def _post_webhook(cfg: dict, payload: dict):
         log.warning("webhook delivery failed: %r", e)
 
 
+def _sign_webhook(cfg: dict, method: str, kwargs: dict) -> None:
+    """Android receivers verify the raw JSON body with the channel secret."""
+    timeout_ms = cfg.get("timeout_ms")
+    if isinstance(timeout_ms, (int, float)) and not isinstance(timeout_ms, bool):
+        seconds = float(timeout_ms) / 1000.0
+        if 1 <= seconds <= 60:
+            kwargs["timeout"] = seconds
+    secret = str(cfg.get("secret") or "")
+    if not secret or method != "POST" or "json" not in kwargs:
+        return
+    raw = json.dumps(kwargs.pop("json"), ensure_ascii=False, separators=(",", ":")).encode()
+    kwargs["data"] = raw
+    headers = kwargs.setdefault("headers", {})
+    headers["Content-Type"] = "application/json"
+    digest = "sha256=" + hmac.new(secret.encode(), raw, hashlib.sha256).hexdigest()
+    headers["X-OneWIFI-Signature"] = digest
+    headers["X-ONWIFI-Signature"] = digest
+
+
 def send_webhook(cfg: dict, payload: dict) -> dict:
     """Send one webhook or raise a sanitized error. Used by delivery and the test API."""
-    method, url, kwargs = build_webhook_request(cfg, payload)
-    try:
-        response = requests.request(method, url, **kwargs)
-        response.raise_for_status()
-    except requests.RequestException as exc:
-        raise RuntimeError("webhook request failed") from None
-    return {"ok": True, "status_code": response.status_code}
+    targets = [str(url).strip() for url in (cfg.get("urls") or []) if str(url).strip()]
+    if not targets and str(cfg.get("url") or "").strip():
+        targets = [str(cfg.get("url")).strip()]
+    if not targets:
+        raise RuntimeError("webhook URL is empty")
+    last = None
+    for target in targets:
+        method, url, kwargs = build_webhook_request({**cfg, "url": target}, payload)
+        _sign_webhook(cfg, method, kwargs)
+        try:
+            response = requests.request(method, url, **kwargs)
+            response.raise_for_status()
+        except requests.RequestException:
+            raise RuntimeError("webhook request failed") from None
+        last = {"ok": True, "status_code": response.status_code}
+    return last
 
 
 def send_pushplus(cfg: dict, payload: dict) -> dict:
@@ -622,15 +652,37 @@ def validate_bark(cfg: dict) -> list[str]:
     return urls
 
 
+def _wecom_body(cfg: dict, payload: dict, message: dict) -> dict:
+    text = "\n\n".join(part for part in (message["title"], message["content"]) if part)
+    template = cfg.get("payload_template") or ""
+    if not template:
+        return {"msgtype": "text", "text": {"content": text}}
+    parsed = template
+    if isinstance(template, str):
+        stripped = template.strip()
+        parsed = None
+        if stripped[:1] in "{[":
+            try:
+                parsed = json.loads(stripped)
+            except json.JSONDecodeError:
+                parsed = None
+        if parsed is None:
+            return {"msgtype": "text", "text": {
+                "content": str(_render(template, {**payload, **message}))}}
+    if isinstance(parsed, (dict, list)):
+        rendered = _render(parsed, {**payload, **message})
+        if isinstance(rendered, dict):
+            return rendered
+    return {"msgtype": "text", "text": {"content": text}}
+
+
 def send_wecom(cfg: dict, payload: dict) -> dict:
     urls = validate_wecom(cfg)
     message = build_notification_message(payload, cfg)
-    text = "\n\n".join(part for part in (message["title"], message["content"]) if part)
-    if cfg.get("payload_template"):
-        text = str(_render(cfg["payload_template"], {**payload, **message}))
+    body = _wecom_body(cfg, payload, message)
     for url in urls:
         try:
-            response = requests.post(url, json={"msgtype": "text", "text": {"content": text}},
+            response = requests.post(url, json=body,
                                      timeout=_TIMEOUT)
             response.raise_for_status()
             result = response.json()
@@ -644,6 +696,12 @@ def send_wecom(cfg: dict, payload: dict) -> dict:
 def send_bark(cfg: dict, payload: dict) -> dict:
     urls = validate_bark(cfg)
     message = build_notification_message(payload, cfg)
+    if payload.get("event") == EV_INCOMING_SMS:
+        content = str(payload.get("text") or message.get("content") or "")
+        if not sms_code.extract_verification_code(content):
+            return {"ok": True, "skipped": "not_verification_code"}
+        source = str(payload.get("sim_name") or "OneWIFI")
+        message = {**message, "title": content, "content": f"来自 {source}"}
     body = {"title": message["title"], "body": message["content"],
             "level": str(cfg.get("level") or "active")}
     for field in ("group", "icon"):
@@ -867,6 +925,139 @@ def _post_telegram(cfg: dict, payload: dict):
         log.warning("telegram delivery failed: %s", type(exc).__name__)
 
 
+_EMAIL_HOST = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
+_EMAIL_ADDRESS = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,255}$")
+EMAIL_FIELDS = ("smtp_host", "smtp_port", "use_ssl", "username", "password",
+                "from_address", "to_addresses")
+
+
+def _email_port(value) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, str)):
+        raise ValueError("smtp_port must be 1-65535")
+    text = str(value).strip()
+    if not text.isdigit():
+        raise ValueError("smtp_port must be 1-65535")
+    port = int(text)
+    if not 1 <= port <= 65535:
+        raise ValueError("smtp_port must be 1-65535")
+    return port
+
+
+def validate_email(cfg: dict) -> None:
+    host = str(cfg.get("smtp_host") or "").strip()
+    if not _EMAIL_HOST.fullmatch(host):
+        raise ValueError("smtp_host must be a hostname or address")
+    _email_port(cfg.get("smtp_port"))
+    if not isinstance(cfg.get("use_ssl"), bool):
+        raise ValueError("use_ssl must be boolean")
+    sender = str(cfg.get("from_address") or "").strip()
+    recipients = cfg.get("to_addresses")
+    if not _EMAIL_ADDRESS.fullmatch(sender):
+        raise ValueError("from_address must be an email address")
+    if not isinstance(recipients, list) or not recipients or len(recipients) > 10 \
+            or any(not isinstance(item, str) or not _EMAIL_ADDRESS.fullmatch(item.strip())
+                   for item in recipients):
+        raise ValueError("to_addresses must be 1 to 10 email addresses")
+
+
+def prepare_email(supplied: dict, previous: dict | None) -> dict:
+    """Merge one email channel save. Validation runs only when the channel is on."""
+    saved = previous or {}
+    item = dict(saved)
+    item["enabled"] = bool(supplied.get("enabled"))
+    for field in ("smtp_host", "username", "from_address"):
+        if field in supplied:
+            item[field] = str(supplied.get(field) or "").strip()
+    if "smtp_port" in supplied:
+        item["smtp_port"] = _email_port(supplied.get("smtp_port"))
+    if "use_ssl" in supplied:
+        if not isinstance(supplied.get("use_ssl"), bool):
+            raise ValueError("use_ssl must be boolean")
+        item["use_ssl"] = supplied["use_ssl"]
+    if "password" in supplied:
+        value = supplied.get("password")
+        item["password"] = saved.get("password") if value == "********" else str(value or "")
+    if "to_addresses" in supplied:
+        values = supplied.get("to_addresses")
+        if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
+            raise ValueError("to_addresses must be a list of strings")
+        item["to_addresses"] = [value.strip() for value in values]
+    if item["enabled"]:
+        validate_email(item)
+    return item
+
+
+def email_view(channel: dict | None) -> dict:
+    channel = channel or {}
+    port = channel.get("smtp_port")
+    return {
+        "enabled": bool(channel.get("enabled")),
+        "smtp_host": str(channel.get("smtp_host") or ""),
+        "smtp_port": int(port) if isinstance(port, int) and not isinstance(port, bool) else 0,
+        "use_ssl": bool(channel.get("use_ssl")),
+        "username": str(channel.get("username") or ""),
+        "password": "********" if channel.get("password") else "",
+        "from_address": str(channel.get("from_address") or ""),
+        "to_addresses": [str(item) for item in channel.get("to_addresses") or []],
+    }
+
+
+def _email_subject(payload: dict) -> str:
+    text = str(payload.get("text") or payload.get("event") or "notice").replace("\r", " ").replace("\n", " ")
+    return f"OneWIFI · {text[:120]}"
+
+
+def _email_body(payload: dict) -> str:
+    lines = [str(payload.get("sim_name") or payload.get("instance") or "OneWIFI")]
+    source = str(payload.get("from") or "")
+    if source:
+        lines.append(source)
+    text = payload.get("text")
+    if text:
+        lines.append(str(text))
+    return "\n".join(lines)
+
+
+def send_email(cfg: dict, payload: dict) -> dict:
+    """Deliver one event over SMTP. Failures stay generic so the password never lands in a log."""
+    validate_email(cfg)
+    host = str(cfg["smtp_host"]).strip()
+    port = _email_port(cfg.get("smtp_port"))
+    username = str(cfg.get("username") or "")
+    password = str(cfg.get("password") or "")
+    sender = str(cfg["from_address"]).strip()
+    recipients = [str(item).strip() for item in cfg.get("to_addresses") or []]
+    message = EmailMessage()
+    message["From"] = sender
+    message["To"] = ", ".join(recipients)
+    message["Subject"] = _email_subject(payload)
+    message.set_content(_email_body(payload))
+    client = None
+    try:
+        if cfg.get("use_ssl") or port == 465:
+            client = smtplib.SMTP_SSL(host, port, timeout=20)
+        else:
+            client = smtplib.SMTP(host, port, timeout=20)
+            client.ehlo()
+            client.starttls()
+            client.ehlo()
+        if username:
+            client.login(username, password)
+        client.send_message(message)
+    except Exception:
+        raise RuntimeError("email delivery failed") from None
+    finally:
+        if client is not None:
+            try:
+                client.quit()
+            except Exception:
+                try:
+                    client.close()
+                except Exception:
+                    pass
+    return {"ok": True}
+
+
 def dispatch(settings: dict, event: str, instance: dict, source: str, text: str | None = None,
              match_instances: list[str] | None = None, *, call_id: str = ""):
     """Queue independent deliveries on the notification pool and return their futures.
@@ -882,13 +1073,21 @@ def dispatch(settings: dict, event: str, instance: dict, source: str, text: str 
         deliveries = []
         wh = settings.get("webhook") or {}
         if wh.get("enabled") and _events_enabled(wh).get(event):
-            deliveries.append(("webhook", send_webhook, wh))
+            targets = [str(url).strip() for url in (wh.get("urls") or []) if str(url).strip()]
+            if not targets and str(wh.get("url") or "").strip():
+                targets = [str(wh.get("url")).strip()]
+            for index, url in enumerate(targets, start=1):
+                name = "webhook" if len(targets) == 1 else f"webhook:{index}"
+                deliveries.append((name, send_webhook, {**wh, "url": url, "urls": [url]}))
         tg = settings.get("telegram") or {}
         if tg.get("enabled") and _events_enabled(tg).get(event):
             deliveries.append(("telegram", send_telegram, tg))
         pp = settings.get("pushplus") or {}
         if pp.get("enabled") and _events_enabled(pp).get(event):
             deliveries.append(("pushplus", send_pushplus, pp))
+        mail = settings.get("email") or {}
+        if mail.get("enabled") and _events_enabled(mail).get(event):
+            deliveries.append(("email", send_email, mail))
         for channel, sender in (("wecom", send_wecom), ("bark", send_bark)):
             target = settings.get(channel) or {}
             if target.get("enabled") and _events_enabled(target).get(event):

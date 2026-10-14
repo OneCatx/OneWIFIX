@@ -1,0 +1,72 @@
+/**
+ * OneBord — 卡片文字系统（Typography Design System）
+ * 仅文字层级；布局 / 背景 / 结构由各组件自行维护。
+ */
+
+:root {
+  --card-t-primary-size: 14px;
+  --card-t-primary-size-compact: 13px;
+  --card-t-primary-weight: 600;
+  --card-t-primary-color: rgba(255, 255, 255, 0.9);
+  --card-t-primary-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+
+  --card-t-secondary-size: 12px;
+  --card-t-secondary-weight: 500;
+  --card-t-secondary-color: rgba(255, 255, 255, 0.62);
+
+  --card-t-meta-size: 11px;
+  --card-t-meta-weight: 500;
+  --card-t-meta-color: rgba(255, 255, 255, 0.58);
+
+  --card-t-metric-size: 15px;
+  --card-t-metric-weight: 600;
+  --card-t-metric-color: rgba(255, 255, 255, 0.92);
+  --card-t-metric-ok: #6ee7b7;
+  --card-t-metric-bad: #f87171;
+
+  --card-t-latency-color: #ffd84d;
+  --card-t-latency-weight: 600;
+  --card-t-latency-size: 12px;
+  --card-t-latency-size-compact: 11px;
+  --card-t-latency-glow: 0 0 8px rgba(255, 216, 77, 0.35);
+  --card-t-latency-border: rgba(255, 216, 77, 0.42);
+}
+
+/* ── 1️⃣ Primary ── */
+.cnc-title {
+  font-size: var(--card-t-primary-size);
+  font-weight: var(--card-t-primary-weight);
+  color: var(--card-t-primary-color);
+  letter-spacing: 0.02em;
+  text-shadow: var(--card-t-primary-shadow);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 2️⃣ Secondary ── */
+
+/* ── 3️⃣ Meta ── */
+
+/* ── 4️⃣ Metric ── */
+
+/* ── Latency / ms ── */
+
+.ob-delay-fast,
+.ob-delay-warn,
+.ob-delay-slow {
+  color: var(--card-t-latency-color) !important;
+  text-shadow: var(--card-t-latency-glow);
+}
+
+.ob-delay-fast {
+  border-color: rgba(110, 231, 183, 0.45);
+}
+
+.ob-delay-warn {
+  border-color: var(--card-t-latency-border);
+}
+
+.ob-delay-slow {
+  border-color: rgba(248, 113, 113, 0.45);
+}

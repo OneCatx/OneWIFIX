@@ -48,14 +48,32 @@ class MobileNotificationTests(unittest.TestCase):
     def test_invalid_or_unimplemented_enabled_channel_is_not_persisted(self):
         with patch.object(mobile_settings.cfg, "get_settings", return_value={}), \
                 patch.object(mobile_settings.cfg, "update_settings") as save:
-            for body, status in (({"email": {"enabled": True}}, 501),
-                                 ({"wecom": {"enabled": True, "urls": ["https://evil.test/"]}}, 422),
-                                 ({"webhook": {"enabled": True,
-                                               "urls": ["https://a.test", "https://b.test"]}}, 501)):
+            for body, status in (({"email": {"enabled": True}}, 422),
+                                 ({"wecom": {"enabled": True, "urls": ["https://evil.test/"]}}, 422)):
                 with self.assertRaises(HTTPException) as error:
                     mobile_settings.update(body)
                 self.assertEqual(error.exception.status_code, status)
         save.assert_not_called()
+
+    def test_android_webhook_bark_and_onetools_are_saved(self):
+        with patch.object(mobile_settings.cfg, "get_settings", return_value={}), \
+                patch.object(mobile_settings.cfg, "update_settings") as save:
+            view = mobile_settings.update({
+                "webhook": {"enabled": True, "urls": ["https://a.test/hook", "https://b.test/hook"],
+                            "secret": "s3cret", "timeout_ms": 5000},
+                "bark": {"enabled": True, "urls": ["https://api.day.app/key"],
+                         "group": "", "icon": "", "level": "active"},
+                "onetools": {"enabled": True, "public_base_url": "https://gw.example.test"},
+            })
+        saved = save.call_args.args[0]
+        self.assertEqual(saved["webhook"]["urls"], ["https://a.test/hook", "https://b.test/hook"])
+        self.assertEqual(saved["webhook"]["url"], "https://a.test/hook")
+        self.assertEqual(saved["webhook"]["secret"], "s3cret")
+        self.assertEqual(saved["bark"]["urls"], ["https://api.day.app/key"])
+        self.assertTrue(saved["onetools"]["enabled"])
+        self.assertEqual(view["webhook"]["urls"], ["********", "********"])
+        self.assertEqual(view["webhook"]["secret"], "********")
+        self.assertEqual(view["onetools"]["public_base_url"], "https://gw.example.test")
 
     def test_masked_multi_url_delete_or_insert_cannot_retarget_destination(self):
         existing = {"wecom": {"enabled": True, "urls": [
@@ -81,12 +99,15 @@ class MobileNotificationTests(unittest.TestCase):
                 "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=private-key"]}, payload)
             self.assertEqual(post.call_args.kwargs["json"]["msgtype"], "text")
             response.json.return_value = {"code": 200}
+            coded = notify_push.build_payload(notify_push.EV_INCOMING_SMS,
+                                               {"id": "sim1", "name": "Work"}, "+123",
+                                               "验证码 246810")
             notify_push.send_bark({"urls": ["https://api.day.app/private-key"],
-                                   "level": "active"}, payload)
-            self.assertIn("hello", post.call_args.kwargs["json"]["body"])
+                                   "level": "active"}, coded)
+            self.assertEqual(post.call_args.kwargs["json"]["title"], "验证码 246810")
             response.json.return_value = {"code": 400}
             with self.assertRaisesRegex(RuntimeError, "Bark rejected"):
-                notify_push.send_bark({"urls": ["https://api.day.app/private-key"]}, payload)
+                notify_push.send_bark({"urls": ["https://api.day.app/private-key"]}, coded)
 
     def test_dispatch_splits_endpoints_for_independent_retries(self):
         payload = {"id": "sim1", "name": "Work"}

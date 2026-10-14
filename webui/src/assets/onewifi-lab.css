@@ -1,0 +1,1524 @@
+/** OneWifi lab UI - layout shared; dark visuals here, light in onewifi-lab-light.css */
+:root {
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --space-grid: 14px;
+}
+
+[data-theme='dark'] .onewifi-lab-shell {
+  --vh-surface: rgba(22, 26, 38, 0.58);
+  --vh-surface-hover: rgba(28, 32, 46, 0.68);
+  --vh-surface-inset: rgba(255, 255, 255, 0.035);
+  --vh-mint: #34d399;
+  --vh-mint-neon: #6ee7b7;
+  --vh-mint-soft: rgba(16, 48, 38, 0.72);
+  --vh-mint-border: rgba(52, 211, 153, 0.55);
+  --vh-amber: #fbbf24;
+  --vh-amber-neon: #fcd34d;
+  --vh-amber-glow: #fde68a;
+  --vh-amber-soft: rgba(251, 191, 36, 0.14);
+  --vh-amber-border: rgba(251, 191, 36, 0.42);
+  --vh-glass-border: rgba(255, 255, 255, 0.1);
+  --vh-label: rgba(148, 163, 184, 0.82);
+  --vh-text: #ffffff;
+  --vh-radius: 14px;
+  --vh-top-light: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --vh-card-shadow: 0 10px 36px rgba(0, 0, 0, 0.42);
+  --vh-edge-top: rgba(255, 255, 255, 0.1);
+  --vh-edge-side: rgba(255, 255, 255, 0.05);
+  --vh-edge-bottom: rgba(255, 255, 255, 0.02);
+  --glass-filter: blur(40px) saturate(132%) brightness(0.86);
+  --glass-blur-soft: blur(24px) saturate(128%) brightness(0.88);
+  --frame-base-top: rgba(24, 26, 38, 0.4);
+  --frame-base-bottom: rgba(13, 15, 24, 0.43);
+  --frame-veil-top: rgba(255, 255, 255, 0.022);
+  --frame-veil-bottom: rgba(0, 0, 0, 0.045);
+  --lens-wash: rgba(255, 255, 255, 0.014);
+  --corner-glow-x: 68%;
+  --corner-glow-y: 56%;
+  --corner-glow-a: rgba(125, 95, 255, 0.09);
+  --corner-glow-b: rgba(125, 95, 255, 0.028);
+  --corner-glow-c: rgba(125, 95, 255, 0.008);
+  --corner-glow-fade: 90%;
+}
+
+.onewifi-lab-shell .mono {
+  font-family: var(--mono);
+}
+
+.onewifi-lab-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 12px 0 24px;
+}
+
+.onewifi-lab-shell .onewifi-empty-hint {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--vh-label, rgba(226, 232, 240, 0.78));
+  background: var(--vh-surface-inset, rgba(255, 255, 255, 0.035));
+}
+
+.onewifi-lab-shell .onewifi-region-warn {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+}
+
+.onewifi-lab-shell .overview-card--sim .sim-sms-storage-warn {
+  margin: 10px 0 0;
+}
+
+/* Dark - glass-frame */
+[data-theme='dark'] .onewifi-lab-shell .glass-frame {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  cursor: default;
+  background:
+    radial-gradient(circle at 86% 50%, var(--lens-wash) 0%, transparent 52%),
+    radial-gradient(
+      ellipse var(--corner-glow-x) var(--corner-glow-y) at 0% 0%,
+      var(--corner-glow-a) 0%,
+      var(--corner-glow-b) 22%,
+      var(--corner-glow-c) 44%,
+      transparent var(--corner-glow-fade)
+    ),
+    linear-gradient(
+      168deg,
+      var(--frame-veil-top) 0%,
+      transparent 36%,
+      var(--frame-veil-bottom) 100%
+    ),
+    linear-gradient(168deg, var(--frame-base-top) 0%, var(--frame-base-bottom) 100%);
+  box-shadow:
+    inset 0 1px 0 var(--vh-edge-top),
+    inset 1px 0 0 var(--vh-edge-side),
+    inset 0 -1px 0 var(--vh-edge-bottom),
+    var(--vh-card-shadow);
+  transition:
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    background 0.28s ease;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame.glass-frame--selectable.is-glow-green {
+  --frame-base-top: rgba(16, 28, 24, 0.41);
+  --frame-base-bottom: rgba(9, 17, 15, 0.44);
+  --frame-veil-top: rgba(200, 255, 230, 0.016);
+  --frame-veil-bottom: rgba(0, 0, 0, 0.055);
+  --lens-wash: rgba(52, 211, 153, 0.011);
+  --corner-glow-a: rgba(52, 211, 153, 0.1);
+  --corner-glow-b: rgba(52, 211, 153, 0.032);
+  --corner-glow-c: rgba(52, 211, 153, 0.008);
+  border-color: rgba(52, 211, 153, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(110, 231, 183, 0.14),
+    inset 1px 0 0 rgba(52, 211, 153, 0.18),
+    inset 0 -1px 0 var(--vh-edge-bottom),
+    0 0 0 1px rgba(52, 211, 153, 0.1),
+    0 0 48px rgba(52, 211, 153, 0.045),
+    var(--vh-card-shadow);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame.glass-frame--selectable.is-glow-green::before {
+  background: linear-gradient(
+    145deg,
+    rgba(110, 231, 183, 0.22) 0%,
+    rgba(52, 211, 153, 0.07) 24%,
+    rgba(255, 255, 255, 0.02) 52%,
+    rgba(52, 211, 153, 0.05) 100%
+  );
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    168deg,
+    rgba(255, 255, 255, 0.028) 0%,
+    rgba(255, 255, 255, 0.008) 42%,
+    rgba(0, 0, 0, 0.022) 100%
+  );
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.05) 24%,
+    rgba(255, 255, 255, 0.02) 52%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame > *:not(.device-card__lens) {
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame--selectable {
+  cursor: pointer;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame--static {
+  cursor: pointer;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame.glass-frame--compact {
+  border-radius: 12px;
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  box-shadow:
+    inset 0 1px 0 var(--vh-edge-top),
+    inset 1px 0 0 var(--vh-edge-side),
+    inset 0 -1px 0 var(--vh-edge-bottom),
+    0 6px 22px rgba(0, 0, 0, 0.34);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame.glass-frame--pill {
+  border-radius: 999px;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame.glass-frame--tone-green {
+  --frame-base-top: rgba(16, 28, 24, 0.41);
+  --frame-base-bottom: rgba(9, 17, 15, 0.44);
+  --frame-veil-top: rgba(200, 255, 230, 0.016);
+  --frame-veil-bottom: rgba(0, 0, 0, 0.055);
+  --lens-wash: rgba(52, 211, 153, 0.011);
+  --corner-glow-a: rgba(52, 211, 153, 0.1);
+  --corner-glow-b: rgba(52, 211, 153, 0.032);
+  --corner-glow-c: rgba(52, 211, 153, 0.008);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(110, 231, 183, 0.14),
+    inset 1px 0 0 rgba(52, 211, 153, 0.18),
+    inset 0 -1px 0 var(--vh-edge-bottom),
+    0 0 0 1px rgba(52, 211, 153, 0.1),
+    0 0 32px rgba(52, 211, 153, 0.045),
+    0 6px 22px rgba(0, 0, 0, 0.34);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .glass-frame.glass-frame--tone-green::before {
+  background: linear-gradient(
+    145deg,
+    rgba(110, 231, 183, 0.22) 0%,
+    rgba(52, 211, 153, 0.07) 24%,
+    rgba(255, 255, 255, 0.02) 52%,
+    rgba(52, 211, 153, 0.05) 100%
+  );
+}
+
+/* Header */
+
+.onewifi-lab-shell .onewifi-at-input {
+  width: min(220px, 34vw);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  outline: none;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .onewifi-at-input {
+  color: rgba(255, 255, 255, 0.9);
+  background: var(--vh-surface-inset);
+  border: 1px solid transparent;
+  box-shadow: var(--vh-top-light);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .onewifi-at-input::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+/* Metrics */
+.onewifi-lab-shell .metric-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.onewifi-lab-shell .metric-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: var(--vh-radius);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+  appearance: none;
+}
+
+.onewifi-lab-shell .metric-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .metric-card--blue .metric-card__icon {
+  color: #6eb5ff;
+  background: rgba(56, 120, 200, 0.16);
+  border-color: rgba(59, 130, 246, 0.14);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .metric-card--green .metric-card__icon {
+  color: var(--vh-mint-neon);
+  background: rgba(52, 211, 153, 0.14);
+  border-color: rgba(52, 211, 153, 0.14);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .metric-card--purple .metric-card__icon {
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(167, 139, 250, 0.14);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .metric-card--amber .metric-card__icon {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.14);
+  border-color: rgba(251, 191, 36, 0.14);
+  box-shadow: none;
+}
+
+.onewifi-lab-shell .metric-card__label {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.onewifi-lab-shell .metric-card__value {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.onewifi-lab-shell .metric-card__sub {
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .metric-card__label {
+  color: var(--vh-label);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .metric-card__value {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .metric-card__sub {
+  color: rgba(148, 163, 184, 0.72);
+}
+
+/* Device row - device-card uses own glass, not glass-frame */
+.onewifi-lab-shell .device-scroll-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 22px;
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+}
+
+.onewifi-lab-shell .device-grid {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: var(--space-grid);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  height: auto;
+  align-items: flex-start;
+}
+
+.onewifi-lab-shell .device-card-stack {
+  flex: 0 0 calc(((100% - 28px) / 3) * 0.7);
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onewifi-lab-shell .device-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.onewifi-lab-shell .device-scroll-btn {
+  flex-shrink: 0;
+  width: 40px;
+  align-self: stretch;
+  border-radius: var(--vh-radius, 14px);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font: inherit;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-scroll-btn {
+  color: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  background:
+    radial-gradient(circle at 86% 50%, var(--lens-wash) 0%, transparent 52%),
+    linear-gradient(168deg, var(--frame-base-top) 0%, var(--frame-base-bottom) 100%);
+  box-shadow:
+    inset 0 1px 0 var(--vh-edge-top),
+    inset 1px 0 0 var(--vh-edge-side),
+    inset 0 -1px 0 var(--vh-edge-bottom),
+    var(--vh-card-shadow);
+}
+
+.onewifi-lab-shell .device-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  flex: 0 0 calc(((100% - 28px) / 3) * 0.7);
+  min-width: 168px;
+  text-align: left;
+  min-height: 176px;
+  padding: 14px 16px;
+  border-radius: var(--vh-radius, 14px);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  transition:
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    background 0.28s ease,
+    transform 0.28s ease;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  background:
+    radial-gradient(circle at 86% 50%, var(--lens-wash) 0%, transparent 52%),
+    radial-gradient(
+      ellipse var(--corner-glow-x) var(--corner-glow-y) at 0% 0%,
+      var(--corner-glow-a) 0%,
+      var(--corner-glow-b) 22%,
+      var(--corner-glow-c) 44%,
+      transparent var(--corner-glow-fade)
+    ),
+    linear-gradient(
+      168deg,
+      var(--frame-veil-top) 0%,
+      transparent 36%,
+      var(--frame-veil-bottom) 100%
+    ),
+    linear-gradient(168deg, var(--frame-base-top) 0%, var(--frame-base-bottom) 100%);
+  box-shadow:
+    inset 0 1px 0 var(--vh-edge-top),
+    inset 1px 0 0 var(--vh-edge-side),
+    inset 0 -1px 0 var(--vh-edge-bottom),
+    var(--vh-card-shadow);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.05) 24%,
+    rgba(255, 255, 255, 0.02) 52%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    168deg,
+    rgba(255, 255, 255, 0.028) 0%,
+    rgba(255, 255, 255, 0.008) 42%,
+    rgba(0, 0, 0, 0.022) 100%
+  );
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card > *:not(.device-card__lens) {
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card.is-glow-green {
+  --frame-base-top: rgba(16, 28, 24, 0.41);
+  --frame-base-bottom: rgba(9, 17, 15, 0.44);
+  --frame-veil-top: rgba(200, 255, 230, 0.016);
+  --frame-veil-bottom: rgba(0, 0, 0, 0.055);
+  --lens-wash: rgba(52, 211, 153, 0.011);
+  --corner-glow-a: rgba(52, 211, 153, 0.1);
+  --corner-glow-b: rgba(52, 211, 153, 0.032);
+  --corner-glow-c: rgba(52, 211, 153, 0.008);
+  border-color: rgba(52, 211, 153, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(110, 231, 183, 0.14),
+    inset 1px 0 0 rgba(52, 211, 153, 0.18),
+    inset 0 -1px 0 var(--vh-edge-bottom),
+    0 0 0 1px rgba(52, 211, 153, 0.1),
+    0 0 48px rgba(52, 211, 153, 0.045),
+    var(--vh-card-shadow);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card.is-glow-green::before {
+  background: linear-gradient(
+    145deg,
+    rgba(110, 231, 183, 0.22) 0%,
+    rgba(52, 211, 153, 0.07) 24%,
+    rgba(255, 255, 255, 0.02) 52%,
+    rgba(52, 211, 153, 0.05) 100%
+  );
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card:hover {
+  transform: translateY(-1px);
+}
+
+/* 必须压过 .glass-frame > * { position: relative }，否则 104px 装饰圆会占文档流把标题顶下去 */
+[data-theme='dark'] .onewifi-lab-shell .device-card > .device-card__lens,
+.onewifi-lab-shell .device-card > .device-card__lens {
+  position: absolute !important;
+  inset: auto;
+  top: 50%;
+  right: 2px;
+  left: auto;
+  bottom: auto;
+  width: 104px;
+  height: 104px;
+  margin: 0;
+  flex: none;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 40% 36%, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.014) 32%, transparent 66%);
+  border: 1px solid rgba(255, 255, 255, 0.022);
+  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+  opacity: 0.58;
+  filter: blur(0.6px);
+  z-index: 0;
+}
+
+.onewifi-lab-shell .device-card.is-glow-green .device-card__lens {
+  background:
+    radial-gradient(circle at 40% 36%, rgba(52, 211, 153, 0.05) 0%, rgba(52, 211, 153, 0.016) 32%, transparent 66%);
+  border-color: rgba(52, 211, 153, 0.03);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__lens::after {
+  content: '';
+  position: absolute;
+  inset: 28%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.onewifi-lab-shell .device-card__head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.onewifi-lab-shell .device-card-stack .device-card {
+  flex: 1 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.onewifi-lab-shell .device-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.onewifi-lab-shell .device-card__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__icon {
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card.is-glow-green .device-card__icon {
+  color: var(--vh-mint-neon);
+  border-color: rgba(52, 211, 153, 0.14);
+  background: rgba(52, 211, 153, 0.1);
+  box-shadow: none;
+}
+
+.onewifi-lab-shell .device-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onewifi-lab-shell .device-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__name {
+  color: #fff;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__status {
+  color: var(--vh-mint-neon);
+}
+
+.onewifi-lab-shell .device-card__head .device-card__tag {
+  margin-bottom: 0;
+  padding: 4px 10px;
+}
+
+.onewifi-lab-shell .device-card__tag,
+.onewifi-lab-shell .overview-badge.ready {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 14px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__tag,
+[data-theme='dark'] .onewifi-lab-shell .overview-badge.ready {
+  color: var(--vh-mint-neon);
+  background: rgba(6, 44, 34, 0.32);
+  border: 1px solid rgba(52, 211, 153, 0.24);
+  backdrop-filter: var(--glass-blur-soft);
+  -webkit-backdrop-filter: var(--glass-blur-soft);
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.1);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__tag.is-offline {
+  color: rgba(148, 163, 184, 0.88);
+  background: rgba(15, 23, 42, 0.42);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__tag.is-offline .overview-badge__dot {
+  background: rgba(148, 163, 184, 0.7);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__tag.is-online .overview-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--vh-mint, #34d399);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.95);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .overview-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--vh-mint, #34d399);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.95);
+}
+
+.onewifi-lab-shell .overview-card--runtime .overview-badge.ready {
+  margin-bottom: 14px;
+}
+
+.onewifi-lab-shell .device-card__ip {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 0;
+  padding-top: 8px;
+}
+
+.onewifi-lab-shell .device-card__ip + .device-card__ip {
+  padding-top: 4px;
+  border-top: 0;
+}
+
+.onewifi-lab-shell .device-card__ip-label {
+  font-size: 12px;
+}
+
+.onewifi-lab-shell .device-card__mihomo {
+  align-items: center;
+}
+
+.onewifi-lab-shell .device-card__title .device-card__mihomo {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.onewifi-lab-shell .device-card__plates {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.onewifi-lab-shell .device-card__nameplate {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onewifi-lab-shell .device-card__plate {
+  min-width: 0;
+  margin: 0 0 0 auto;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.onewifi-lab-shell .device-card__plate .overview-badge__dot {
+  width: 6px;
+  height: 6px;
+}
+
+.onewifi-lab-shell .device-card__plate--esim {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  max-width: 100%;
+  color: rgba(148, 163, 184, 0.92);
+}
+
+.onewifi-lab-shell .device-card__plate--slot-reserve {
+  visibility: hidden;
+  pointer-events: none;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.onewifi-lab-shell .device-card__plate-prefix,
+.onewifi-lab-shell .device-card__plate-separator,
+.onewifi-lab-shell .device-card__plate-capacity {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.onewifi-lab-shell .device-card__plate-capacity {
+  color: rgba(226, 232, 240, 0.88);
+}
+
+.onewifi-lab-shell .device-card__switch-hint {
+  margin-left: 6px;
+  font-style: normal;
+  font-weight: 650;
+  color: #fcd34d;
+}
+
+.onewifi-lab-shell .device-card.is-esim-switching {
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.28);
+}
+
+.onewifi-lab-shell .device-card-stack .device-card__stages {
+  position: relative;
+  z-index: 1;
+  margin-top: 0;
+  padding: 8px 10px 6px;
+  gap: 6px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.onewifi-lab-shell .device-card__stages {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  gap: 6px;
+}
+
+.onewifi-lab-shell .device-card__stages .stage-bar {
+  height: 5px;
+}
+
+.onewifi-lab-shell .device-card__stages .stage-label {
+  margin-top: 4px;
+  font-size: 9px;
+}
+
+.onewifi-lab-shell .device-card__stages .stage-bar.failed {
+  background: linear-gradient(90deg, #f87171 0%, #b91c1c 100%);
+  animation: none;
+}
+
+.onewifi-lab-shell .device-card__stages .stage-bar.pending:not(.ready) {
+  background: linear-gradient(90deg, rgba(252, 211, 77, 0.18), rgba(252, 211, 77, 0.7), rgba(252, 211, 77, 0.18));
+  background-size: 160% 100%;
+  animation: device-stage-pending 1.15s ease-in-out infinite;
+}
+
+@keyframes device-stage-pending {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onewifi-lab-shell .device-card__stages .stage-bar.pending:not(.ready) {
+    animation: none;
+    background: rgba(252, 211, 77, 0.4);
+  }
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__ip {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__ip + .device-card__ip {
+  border-top: 0;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .device-card__ip-label {
+  color: rgba(148, 163, 184, 0.72);
+}
+
+/* Overview grid — four equal columns fill available width */
+.onewifi-lab-shell .overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  width: 100%;
+}
+
+.onewifi-lab-shell .overview-grid--pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.onewifi-lab-shell .overview-grid--trio {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 18px;
+}
+
+.onewifi-lab-shell .overview-grid--trio > .overview-card {
+  min-width: 0;
+  min-height: 520px;
+  overflow: hidden;
+}
+
+.onewifi-lab-shell .overview-card--dial {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.onewifi-lab-shell .overview-card--dial .panel-title-row--runtime {
+  margin-bottom: 16px;
+}
+
+.onewifi-lab-shell .overview-card--dial .soft-label-grid {
+  gap: 12px;
+}
+
+.onewifi-lab-shell .overview-card--dial .soft-label-card {
+  padding: 10px 12px;
+  gap: 6px;
+}
+
+.onewifi-lab-shell .calls-keypad {
+  width: 100%;
+  max-width: 280px;
+  gap: 10px;
+  margin: 16px auto 0;
+}
+
+.onewifi-lab-shell .calls-keypad .ow-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  min-height: 52px;
+  border-radius: 14px;
+  font-size: 18px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.onewifi-lab-shell .calls-keypad .ow-key__letters {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  opacity: 0.48;
+}
+
+.onewifi-lab-shell .calls-dial {
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 8px 4px 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 650;
+  outline: none;
+}
+
+.onewifi-lab-shell .calls-dial::placeholder {
+  opacity: 0.35;
+  font-weight: 500;
+}
+
+.onewifi-lab-shell .esim-item__name.mono {
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+}
+
+.onewifi-lab-shell .calls-dial {
+  font-family: var(--sans);
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.onewifi-lab-shell .calls-dial__actions.ow-theme-row {
+  width: 100%;
+  max-width: 520px;
+  margin: 16px auto 0;
+  gap: 10px;
+}
+
+.onewifi-lab-shell .calls-dial__actions .ow-theme-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.onewifi-lab-shell .calls-live-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  max-width: 42%;
+  min-width: 88px;
+}
+
+.onewifi-lab-shell .calls-history-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.onewifi-lab-shell .overview-grid--trio .esim-list,
+.onewifi-lab-shell .overview-grid--trio .call-history-list {
+  max-height: none;
+  flex: 1 1 auto;
+}
+
+.onewifi-lab-shell .overview-card {
+  padding: 20px 18px;
+  border-radius: var(--vh-radius, 14px);
+  min-height: 368px;
+  display: flex;
+  flex-direction: column;
+}
+
+.onewifi-lab-shell .panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.onewifi-lab-shell .panel-title-row .overview-card__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.onewifi-lab-shell .panel-title-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.onewifi-lab-shell .panel-title-icon--teal {
+  color: #5eead4;
+  background: rgba(45, 212, 191, 0.12);
+  box-shadow: 0 0 16px rgba(45, 212, 191, 0.18);
+}
+
+.onewifi-lab-shell .panel-title-icon--purple {
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.18);
+  box-shadow: 0 0 18px rgba(167, 139, 250, 0.22);
+}
+
+.onewifi-lab-shell .panel-title-icon--green {
+  color: #6ee7b7;
+  background: rgba(52, 211, 153, 0.14);
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.2);
+}
+
+.onewifi-lab-shell .panel-title-icon--amber {
+  color: #fcd34d;
+  background: rgba(251, 191, 36, 0.14);
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.18);
+}
+
+.onewifi-lab-shell .panel-title-icon--blue {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.16);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.2);
+}
+
+.onewifi-lab-shell .overview-card__title {
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Carrier orbit empty */
+
+[data-theme='dark'] .onewifi-lab-shell .sim-visual__glow {
+  position: absolute;
+  inset: -24px -12px -12px -24px;
+  border-radius: 18px;
+  background: radial-gradient(
+    ellipse 90% 80% at 12% 8%,
+    rgba(110, 231, 183, 0.22) 0%,
+    rgba(52, 211, 153, 0.08) 34%,
+    transparent 72%
+  );
+  filter: blur(16px);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .sim-visual__chip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(52, 211, 153, 0.28) 0%, rgba(16, 185, 129, 0.16) 100%);
+  border: 1px solid rgba(110, 231, 183, 0.28);
+  box-shadow:
+    0 0 20px rgba(52, 211, 153, 0.12),
+    inset 0 0 16px rgba(110, 231, 183, 0.05);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .sim-visual__chip::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 56%;
+  height: 48%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(167, 255, 220, 0.18) 0%,
+    rgba(110, 231, 183, 0.07) 42%,
+    transparent 72%
+  );
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .sim-visual__corner {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 16px;
+  height: 14px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .sim-visual__lines {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 14px;
+  height: 34px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.14) 0,
+    rgba(255, 255, 255, 0.14) 3px,
+    transparent 3px,
+    transparent 7px
+  );
+}
+
+/* Runtime / SIM - see overview-panels.css */
+.onewifi-lab-shell .overview-card--runtime,
+.onewifi-lab-shell .overview-card--sim {
+  justify-content: flex-start;
+}
+
+/* eSIM */
+.onewifi-lab-shell .esim-list,
+.onewifi-lab-shell .call-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  max-height: 480px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+}
+
+.onewifi-lab-shell .esim-list::-webkit-scrollbar,
+.onewifi-lab-shell .call-history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.onewifi-lab-shell .esim-list::-webkit-scrollbar-track,
+.onewifi-lab-shell .call-history-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.onewifi-lab-shell .esim-list::-webkit-scrollbar-thumb,
+.onewifi-lab-shell .call-history-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
+
+.onewifi-lab-shell .esim-list::-webkit-scrollbar-thumb:hover,
+.onewifi-lab-shell .call-history-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .esim-list,
+[data-theme='dark'] .onewifi-lab-shell .call-history-list {
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .esim-list::-webkit-scrollbar-thumb,
+[data-theme='dark'] .onewifi-lab-shell .call-history-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .esim-list::-webkit-scrollbar-thumb:hover,
+[data-theme='dark'] .onewifi-lab-shell .call-history-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.onewifi-lab-shell .esim-item {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 88px;
+  box-sizing: border-box;
+  text-align: left;
+  padding: 12px;
+  border-radius: 12px;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+}
+
+.onewifi-lab-shell .esim-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.onewifi-lab-shell .esim-row .esim-item {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.onewifi-lab-shell .esim-item__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.onewifi-lab-shell .esim-item__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onewifi-lab-shell .esim-item__badges {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.onewifi-lab-shell .esim-item-delete {
+  flex: 0 0 auto;
+  align-self: center;
+  min-height: 36px;
+  color: #f87171;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .esim-item.is-active .esim-item__name {
+  color: var(--vh-mint-neon);
+}
+
+.onewifi-lab-shell .esim-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: nowrap;
+}
+
+.onewifi-lab-shell .esim-item__name {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onewifi-lab-shell .esim-item__badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .esim-item__badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .onewifi-lab-shell .esim-item__badge.current,
+[data-theme='dark'] .onewifi-lab-shell .esim-item__badge.enabled {
+  color: var(--vh-mint-neon, #6ee7b7);
+  background: rgba(52, 211, 153, 0.16);
+  border: 1px solid rgba(110, 231, 183, 0.28);
+}
+
+[data-theme='dark'] .onewifi-lab-shell .esim-item__badge.disabled {
+  color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.onewifi-lab-shell .esim-item__provider {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.62);
+  margin-bottom: 6px;
+}
+
+.onewifi-lab-shell .esim-item__meta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.onewifi-lab-shell .panel-title-icon .m-icon {
+  font-size: 18px;
+}
+
+.onewifi-lab-shell .metric-card__icon .m-icon {
+  font-size: 22px;
+}
+
+.onewifi-lab-shell .device-card__icon .m-icon {
+  font-size: 18px;
+}
+
+.onewifi-lab-shell .device-scroll-btn .m-icon {
+  font-size: 24px;
+}
+
+.onewifi-lab-shell .runtime-action-btn .m-icon {
+  font-size: 16px;
+}
+
+@media (max-width: 1280px) {
+  .onewifi-lab-shell .metric-row,
+  .onewifi-lab-shell .overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .onewifi-lab-shell .overview-grid--trio {
+    grid-template-columns: 1fr;
+  }
+
+  .onewifi-lab-shell .overview-grid--trio > .overview-card {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 900px) {
+
+  .onewifi-lab-shell .metric-row,
+  .onewifi-lab-shell .overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .onewifi-lab-shell .device-card-stack,
+  .onewifi-lab-shell .device-card {
+    flex-basis: 92%;
+  }
+
+  /* 指标卡：给正文列真正宽度，拉开标签/数值呼吸 */
+  .onewifi-lab-shell .metric-card {
+    gap: 16px;
+    padding: 18px 16px;
+  }
+
+  .onewifi-lab-shell .metric-card__body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .onewifi-lab-shell .metric-card__label {
+    font-size: 13px;
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  .onewifi-lab-shell .metric-card__value {
+    font-size: 22px;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .onewifi-lab-shell .metric-card__sub {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .onewifi-lab-shell .device-card {
+    padding: 14px 16px;
+  }
+
+  .onewifi-lab-shell .device-card__head {
+    gap: 12px;
+    margin-bottom: 0;
+  }
+
+  .onewifi-lab-shell .device-card__name {
+    font-size: 15px;
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: normal;
+  }
+
+  .onewifi-lab-shell .device-card__tag,
+  .onewifi-lab-shell .overview-badge.ready {
+    margin-bottom: 12px;
+    padding: 8px 14px;
+  }
+
+  .onewifi-lab-shell .device-card__head .device-card__tag {
+    margin-bottom: 0;
+    padding: 4px 10px;
+  }
+
+  .onewifi-lab-shell .device-card__ip {
+    gap: 12px;
+    margin-top: 0;
+    padding-top: 8px;
+  }
+
+  .onewifi-lab-shell .device-card__ip-label {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  /* 概览信息：IMEI/ICCID 等改单列大行，避免双列把长串捏扁 */
+  .onewifi-lab-shell .overview-card {
+    padding: 16px 14px;
+    min-height: 0;
+  }
+
+  .onewifi-lab-shell .soft-label-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  .onewifi-lab-shell .overview-card--sim .soft-label-grid.kv-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .onewifi-lab-shell .soft-label-grid .soft-label-card {
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+
+  .onewifi-lab-shell .soft-label-grid .soft-label-card__title {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+
+  .onewifi-lab-shell .soft-label-grid .soft-label-card__value,
+  .onewifi-lab-shell .soft-label-grid .soft-label-card__value--mono {
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-all;
+  }
+
+  .onewifi-lab-shell .esim-item {
+    padding: 14px 14px;
+  }
+
+  .onewifi-lab-shell .esim-item__head {
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .onewifi-lab-shell .esim-item__name {
+    font-size: 14px;
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .onewifi-lab-shell .esim-item__meta {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.45;
+    word-break: break-all;
+  }
+}

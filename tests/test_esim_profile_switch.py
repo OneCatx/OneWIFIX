@@ -239,6 +239,41 @@ class ESimProfileSwitchControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("original profile restored", raised.exception.detail)
         compensate.assert_awaited_once()
         self.assertNotIn("reader", main.hub.lpa_busy)
+        shot = main.esim_switch_progress.snapshot("reader")
+        self.assertEqual(shot["phase"], "failure_ims_recovery")
+        self.assertEqual(shot["fail_reason"], "rolled_back")
+        self.assertTrue(shot["recoverable"])
+        self.assertEqual(len(shot["phases"]), 11)
+
+    async def test_native_reader_success_lands_on_switch_callbacks(self):
+        main.esim_switch_progress._progress.clear()
+        with patch.object(main, "_esim_resolve_reader", return_value=("reader", 0)), \
+                patch.object(main, "_esim_switch_identity", return_value=("reader:reader", "")), \
+                patch.object(main, "_esim_resolve_se", return_value={"id": "se", "aid": None}), \
+                patch.object(main, "_esim_active_profile_card", new=AsyncMock(return_value=(
+                    "eid-1", "profile-old", {"profile-old", "profile-target"}, None))), \
+                patch.object(main, "_esim_prepare_reader_profile_switch",
+                             new=AsyncMock(return_value={})), \
+                patch.object(main, "_esim_profile_inventory", new=AsyncMock(side_effect=[
+                    ("eid-1", "profile-old", {"profile-old", "profile-target"}),
+                    ("eid-1", "profile-target", {"profile-old", "profile-target"})])), \
+                patch.object(main, "_esim_probe_card", new=AsyncMock(return_value=SimpleNamespace(
+                    iccid="profile-target"))), \
+                patch.object(main, "_esim_refresh_card", new=AsyncMock(return_value={
+                    "iccid": "profile-target"})), \
+                patch.object(main.lpa, "profile_enable", new=AsyncMock()), \
+                patch.object(main, "_esim_run", side_effect=self._run_captured), \
+                patch.object(main, "_esim_cache_update_profile"):
+            result = await main.api_esim_enable("profile-target", {})
+        shot = result["esim_switch"]
+        self.assertEqual(result["card"]["iccid"], "profile-target")
+        self.assertEqual(shot["status"], "done")
+        self.assertEqual(shot["phase"], "switch_callbacks")
+        self.assertFalse(shot["active"])
+        self.assertTrue(shot["recoverable"])
+        self.assertEqual(len(shot["phases"]), 11)
+        self.assertEqual(len(shot["steps"]), 5)
+        self.assertTrue(shot["steps"][-1]["ready"])
 
     async def test_post_switch_probe_retries_through_the_refresh_window(self):
         old = SimpleNamespace(iccid="profile-old")
@@ -336,6 +371,13 @@ class ESimProfileSwitchControlTests(unittest.IsolatedAsyncioTestCase):
         compensate.assert_awaited_once_with(
             "reader", 0, "", "profile-target", snapshot, previous)
         cache.assert_not_called()
+        shot = main.esim_switch_progress.snapshot("reader")
+        self.assertEqual(shot["status"], "failed")
+        self.assertEqual(shot["phase"], "failure_ims_recovery")
+        self.assertEqual(shot["fail_reason"], "rolled_back")
+        self.assertTrue(shot["recoverable"])
+        self.assertEqual(len(shot["steps"]), 5)
+        self.assertEqual(len(shot["phases"]), 11)
 
     async def test_native_reader_inventory_target_but_card_unreadable_compensates(self):
         previous = {"7": {"enabled": True, "running": False}}
@@ -1036,6 +1078,7 @@ class ESimProfileSwitchControlTests(unittest.IsolatedAsyncioTestCase):
                 await main._esim_profile_inventory("reader", "aid")
 
     async def test_idempotent_enable_is_verified_against_physical_card(self):
+        main.esim_switch_progress._progress.clear()
         with patch.object(main, "_esim_resolve_reader", return_value=("reader", 0)), \
                 patch.object(main, "_esim_switch_identity",
                              return_value=("modem-1", "modem-1")), \
@@ -1052,6 +1095,12 @@ class ESimProfileSwitchControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["card"]["iccid"], "profile-target")
         prepare.assert_not_awaited()
         enable.assert_not_awaited()
+        shot = result["esim_switch"]
+        self.assertEqual(shot["status"], "")
+        self.assertFalse(shot["active"])
+        self.assertEqual(len(shot["phases"]), 11)
+        self.assertEqual([step["label"] for step in shot["steps"]],
+                         ["停网", "飞行", "写卡", "校验", "恢复"])
 
     async def test_compensation_failure_remains_distinct_from_enable_failure(self):
         previous = {"1": {"enabled": True, "running": True}}
@@ -1074,6 +1123,10 @@ class ESimProfileSwitchControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(raised.exception.status_code, 503)
         self.assertIn("enable failed", raised.exception.detail)
         self.assertIn("compensation failed: EID changed", raised.exception.detail)
+        shot = main.esim_switch_progress.snapshot("reader")
+        self.assertEqual(shot["phase"], "failure_ims_recovery")
+        self.assertEqual(shot["fail_reason"], "rollback_failed")
+        self.assertTrue(shot["recoverable"])
 
     async def test_cancelled_request_awaits_compensation_before_releasing_reader(self):
         previous = {"1": {"enabled": True, "running": True}}

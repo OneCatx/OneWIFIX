@@ -116,8 +116,9 @@ class AsteriskKeepListTests(unittest.TestCase):
         # Applications and functions used by extensions.conf.j2, the codecs the IMS and
         # browser legs negotiate, and the PJSIP pieces IMS registration cannot work without.
         # A missing one of these is a silent call or a failed REGISTER, not an error message.
-        for module in ("app_dial.so", "app_exec.so", "app_playback.so", "app_record.so",
+        for module in (                       "app_dial.so", "app_exec.so", "app_playback.so", "app_record.so",
                        "app_stack.so", "app_system.so", "app_waitforprecondition.so",
+                       "app_audiosocket.so", "res_audiosocket.so",
                        "func_base64.so", "func_callerid.so", "func_channel.so", "func_cut.so",
                        "func_env.so", "func_logic.so", "func_strings.so",
                        "pbx_config.so", "chan_pjsip.so", "bridge_softmix.so",
@@ -142,7 +143,7 @@ class AsteriskKeepListTests(unittest.TestCase):
         into a red release, or worse, a stale number nobody notices is no longer meaningful.
         """
         expected = len(self.keep_list())
-        for name in ("ci.yml", "release.yml"):
+        for name in ("images.yml", "release.yml"):
             workflow = (self.ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
             counts = re.findall(r"^\s*modules:\s*(\d+)\s*$", workflow, re.MULTILINE)
             self.assertTrue(counts, f"{name} no longer asserts a module count")

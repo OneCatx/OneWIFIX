@@ -1,0 +1,326 @@
+:root {
+  /* Material Dark Surface */
+  --bg-base: #030303;
+  --bg-surface: rgba(12, 12, 14, 0.92);
+  --bg-card: rgba(16, 16, 20, 0.9);
+  --bg-card-hover: rgba(22, 22, 28, 0.94);
+  --bg-input: rgba(255, 255, 255, 0.04);
+  --bg-hover: rgba(255, 255, 255, 0.05);
+
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-field: rgba(255, 255, 255, 0.08);
+  --border-glass: rgba(255, 255, 255, 0.1);
+
+  --glass-blur-size: 28px;
+  --glass-blur: var(--glass-blur-size);
+  --glass-saturate: 112%;
+  --glass-filter: blur(var(--glass-blur-size)) saturate(var(--glass-saturate));
+  --glass-highlight: rgba(255, 255, 255, 0.045);
+  --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.52), 0 2px 8px rgba(0, 0, 0, 0.32);
+  --glass-shadow-inset: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 rgba(0, 0, 0, 0.42);
+
+  /* Material accent tones */
+  --accent: #8ab4f8;
+  --accent-hover: #aecbfa;
+  --accent-soft: rgba(138, 180, 248, 0.12);
+  --purple: #c58af9;
+  --purple-soft: rgba(197, 138, 249, 0.12);
+  --green: #81c995;
+  --green-soft: rgba(129, 201, 149, 0.12);
+  --orange: #fbbc04;
+  --orange-soft: rgba(251, 188, 4, 0.12);
+  --pink: #f48fb1;
+  --pink-soft: rgba(244, 143, 177, 0.12);
+  --cyan: #78d9ec;
+  --cyan-soft: rgba(120, 217, 236, 0.12);
+  --success: #81c995;
+  --warning: #fdd663;
+  --danger: #f28b82;
+  --info: #8ab4f8;
+
+  --text-primary: rgba(255, 255, 255, 0.96);
+  --text-secondary: rgba(255, 255, 255, 0.82);
+  --text-muted: rgba(255, 255, 255, 0.62);
+  --text-disabled: rgba(255, 255, 255, 0.28);
+
+  --sidebar-bg:
+    radial-gradient(ellipse 80% 50% at 0% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(167, 139, 250, 0.06) 0%, transparent 48%),
+    linear-gradient(180deg, rgba(14, 14, 18, 0.94) 0%, rgba(8, 8, 11, 0.97) 100%);
+  --sidebar-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.42),
+    0 8px 24px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --sidebar-brand-bg: rgba(0, 0, 0, 0.14);
+  --sidebar-footer-bg: rgba(0, 0, 0, 0.16);
+  --sidebar-divider: rgba(255, 255, 255, 0.04);
+  --sidebar-nav-hover-bg: rgba(0, 0, 0, 0.22);
+  --sidebar-nav-hover-color: var(--text-secondary);
+  --sidebar-nav-active-bg:
+    radial-gradient(ellipse 100% 80% at 0% 0%, rgba(59, 130, 246, 0.14) 0%, transparent 55%),
+    linear-gradient(160deg, rgba(18, 22, 32, 0.92) 0%, rgba(10, 12, 18, 0.96) 100%);
+  --sidebar-nav-active-color: var(--accent);
+  --sidebar-nav-active-border: rgba(96, 165, 250, 0.16);
+  --sidebar-nav-active-shadow: inset 0 1px 0 rgba(96, 165, 250, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+  --sidebar-footer-hover-bg: rgba(0, 0, 0, 0.2);
+
+  --stat-card-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 20%),
+    linear-gradient(165deg, rgba(18, 18, 22, 0.93) 0%, rgba(10, 10, 14, 0.96) 100%);
+  --stat-card-border: var(--border-glass);
+  --stat-card-shadow: var(--glass-shadow), var(--glass-shadow-inset);
+  --stat-label-color: var(--text-muted);
+  --stat-value-color: var(--text-primary);
+  --stat-sub-color: var(--text-secondary);
+  --stat-wave-back: rgba(255, 255, 255, 0.04);
+  --stat-wave-mid: rgba(255, 255, 255, 0.07);
+  --stat-wave-front: rgba(255, 255, 255, 0.1);
+  --stat-wave-stroke: rgba(255, 255, 255, 0.55);
+  --stat-wave-fill-top: rgba(255, 255, 255, 0.08);
+  --stat-wave-fill-bottom: rgba(255, 255, 255, 0);
+  --stat-glass-blur: 20px;
+  --stat-card-shadow-hover: 0 12px 36px rgba(0, 0, 0, 0.48), var(--glass-shadow-inset);
+
+  --region-card-bg:
+    linear-gradient(165deg, rgba(14, 15, 22, 0.94) 0%, rgba(8, 9, 14, 0.97) 100%);
+  --region-scrim: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.88) 38%,
+    rgba(0, 0, 0, 0.55) 62%,
+    rgba(0, 0, 0, 0.18) 82%,
+    transparent 100%
+  );
+  --region-icon-border: rgba(255, 255, 255, 0.14);
+  --region-tag-bg: rgba(0, 0, 0, 0.28);
+
+  --toggle-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 20%),
+    linear-gradient(165deg, rgba(18, 18, 22, 0.93) 0%, rgba(10, 10, 14, 0.96) 100%);
+  --thumb-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+
+  /* 字体：细、层级清晰 */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 22px;
+  --fs-stat: 20px;
+  --fs-stat-sm: 13px;
+
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+
+  --lh-tight: 1.35;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.65;
+
+  --sidebar-width: 184px;
+  --layout-gutter: 28px;
+  --sidebar-content-gap: 24px;
+  --shell-padding: 20px;
+  --content-padding: 12px 18px 20px 14px;
+  --content-max-width: none;
+  --content-inner-inset: 10px 12px;
+  --sidebar-rail: calc(var(--layout-gutter) + var(--sidebar-width) + var(--sidebar-content-gap));
+  --sidebar-brand-pad: 14px 10px 12px;
+  --sidebar-nav-pad: 10px 6px;
+  --sidebar-nav-item-pad: 7px 8px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-panel: 22px;
+  --radius-card: 20px;
+  --radius-card-sm: 18px;
+  --radius-shell: 28px;
+  --space-section: 16px;
+  --space-grid: 14px;
+  --panel-padding: 20px;
+  --fs-xl: 20px;
+  --fs-stat: 18px;
+  --fs-md: 13px;
+  --fs-base: 12.5px;
+  --fs-sm: 11.5px;
+
+  --md-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+  --md-elevation-2: 0 2px 6px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3);
+
+  --sans: 'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'HarmonyOS Sans SC', sans-serif;
+  --mono: ui-monospace, 'Cascadia Code', 'Cascadia Mono', Consolas, monospace;
+
+  font: var(--fs-md) / var(--lh-normal) var(--sans);
+  font-weight: var(--fw-regular);
+  color: var(--text-primary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* 整页按 90% 排，不把页面撑出视口，否则右侧滚动按钮会被裁掉。 */
+html {
+  zoom: 0.9;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#app { min-height: 100vh; height: 100vh; position: relative; z-index: 1; }
+
+html[data-theme='light'] body {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+[data-theme="light"] #app,
+[data-theme="light"] .layout,
+[data-theme="light"] .app-main {
+  background: transparent !important;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: var(--fw-medium); color: var(--text-primary); }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; font-size: inherit; }
+input, select, textarea { font-family: inherit; font-size: var(--fs-base); font-weight: var(--fw-regular); }
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: var(--space-section);
+}
+
+.card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, transparent 22%),
+    linear-gradient(165deg, rgba(16, 16, 20, 0.94) 0%, rgba(9, 9, 12, 0.97) 100%);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--glass-shadow), var(--glass-shadow-inset);
+}
+
+/* ── 全局磨砂玻璃 ── */
+.glass {
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--glass-shadow), var(--glass-shadow-inset);
+}
+
+/* 地区统计小卡：磨砂 + 色调 */
+
+/* 面板卡片（全局复用） */
+.panel-card {
+  border-radius: var(--radius-panel);
+  padding: var(--panel-padding, 20px);
+  position: relative;
+  overflow: hidden;
+}
+
+.panel-blue {
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--border-glass);
+  background:
+    radial-gradient(ellipse 90% 60% at 0% -8%, rgba(59, 130, 246, 0.14) 0%, transparent 52%),
+    linear-gradient(165deg, rgba(14, 15, 22, 0.94) 0%, rgba(8, 9, 14, 0.97) 100%);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(59, 130, 246, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.panel-purple {
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--border-glass);
+  background:
+    radial-gradient(ellipse 90% 60% at 0% -8%, rgba(167, 139, 250, 0.12) 0%, transparent 52%),
+    linear-gradient(165deg, rgba(18, 15, 24, 0.94) 0%, rgba(10, 8, 14, 0.97) 100%);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(167, 139, 250, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.panel-green {
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--border-glass);
+  background:
+    radial-gradient(ellipse 90% 60% at 0% -8%, rgba(52, 211, 153, 0.11) 0%, transparent 52%),
+    linear-gradient(165deg, rgba(12, 18, 16, 0.94) 0%, rgba(7, 11, 10, 0.97) 100%);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(52, 211, 153, 0.09), inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.panel-neutral {
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: 1px solid var(--border-glass);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, transparent 22%),
+    linear-gradient(165deg, rgba(16, 16, 20, 0.94) 0%, rgba(9, 9, 12, 0.97) 100%);
+  box-shadow: var(--glass-shadow), var(--glass-shadow-inset);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--green);
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(129, 201, 149, 0.12);
+  border: 1px solid rgba(129, 201, 149, 0.15);
+}
+
+.status-pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.fill-purple { background: linear-gradient(90deg, rgba(167, 139, 250, 0.85), rgba(129, 140, 248, 0.85)); }
+.fill-teal { background: linear-gradient(90deg, rgba(45, 212, 191, 0.85), rgba(52, 211, 153, 0.85)); }
+.fill-pink { background: linear-gradient(90deg, rgba(251, 113, 133, 0.85), rgba(244, 114, 182, 0.85)); }
+
+/* Material 卡片头：图标 + 标题 + 副标题 */
+
+/* 统计小卡：图标与文字垂直居中对齐 */
+
+.progress-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.progress-fill.blue { background: var(--purple); }
+.progress-fill.green { background: var(--green); }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  color: var(--text-muted);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-regular);
+  gap: 12px;
+}
+.empty-state svg { width: 48px; height: 48px; opacity: 0.3; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 3px; }

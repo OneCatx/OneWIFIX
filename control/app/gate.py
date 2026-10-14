@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import asyncio
 import hmac
-import ipaddress
 import logging
 from dataclasses import dataclass
 from typing import Callable
@@ -38,7 +37,7 @@ from starlette.requests import cookie_parser
 from starlette.responses import JSONResponse
 from starlette.websockets import WebSocket
 
-from . import auth, authz, clients, mobile_pairing
+from . import auth, authz, clients, mobile_pairing, phone_extras
 from . import config as cfg
 
 log = logging.getLogger("mdd.gate")
@@ -234,12 +233,7 @@ def current(connection) -> Principal:
 def trusted_proxy(peer: str, settings: dict | None = None) -> bool:
     """Whether the direct peer is a reverse proxy whose forwarding headers are believed."""
     settings = settings if settings is not None else cfg.get_settings()
-    trusted = (settings.get("security") or {}).get("trusted_proxies") or []
-    try:
-        address = ipaddress.ip_address(peer)
-        return any(address in ipaddress.ip_network(str(item), strict=False) for item in trusted)
-    except ValueError:
-        return False
+    return phone_extras.trusted_proxy_peer(peer, settings)
 
 
 def _host_port(authority: str) -> tuple[str, int] | None:
@@ -358,6 +352,13 @@ class Gate:
                                     WS_FORBIDDEN)
         # Anonymous callers only get this far on a source that does not require a credential,
         # which is what makes those paths public; everyone else asks authz.
+        if who.kind == "client":
+            peer = (scope.get("client") or ("", 0))[0]
+            client = phone_extras.effective_client(
+                peer, headers.get("x-forwarded-for", ""), cfg.get_settings())
+            if not phone_extras.client_allowed(client, cfg.get_settings()):
+                return await self._deny(scope, receive, send, 403, "client address is not allowed",
+                                        WS_FORBIDDEN)
         if who.authenticated and not authz.allowed(who, method, scope.get("path") or ""):
             return await self._deny(scope, receive, send, 403, "not permitted", WS_FORBIDDEN)
         scope.setdefault("state", {})["principal"] = who

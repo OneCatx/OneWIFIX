@@ -14,7 +14,9 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from . import cellular_sms, config as cfg, mobile_dto, mobile_pairing, mobile_settings, store
+from . import (cellular_sms, config as cfg, gate, handset_audio, mobile_dto, mobile_pairing,
+               mobile_settings, phone_calls, phone_extras, store, vowifi_mtu)
+from .ami import target_channel
 from .version import VERSION
 
 
@@ -44,11 +46,17 @@ def install(app, mdd):
             item["reader_id"] = item["id"][7:]
         return configured + unbound
 
+    @router.post("/devices")
+    def register_device(body: dict):
+        return mdd._register_discovered_device(body)
+
     @router.get("/devices")
     async def devices():
         items = await rows()
         # MDD does not impose OneWIFI's licensed device quota.
-        return {"data": {"device_limit": None, "devices": items}}
+        # The phone DTO rejects null. This is a display ceiling, not a license.
+        return {"data": {"device_limit": phone_extras.developer_view(cfg.get_settings())["device_limit"],
+                         "devices": items}}
 
     @router.get("/devices/{iid}/overview")
     async def device_overview(iid: str):
@@ -68,18 +76,19 @@ def install(app, mdd):
         memory = snapshot.get("memory") or {}
         disk = snapshot.get("disk") or {}
         total_mb = max(0, int(memory.get("total_mb") or 0))
-        used_mb = round(total_mb * float(memory.get("used_percent") or 0) / 100)
+        memory_percent = phone_extras.percent(memory.get("used_percent"))
+        used_mb = round(total_mb * memory_percent / 100)
         return {"data": {"host": {"cpu_model": "", "board_model": str(snapshot.get("model") or ""),
                                    "memory_model": "", "disk_model": ""},
-                         "perf": {"cpu_percent": None,
-                                  "memory_percent": float(memory.get("used_percent") or 0),
+                         "perf": {"cpu_percent": phone_extras.percent(snapshot.get("cpu_percent")),
+                                  "memory_percent": memory_percent,
                                   "memory_used_bytes": used_mb * 1024 * 1024,
                                   "memory_total_bytes": total_mb * 1024 * 1024,
-                                  "disk_percent": float(disk.get("used_percent") or 0),
+                                  "disk_percent": phone_extras.percent(disk.get("used_percent")),
                                   "disk_used_bytes": int(disk.get("used_bytes") or 0),
                                   "disk_total_bytes": int(disk.get("total_bytes") or 0),
-                                  "net_rx_bps": None,
-                                  "net_tx_bps": None}}}
+                                  "net_rx_bps": 0.0,
+                                  "net_tx_bps": 0.0}}}
 
     async def physical_for(iid: str) -> dict:
         physical = await mdd._unified_devices()
@@ -117,38 +126,44 @@ def install(app, mdd):
         await physical_for(iid)
         return {"data": await mdd.api_instance_start(iid)}
 
+    @router.post("/devices/{iid}/actions/reboot")
+    async def reboot_device(iid: str):
+        line(iid)
+        if await asyncio.to_thread(mdd.engine.is_running, iid):
+            await mdd._stop_instance(iid, "user_requested")
+        await mdd.api_instance_start(iid)
+        return {"data": {"ok": True, "id": iid}}
+
     @router.get("/sms/contacts")
-    async def sms_contacts(request: Request, limit: int = 100):
-        result = []
-        owner = mdd._owner(request)
-        for inst in cfg.list_instances():
-            iid = str(inst["id"])
-            unread = store.unread_counts(owner, iid)
-            for thread in store.list_threads(iid):
-                peer = str(thread["peer"])
-                result.append({"peer": peer, "device_id": iid,
-                               "device_name": str(inst.get("name") or iid),
-                               "local_phone": str(inst.get("msisdn") or ""),
-                               "iccid": str(inst.get("iccid") or ""),
-                               "imsi": str(inst.get("imsi") or ""),
-                               "last_content": str(thread.get("last_body") or ""),
-                               "message_count": int(thread["n"]),
-                               "unread_count": int(unread.get(peer) or 0),
-                               "last_timestamp": thread.get("last_ts"),
-                               "direction": "outbound" if thread.get("last_kind") == "out" else "inbound"})
-        result.sort(key=lambda row: int(row["last_timestamp"] or 0), reverse=True)
-        return {"data": result[:max(1, min(limit, 500))]}
+    async def sms_contacts(request: Request, device_id: str = "", limit: int = 100):
+        return {"data": mdd.sms_inbox.list_contacts(
+            mdd._owner(request), cfg.list_instances(), device_id, limit)}
 
     @router.get("/sms/thread")
-    def sms_thread(device_id: str, peer: str, before_id: int | None = None,
+    def sms_thread(request: Request, device_id: str, peer: str, before_id: int | None = None,
                    limit: int = 100, iccid: str = "", imsi: str = ""):
-        inst = line(device_id)
-        if (iccid and iccid != str(inst.get("iccid") or "")) or (
-                imsi and imsi != str(inst.get("imsi") or "")):
-            raise HTTPException(409, "line identity changed")
-        return {"data": [mobile_dto.sms_message(row) for row in
-                         store.list_messages_page(device_id, peer, before_id,
-                                                  max(1, min(limit, 500)))]}
+        try:
+            rows = mdd.sms_inbox.open_thread(
+                mdd._owner(request), line(device_id), peer, before_id, limit, iccid, imsi)
+        except mdd.sms_inbox.SmsInboxError as exc:
+            raise HTTPException(exc.status, str(exc)) from exc
+        return {"data": [mobile_dto.sms_message(row) for row in rows]}
+
+    @router.delete("/sms/messages/{message_id}")
+    def sms_message_delete(message_id: str):
+        try:
+            deleted = mdd.sms_inbox.delete_message(message_id)
+        except mdd.sms_inbox.SmsInboxError as exc:
+            raise HTTPException(exc.status, str(exc)) from exc
+        return {"data": {"deleted": deleted}}
+
+    @router.get("/cards/{iccid}/policy")
+    def card_policy(iccid: str):
+        return mdd.api_card_policy(iccid)
+
+    @router.put("/cards/{iccid}/policy")
+    async def card_policy_save(iccid: str, request: Request):
+        return await mdd.api_card_policy_save(iccid, request)
 
     @router.delete("/sms/thread")
     def sms_delete(device_id: str, peer: str, iccid: str = "", imsi: str = ""):
@@ -166,6 +181,9 @@ def install(app, mdd):
         message = body.get("message")
         if not to or not isinstance(message, str) or not message:
             raise HTTPException(422, "recipient and non-empty message body are required")
+        limit = phone_extras.developer_view(cfg.get_settings())["sms_hourly_limit"]
+        if store.count_outbound_since(int(time.time()) - 3600) >= limit:
+            raise HTTPException(429, "hourly SMS limit reached")
         result = await mdd.send_sms_on_line(iid, to, message)
         if result.get("unavailable"):
             raise HTTPException(409, result.get("error") or "SMS unavailable")
@@ -196,7 +214,7 @@ def install(app, mdd):
     def _reader_args(name: str, index: int, body: dict | None = None) -> dict:
         body = body or {}
         return {"reader": name, "reader_index": index,
-                "aid": body.get("aid_hex") or body.get("aid") or None}
+                "aid": body.get("aid_hex") or body.get("aidHex") or body.get("aid") or None}
 
     @router.get("/devices/{iid}/esim")
     async def esim(iid: str):
@@ -243,9 +261,13 @@ def install(app, mdd):
         if candidate and (not instance or str(instance.get("iccid") or "") != iccid):
             raise HTTPException(503, "profile switched but line identity is not current")
         device_id = candidate or "reader:" + str(reader["id"])
-        return {"data": {"status": "already_active" if result.get("already_active")
-                         else "switched", "iccid": iccid, "verified": True,
-                         "device_id": device_id, "reader_id": str(reader["id"])}}
+        data = {"status": "already_active" if result.get("already_active") else "switched",
+                "iccid": iccid, "verified": True, "device_id": device_id,
+                "reader_id": str(reader["id"])}
+        switch = result.get("esim_switch")
+        if isinstance(switch, dict):
+            data["esim_switch"] = switch
+        return {"data": data}
 
     @router.post("/devices/{iid}/esim/actions/disable")
     async def esim_disable(iid: str, body: dict):
@@ -329,8 +351,15 @@ def install(app, mdd):
 
     @router.api_route("/settings/notifications/onetools/pairing", methods=["GET", "POST"])
     async def pairing(request: Request):
+        stored = cfg.get_settings().get("onetools") or {}
+        enabled = True if not isinstance(stored, dict) or "enabled" not in stored else bool(
+            stored.get("enabled"))
+        if not enabled:
+            return {"data": {"enabled": False, "token_set": False, "origin": "",
+                             "uri": "", "json": ""}}
         secret = mobile_pairing.issue(rotate=request.method == "POST")
-        origin = str(request.base_url).rstrip("/")
+        public = str(stored.get("public_base_url") or "").strip().rstrip("/")
+        origin = public or str(request.base_url).rstrip("/")
         uri = "onetools://onewifi?" + urlencode({"u": origin, "t": secret})
         return {"data": {"enabled": True, "token_set": True, "origin": origin,
                          "uri": uri, "json": json.dumps({"v": 1, "u": origin, "t": secret})}}
@@ -361,7 +390,161 @@ def install(app, mdd):
 
     @router.get("/system/info")
     def system_info():
-        return {"data": {"version": VERSION, "build_time": "", "developer": False}}
+        return {"data": phone_extras.system_info(VERSION)}
+
+    @router.get("/settings/vowifi")
+    def vowifi_settings():
+        return {"data": vowifi_mtu.view(cfg.get_settings())}
+
+    @router.put("/settings/vowifi")
+    def save_vowifi_settings(body: dict):
+        current = cfg.get_settings()
+        try:
+            saved = vowifi_mtu.patch(current, body)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        cfg.update_settings(saved)
+        return {"data": vowifi_mtu.view({**current, **saved})}
+
+    @router.get("/license")
+    def gateway_license():
+        return {"data": phone_calls.license_status()}
+
+    def _callable(iid: str) -> dict:
+        inst = line(iid)
+        if inst.get("provisioning_state") == "draft":
+            raise HTTPException(409, "line is not callable")
+        return inst
+
+    @router.get("/devices/{iid}/calls")
+    def device_calls(iid: str):
+        line(iid)
+        return {"data": {"calls": [phone_calls.view(row) for row in store.list_calls(iid, 100)]}}
+
+    @router.post("/devices/{iid}/calls/dial")
+    async def device_dial(iid: str, body: dict):
+        _callable(iid)
+        number = str((body or {}).get("number") or "").strip()
+        if not re.fullmatch(r"[0-9+*#]{1,32}", number):
+            raise HTTPException(422, "number is required")
+        result = await mdd.place_handset_call(iid, number)
+        record = phone_calls.dialed_record(result)
+        if not result.get("ok"):
+            if record and not record.get("end_ts"):
+                store.update_call(int(record["id"]), "failed", ended=True)
+            raise HTTPException(409, result.get("error") or result.get("detail") or "call failed")
+        if record is None:
+            raise HTTPException(409, "call was not recorded")
+        return {"data": phone_calls.view(record)}
+
+    @router.post("/devices/{iid}/calls/answer")
+    async def device_answer(iid: str, body: dict):
+        line(iid)
+        ident = str((body or {}).get("id") or "").strip()
+        record = phone_calls.find(store.list_calls(iid, 200), ident)
+        if record is None:
+            raise HTTPException(404, "call not found")
+        result = await mdd.answer_handset_call(iid, ident)
+        if not result.get("ok"):
+            raise HTTPException(409, result.get("error") or result.get("detail") or "call failed")
+        # Connecting the handset's audio is not the far end answering. Only an inbound
+        # ring moves to answered here; an outbound call stays dialing until the carrier does.
+        inbound = str(record.get("direction") or "") in ("in", "incoming")
+        if (inbound and not record.get("end_ts")
+                and str(record.get("status") or "") == "ringing"):
+            store.update_call(int(record["id"]), "answered")
+            record = {**record, "status": "answered"}
+        return {"data": phone_calls.view(record)}
+
+    @router.post("/devices/{iid}/calls/hangup")
+    async def device_hangup(iid: str, body: dict):
+        line(iid)
+        ident = str((body or {}).get("id") or "").strip()
+        if not ident:
+            raise HTTPException(422, "call id is required")
+        record = phone_calls.find(store.list_calls(iid, 200), ident)
+        if record is None:
+            raise HTTPException(404, "call not found")
+        if record.get("end_ts"):
+            handset_audio.bridge.release_record(record)
+            return {"data": {"ok": True}}
+        result = await mdd.hangup_call(iid, record)
+        if not result.get("ok") and result.get("error") != "call is not active":
+            raise HTTPException(409, result.get("error") or result.get("detail") or "call failed")
+        store.update_call(int(record["id"]), "ended", ended=True)
+        handset_audio.bridge.release_record(record)
+        return {"data": {"ok": True}}
+
+    @router.get("/devices/{iid}/calls/media")
+    def device_media(iid: str, id: str = ""):
+        line(iid)
+        call_id = str(id or "").strip()
+        if not call_id:
+            raise HTTPException(422, "call id is required")
+        return {"data": phone_calls.media(iid, call_id)}
+
+    @router.post("/devices/{iid}/calls/dtmf")
+    async def device_dtmf(iid: str, body: dict):
+        line(iid)
+        digit = str((body or {}).get("digit") or "")
+        ident = str((body or {}).get("id") or "").strip()
+        if not re.fullmatch(r"[0-9*#A-D]", digit):
+            return JSONResponse({"error": {"code": "invalid_dtmf", "message": "invalid digit"}},
+                                status_code=422)
+        if not ident:
+            raise HTTPException(422, "call id is required")
+        record = phone_calls.find(store.list_calls(iid, 200), ident)
+        if record is None:
+            raise HTTPException(404, "call not found")
+        if record.get("end_ts"):
+            raise HTTPException(409, "call has ended")
+        ami = await mdd.hub.ami_for(iid)
+        if ami is None:
+            return JSONResponse({"error": {"code": "dtmf_unavailable", "message": "line is not in a call"}},
+                                status_code=409)
+        chosen = await ami.channels_for_call(
+            str(record.get("engine_id") or ""), str(record.get("call_id") or ident))
+        result = await ami.play_dtmf(digit, target_channel(chosen, "dtmf"))
+        if not result.get("ok"):
+            return JSONResponse({"error": {"code": "dtmf_unavailable", "message": "digit was not sent"}},
+                                status_code=409)
+        return {"data": {"ok": True}}
+
+    @router.get("/calls/events")
+    async def call_events(request: Request):
+        who = getattr(request.state, "principal", None)
+        if who is None:
+            who = (request.scope.get("state") or {}).get("principal")
+        credential = str(getattr(who, "credential", "") or "")
+
+        async def events():
+            if not credential:
+                return
+            entry = gate._live.add(credential)
+            revoked = entry[1]
+            revision = 0
+            last = ""
+            try:
+                while True:
+                    if await request.is_disconnected() or revoked.is_set():
+                        return
+                    body = phone_calls.snapshot(
+                        cfg.list_instances(), lambda item: store.list_calls(item, 50))
+                    raw = json.dumps(body, separators=(",", ":"), sort_keys=True)
+                    if raw != last:
+                        revision += 1
+                        last = raw
+                        payload = {"generation": 1, "revision": revision, **body}
+                        yield f"id: {revision}\nevent: snapshot\ndata: {json.dumps(payload)}\n\n"
+                    else:
+                        yield ": keepalive\n\n"
+                    if await phone_calls.until_revoked(revoked, 2):
+                        return
+            finally:
+                gate._live.discard(credential, entry)
+
+        return StreamingResponse(events(), media_type="text/event-stream",
+                                 headers={"Cache-Control": "no-store"})
 
     @router.get("/settings/sms")
     def sms_settings():
@@ -417,6 +600,9 @@ def install(app, mdd):
             last = cursor
             yield "event: connected\ndata: " + json.dumps({"lastEventId": last}) + "\n\n"
             while mobile_pairing.verify(secret):
+                stored = cfg.get_settings().get("onetools") or {}
+                if isinstance(stored, dict) and "enabled" in stored and not stored.get("enabled"):
+                    break
                 page = await asyncio.to_thread(store.inbound_sms_after_id, last)
                 for row in page:
                     last = int(row["id"])
@@ -463,6 +649,140 @@ def install(app, mdd):
             raise HTTPException(409, "call ring window expired")
         return {"data": {"call_id": call_id, "pickup_uri": "mddpickup-" + call_id,
                          "expires_at": expires, "device_id": device_id}}
+
+    @router.get("/logs/history")
+    def log_history(lines: int = 500, level: str = "", search: str = ""):
+        return {"data": phone_extras.history(lines, level, search)}
+
+    @router.get("/settings/security")
+    def security_settings(request: Request):
+        peer = request.client.host if request.client else ""
+        return {"data": phone_extras.security_view(
+            cfg.get_settings(), peer, request.headers.get("x-forwarded-for", ""))}
+
+    @router.put("/settings/security")
+    def security_save(body: dict, request: Request):
+        try:
+            saved = phone_extras.security_save(cfg.get_settings(), body)
+        except phone_extras.PhoneExtraError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        cfg.update_settings({"security": saved})
+        peer = request.client.host if request.client else ""
+        return {"data": phone_extras.security_view(
+            cfg.get_settings(), peer, request.headers.get("x-forwarded-for", ""))}
+
+    @router.get("/settings/https")
+    def https_settings():
+        return {"data": phone_extras.https_view(cfg.get_settings())}
+
+    @router.put("/settings/https")
+    def https_save(body: dict):
+        try:
+            saved = phone_extras.https_save(cfg.get_settings(), body)
+        except phone_extras.PhoneExtraError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        cfg.update_settings({"security": saved})
+        return {"data": phone_extras.https_view(cfg.get_settings())}
+
+    @router.get("/settings/developer")
+    def developer_settings():
+        return {"data": phone_extras.developer_view(cfg.get_settings())}
+
+    @router.put("/settings/developer")
+    def developer_save(body: dict):
+        try:
+            saved = phone_extras.developer_save(body)
+        except phone_extras.PhoneExtraError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        current = dict(cfg.get_settings().get("developer") or {})
+        current.update(saved)
+        cfg.update_settings({"developer": current})
+        return {"data": phone_extras.developer_view(cfg.get_settings())}
+
+    def _tasks():
+        return cfg.get_settings().get("phone_tasks") or {}
+
+    @router.get("/automatic-tasks")
+    def automatic_tasks():
+        return {"data": phone_extras.tasks_view(_tasks())}
+
+    @router.get("/automatic-tasks/runs")
+    def automatic_runs(limit: int = 20, offset: int = 0):
+        return {"data": phone_extras.runs_view(_tasks(), limit, offset)}
+
+    @router.post("/automatic-tasks")
+    def automatic_create(body: dict):
+        try:
+            stored, task = phone_extras.save_task(_tasks(), body)
+        except phone_extras.PhoneExtraError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        cfg.update_settings({"phone_tasks": stored})
+        return {"data": task}
+
+    @router.put("/automatic-tasks/{task_id}")
+    def automatic_update(task_id: int, body: dict):
+        try:
+            stored, task = phone_extras.save_task(_tasks(), body, task_id)
+        except phone_extras.PhoneExtraError as exc:
+            status = 404 if "not found" in str(exc) else 422
+            raise HTTPException(status, str(exc)) from exc
+        cfg.update_settings({"phone_tasks": stored})
+        return {"data": task}
+
+    @router.delete("/automatic-tasks/{task_id}")
+    def automatic_delete(task_id: int):
+        try:
+            stored = phone_extras.delete_task(_tasks(), task_id)
+        except phone_extras.PhoneExtraError as exc:
+            raise HTTPException(404, str(exc)) from exc
+        cfg.update_settings({"phone_tasks": stored})
+        return {"data": {"deleted": True}}
+
+    @router.post("/automatic-tasks/{task_id}/run")
+    async def automatic_run(task_id: int):
+        try:
+            phone_extras.task_by_id(_tasks(), task_id)
+            claimed = phone_extras.claim_task(_tasks(), task_id)
+        except phone_extras.PhoneExtraError as exc:
+            raise HTTPException(404, str(exc)) from exc
+        if claimed is None:
+            raise HTTPException(409, "task is already running")
+        cfg.update_settings({"phone_tasks": claimed[0]})
+        try:
+            status, output, error = await mdd._execute_automatic_task(claimed[1])
+        except Exception as exc:
+            status, output, error = "failed", "", type(exc).__name__
+        stored, run = phone_extras.begin_run(
+            _tasks(), claimed[1], output, error, status, scheduled=False)
+        cfg.update_settings({"phone_tasks": stored})
+        phone_extras.note_run(claimed[1], status)
+        return {"data": run}
+
+    @router.get("/euicc-catalog")
+    def euicc_catalog_route():
+        from . import euicc_catalog
+        return {"data": euicc_catalog.view()}
+
+    @router.post("/settings/password")
+    def change_password(body: dict):
+        from . import auth, clients, gate
+        try:
+            old, new = phone_extras.password_fields(body or {})
+            auth.change_password(old, new)
+        except phone_extras.PhoneExtraError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        clients.revoke_all()
+        gate.revoke_kind("session")
+        gate.revoke_kind("client")
+        return {"data": {"changed": True, "reauthentication_required": True}}
+
+    @router.get("/system/update/check")
+    async def system_update_check():
+        from . import update_check
+        result = await asyncio.to_thread(update_check.check, True)
+        return {"data": phone_extras.update_view(result)}
 
     @router.api_route("/{legacy:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     def unsupported(legacy: str):

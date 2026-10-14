@@ -253,6 +253,7 @@ RUN mkdir -p /var/cache/asterisk /var/log/asterisk /var/spool/asterisk && ldconf
 COPY pin_keeper.py   /usr/local/bin/pin_keeper.py
 COPY ami_usim.py     /usr/local/bin/ami_usim.py
 COPY swu_ike.py      /usr/local/bin/swu_ike.py
+COPY eap_direct.py   /usr/local/bin/eap_direct.py
 COPY outer_transport.py /usr/local/bin/outer_transport.py
 COPY log_capture.py  /usr/local/bin/log_capture.py
 COPY render.py       /usr/local/bin/render.py
