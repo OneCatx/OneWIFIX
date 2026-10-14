@@ -16,8 +16,8 @@ ENGINE = Path(__file__).resolve().parents[1] / "engine"
 
 
 def _line(**overrides):
-    return {"id": "7", "index": 0, "imsi": "204047616123456", "mcc": "204", "mnc": "04",
-            "iccid": "8963662600000000000", "reader": "imsi:204047616123456",
+    return {"id": "7", "index": 0, "imsi": "204047616000000", "mcc": "204", "mnc": "04",
+            "iccid": "8963662600000000000", "reader": "imsi:204047616000000",
             "carrier_identity": {"spn": "DITO"}, "ami_secret": "test-ami",
             "sip": {"webrtc": {"password": "test-web"}}, **overrides}
 
@@ -55,8 +55,8 @@ class OneWifiCarrierResolverTests(unittest.TestCase):
         line = _line()
         profile = carrier_profiles.resolve(carrier_profiles.identity_from_instance(line))
         self.assertEqual(carrier_profiles.presented_subscriber(line, profile),
-                         ("515661015123456", "515", "66"))
-        self.assertEqual(line["imsi"], "204047616123456")
+                         ("515661015000000", "515", "66"))
+        self.assertEqual(line["imsi"], "204047616000000")
         self.assertEqual(line["iccid"], "8963662600000000000")
 
     def test_pre_render_egress_uses_route_country_and_epdg(self):
@@ -68,7 +68,7 @@ class OneWifiCarrierResolverTests(unittest.TestCase):
         self.assertEqual(desired["country"], "ph")
         self.assertEqual(desired["epdg"], egress.epdg_for(line))
         self.assertEqual((line["mcc"], line["mnc"], line["imsi"]),
-                         ("204", "04", "204047616123456"))
+                         ("204", "04", "204047616000000"))
         self.assertEqual(egress.line_country({**line, "proxy_country": "nl"}), "nl")
         self.assertEqual(egress.epdg_for({**line, "epdg": "operator.example"}),
                          "operator.example")
@@ -100,15 +100,15 @@ class OneWifiCarrierEngineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, patch.object(config, "DATA_DIR", tmp), \
                 patch.object(config, "CONFIG_PATH", str(Path(tmp) / "config.yaml")):
             cfg = config.render_instance_json(_line(), {})
-            self.assertEqual(cfg["imsi"], "204047616123456")
-            self.assertEqual(cfg["subscriber_imsi"], "515661015123456")
+            self.assertEqual(cfg["imsi"], "204047616000000")
+            self.assertEqual(cfg["subscriber_imsi"], "515661015000000")
             self.assertEqual((cfg["mcc"], cfg["mnc"]), ("515", "66"))
-            self.assertEqual(cfg["reader"], "imsi:204047616123456")
+            self.assertEqual(cfg["reader"], "imsi:204047616000000")
             self.assertEqual(cfg["carrier_ike"]["proposal"], "legacy-sha1-modp1024")
             from engine import render
             ctx = render.build_context({**cfg, "local_addr": "172.17.0.3"})
-            self.assertEqual(ctx["imsi"], "515661015123456")
-            self.assertEqual(ctx["reader"], "imsi:204047616123456")
+            self.assertEqual(ctx["imsi"], "515661015000000")
+            self.assertEqual(ctx["reader"], "imsi:204047616000000")
             self.assertIn("mnc066.mcc515", ctx["nai"])
             self.assertIn("mnc066.mcc515", ctx["realm"])
             overridden = config.render_instance_json(_line(

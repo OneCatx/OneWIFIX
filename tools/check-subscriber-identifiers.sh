@@ -74,7 +74,9 @@ report() {
 #   ^44770090        Ofcom's 07700 900xxx drama range, reserved for fiction
 #   ^1([0-9]{3})?555 NANP fictional 555, whether as the exchange or in place of the area code
 #   ^447785016005    Vodafone UK's published SMSC -- carrier infrastructure, not a subscriber
-fictional='0{6,}|123456789|^123456|^00101|^35000000|^490154203237518|^44770090|^1([0-9]{3})?555|^447785016005'
+#   ^447802000332    O2 UK's published SMSC -- carrier infrastructure, not a subscriber
+#   ^447870020888    EE UK's published 888 service number -- carrier infrastructure, not a subscriber
+fictional='0{6,}|123456789|^123456|^00101|^35000000|^490154203237518|^44770090|^1([0-9]{3})?555|^447785016005|^447802000332|^447870020888'
 
 display() {
     # A blob extracted for --commits lives at $tmp/<object>/<path>; report it as the path it

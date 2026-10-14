@@ -44,7 +44,7 @@ class NotificationChannelTests(unittest.TestCase):
         message = build_notification_message(payload, {"message_templates": {EV_INCOMING_SMS: {
             "title": "[Home] {{title}}", "content": "---\n{{content}}",
         }}})
-        self.assertTrue(message["title"].startswith("[Home] MDD"))
+        self.assertTrue(message["title"].startswith("[Home] OneWIFI"))
         self.assertIn("hello", message["content"])
 
     def test_unknown_message_template_fields_are_rejected(self):
